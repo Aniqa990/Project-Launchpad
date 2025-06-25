@@ -1,0 +1,14 @@
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\bin\Debug\net8.0\ProjectLaunchpad.DataAccess.deps.json
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\bin\Debug\net8.0\ProjectLaunchpad.DataAccess.dll
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\bin\Debug\net8.0\ProjectLaunchpad.DataAccess.pdb
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.GeneratedMSBuildEditorConfig.editorconfig
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.AssemblyInfoInputs.cache
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.AssemblyInfo.cs
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.csproj.CoreCompileInputs.cache
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.dll
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\refint\ProjectLaunchpad.DataAccess.dll
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.pdb
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ref\ProjectLaunchpad.DataAccess.dll
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\bin\Debug\net8.0\ProjectLaunchpad.DataAccess.runtimeconfig.json
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.csproj.AssemblyReference.cache
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.genruntimeconfig.cache
