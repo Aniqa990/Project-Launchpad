@@ -9,3 +9,15 @@ D:\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.
 D:\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\refint\ProjectLaunchpad.Utility.dll
 D:\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.pdb
 D:\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ref\ProjectLaunchpad.Utility.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\bin\Debug\net8.0\ProjectLaunchpad.Utility.deps.json
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\bin\Debug\net8.0\ProjectLaunchpad.Utility.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\bin\Debug\net8.0\ProjectLaunchpad.Utility.pdb
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.AssemblyInfoInputs.cache
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.AssemblyInfo.cs
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.csproj.CoreCompileInputs.cache
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.sourcelink.json
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\refint\ProjectLaunchpad.Utility.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.pdb
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ref\ProjectLaunchpad.Utility.dll

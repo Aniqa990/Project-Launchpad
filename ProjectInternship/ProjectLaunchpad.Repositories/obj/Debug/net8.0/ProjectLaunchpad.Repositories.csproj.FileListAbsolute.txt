@@ -9,3 +9,15 @@ D:\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunc
 D:\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\refint\ProjectLaunchpad.Repositories.dll
 D:\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.pdb
 D:\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ref\ProjectLaunchpad.Repositories.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\bin\Debug\net8.0\ProjectLaunchpad.Repositories.deps.json
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\bin\Debug\net8.0\ProjectLaunchpad.Repositories.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\bin\Debug\net8.0\ProjectLaunchpad.Repositories.pdb
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.AssemblyInfoInputs.cache
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.AssemblyInfo.cs
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.csproj.CoreCompileInputs.cache
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.sourcelink.json
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\refint\ProjectLaunchpad.Repositories.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Repositories.pdb
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ref\ProjectLaunchpad.Repositories.dll
