@@ -1599,6 +1599,16 @@
             "rid": "win"
           }
         }
+      },
+      "ProjectLaunchpad.Models/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/ProjectLaunchpad.Models.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/ProjectLaunchpad.Models.dll": {}
+        }
       }
     }
   },
@@ -4308,6 +4318,11 @@
         "system.windows.extensions.nuspec",
         "useSharedDesignerContext.txt"
       ]
+    },
+    "ProjectLaunchpad.Models/1.0.0": {
+      "type": "project",
+      "path": "../ProjectLaunchpad.Repositories/ProjectLaunchpad.Models.csproj",
+      "msbuildProject": "../ProjectLaunchpad.Repositories/ProjectLaunchpad.Models.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -4317,7 +4332,8 @@
       "Microsoft.EntityFrameworkCore.SqlServer >= 8.0.0",
       "Microsoft.EntityFrameworkCore.Tools >= 8.0.0",
       "Microsoft.Extensions.Configuration.FileExtensions >= 8.0.0",
-      "Microsoft.Extensions.Configuration.Json >= 8.0.0"
+      "Microsoft.Extensions.Configuration.Json >= 8.0.0",
+      "ProjectLaunchpad.Models >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -4351,7 +4367,11 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj": {
+              "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

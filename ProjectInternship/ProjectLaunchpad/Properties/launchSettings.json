@@ -2,8 +2,11 @@
   "profiles": {
     "ProjectLaunchpad": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7053",
-      "launchBrowser": false
+      "applicationUrl": "https://localhost:7053",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   }
 }

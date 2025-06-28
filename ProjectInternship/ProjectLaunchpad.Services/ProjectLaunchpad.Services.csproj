@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ProjectLaunchpad.DataAccess\ProjectLaunchpad.DataAccess.csproj" />
+    <ProjectReference Include="..\ProjectLaunchpad.Repositories\ProjectLaunchpad.Models.csproj" />
+    <ProjectReference Include="..\ProjectLaunchpad.Utility\ProjectLaunchpad.Utility.csproj" />
+  </ItemGroup>
+
 </Project>

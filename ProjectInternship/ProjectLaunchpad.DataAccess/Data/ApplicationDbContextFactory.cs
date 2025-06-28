@@ -1,27 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using ProjectLaunchpad;
-using System.IO; // ✅ Required for SetBasePath
+using Microsoft.Extensions.Configuration.Json;            // ✅ Required
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProjectLaunchpad.DataAccess
+namespace ProjectLaunchpad.DataAccess.Data
 {
     public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
     {
         public ApplicationDbContext CreateDbContext(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("local.settings.json") // This reads your Azure Functions config file
+            // Go up one directory to reach ProjectLaunchpad (Function project)
+            var basePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "ProjectLaunchpad");
+
+            var config = new ConfigurationBuilder()
+                .SetBasePath(basePath)
+                .AddJsonFile("local.settings.json", optional: false)
                 .Build();
 
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var connectionString = config.GetSection("ConnectionStrings")["DefaultConnection"];
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             optionsBuilder.UseSqlServer(connectionString);

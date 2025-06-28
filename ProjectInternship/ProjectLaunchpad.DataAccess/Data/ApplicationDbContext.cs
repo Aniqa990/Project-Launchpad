@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ProjectLaunchpad.Models;
+using ProjectLaunchpad.Models.Models;
 
-namespace ProjectLaunchpad.DataAccess
+namespace ProjectLaunchpad.DataAccess.Data
 {
     public class ApplicationDbContext : DbContext
     {
@@ -15,9 +16,9 @@ namespace ProjectLaunchpad.DataAccess
          
         }
 
-        public DbSet<User> Users { get; set; }
+        public DbSet<User> users { get; set; }
 
-        public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
+        public DbSet<FreelancerProfile> freelancerProfiles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
