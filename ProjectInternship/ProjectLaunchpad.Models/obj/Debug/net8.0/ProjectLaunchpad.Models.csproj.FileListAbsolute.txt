@@ -10,3 +10,15 @@ C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\Project
 C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\refint\ProjectLaunchpad.Models.dll
 C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ProjectLaunchpad.Models.pdb
 C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Repositories\obj\Debug\net8.0\ref\ProjectLaunchpad.Models.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\bin\Debug\net8.0\ProjectLaunchpad.Models.deps.json
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\bin\Debug\net8.0\ProjectLaunchpad.Models.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\bin\Debug\net8.0\ProjectLaunchpad.Models.pdb
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.AssemblyInfoInputs.cache
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.AssemblyInfo.cs
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.csproj.CoreCompileInputs.cache
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.sourcelink.json
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\refint\ProjectLaunchpad.Models.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.pdb
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ref\ProjectLaunchpad.Models.dll

@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ProjectLaunchpad.Models;
+using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models;
 
 namespace ProjectLaunchpad.DataAccess.Data
 {

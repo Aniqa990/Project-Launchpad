@@ -2,6 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models;
+using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
 using System;
 using System.Collections.Generic;
