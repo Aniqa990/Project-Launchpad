@@ -14,9 +14,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Repositories.csproj",
-      "projectName": "ProjectLaunchpad.Repositories",
-      "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Repositories.csproj",
+      "projectUniqueName": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj",
+      "projectName": "ProjectLaunchpad.Models",
+      "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj",
       "packagesPath": "C:\\Users\\aniqa\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\obj\\",
       "projectStyle": "PackageReference",

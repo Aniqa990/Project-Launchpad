@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectLaunchpad.DataAccess
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectLaunchpad.Utility", "..\ProjectLaunchpad.Utility\ProjectLaunchpad.Utility.csproj", "{A313F10F-CEA6-4BE5-92F9-ED908C23E480}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectLaunchpad.Repositories", "..\ProjectLaunchpad.Repositories\ProjectLaunchpad.Repositories.csproj", "{4417CCC6-6E93-463C-9D79-94CE1530151B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectLaunchpad.Models", "..\ProjectLaunchpad.Repositories\ProjectLaunchpad.Models.csproj", "{4417CCC6-6E93-463C-9D79-94CE1530151B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectLaunchpad.Services", "..\ProjectLaunchpad.Services\ProjectLaunchpad.Services.csproj", "{2B8D54C5-50B9-4472-9C8D-F6429A96A3E0}"
 EndProject

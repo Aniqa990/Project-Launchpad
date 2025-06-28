@@ -21,3 +21,4 @@ C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\Project
 C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\refint\ProjectLaunchpad.Utility.dll
 C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.pdb
 C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ref\ProjectLaunchpad.Utility.dll
+C:\Users\aniqa\source\repos\Aniqa990\Project-Launchpad\ProjectInternship\ProjectLaunchpad.Utility\obj\Debug\net8.0\ProjectLaunchpad.Utility.csproj.AssemblyReference.cache

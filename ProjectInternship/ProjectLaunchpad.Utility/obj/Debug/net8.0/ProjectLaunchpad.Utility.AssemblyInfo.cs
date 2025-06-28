@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProjectLaunchpad.Utility")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+256230122b580bb7901b1b9bcf0525481b1bde11")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98f3118e49ac6ee13e315d35e9cfe234402542b7")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProjectLaunchpad.Utility")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProjectLaunchpad.Utility")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
