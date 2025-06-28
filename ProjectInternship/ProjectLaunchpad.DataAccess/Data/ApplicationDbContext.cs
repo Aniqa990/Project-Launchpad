@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ProjectLaunchpad.Models;
-using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 
 namespace ProjectLaunchpad.DataAccess.Data
 {

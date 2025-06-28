@@ -4321,8 +4321,8 @@
     },
     "ProjectLaunchpad.Models/1.0.0": {
       "type": "project",
-      "path": "../ProjectLaunchpad.Repositories/ProjectLaunchpad.Models.csproj",
-      "msbuildProject": "../ProjectLaunchpad.Repositories/ProjectLaunchpad.Models.csproj"
+      "path": "../ProjectLaunchpad.Models/ProjectLaunchpad.Models.csproj",
+      "msbuildProject": "../ProjectLaunchpad.Models/ProjectLaunchpad.Models.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -4368,8 +4368,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj": {
-              "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj"
+            "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj": {
+              "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj"
             }
           }
         }
