@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ProjectLaunchpad.Repositories\ProjectLaunchpad.Models.csproj" />
+    <ProjectReference Include="..\ProjectLaunchpad.Models\ProjectLaunchpad.Models.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4032,8 +4032,8 @@
     },
     "ProjectLaunchpad.Models/1.0.0": {
       "type": "project",
-      "path": "../ProjectLaunchpad.Repositories/ProjectLaunchpad.Models.csproj",
-      "msbuildProject": "../ProjectLaunchpad.Repositories/ProjectLaunchpad.Models.csproj"
+      "path": "../ProjectLaunchpad.Models/ProjectLaunchpad.Models.csproj",
+      "msbuildProject": "../ProjectLaunchpad.Models/ProjectLaunchpad.Models.csproj"
     },
     "ProjectLaunchpad.Utility/1.0.0": {
       "type": "project",
@@ -4083,8 +4083,8 @@
             "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj": {
               "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj"
             },
-            "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj": {
-              "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Repositories\\ProjectLaunchpad.Models.csproj"
+            "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj": {
+              "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj"
             },
             "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj": {
               "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj"
