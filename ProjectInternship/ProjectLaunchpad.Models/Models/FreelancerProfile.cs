@@ -1,6 +1,8 @@
-﻿using System;
+﻿using ProjectLaunchpad.Models.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,14 +12,15 @@ namespace ProjectLaunchpad.Models
     public class FreelancerProfile
     {
 
-        [Key]
+        [Key, ForeignKey("User")]
         public int Id { get; set; }
+        public User User { get; set; }
 
         [Required]
         public string Skills { get; set; }
 
-        public decimal HourlyRate { get; set; }
-        public decimal FixedRate { get; set; }
+        public decimal? HourlyRate { get; set; }
+        public decimal? FixedRate { get; set; }
         [Required]
         public string Availability { get; set; }
 

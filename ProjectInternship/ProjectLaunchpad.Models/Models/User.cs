@@ -39,5 +39,9 @@ namespace ProjectLaunchpad.Models.Models
         public string? Gender { get; set; } // Optional (Male/Female/Other/Prefer not to say)
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<Project> OwnedProjects { get; set; }  // As Client
+
+        public ICollection<ProjectAssignment> ProjectAssignments { get; set; } // As Freelancer
     }
 }

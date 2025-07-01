@@ -16,11 +16,14 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IUserRepository Users { get; }
         public IFreelancerProfileRepository FreelancerProfiles { get; }
 
+        public IProjectAssignmentRepository ProjectFreelancers { get; }
+
         public UnitOfWork(ApplicationDbContext db)
         {
             _db = db;
             Users = new UserRepository(_db);
             FreelancerProfiles = new FreelancerProfileRepository(_db);
+            ProjectFreelancers = new ProjectAssignmentRepository(_db);
         }
 
         public async Task<int> SaveAsync()

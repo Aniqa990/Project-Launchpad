@@ -21,6 +21,10 @@ namespace ProjectLaunchpad.DataAccess.Data
 
         public DbSet<FreelancerProfile> freelancerProfiles { get; set; }
 
+        public DbSet<Project> projects { get; set; }
+
+        public DbSet<ProjectAssignment> projectFreelancers { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -36,6 +40,24 @@ namespace ProjectLaunchpad.DataAccess.Data
                 entity.Property(f => f.AvgRating)
                       .HasPrecision(3, 1);
             });
+
+            modelBuilder.Entity<Project>(entity =>
+            {
+                entity.Property(p => p.Budget)
+                      .HasPrecision(18, 2);
+            });
+
+            modelBuilder.Entity<ProjectAssignment>()
+                .HasOne(pf => pf.Project)
+                .WithMany(f => f.AssignedFreelancers)
+                .HasForeignKey(pf => pf.ProjectId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ProjectAssignment>()
+                .HasOne(pf => pf.Freelancer)
+                .WithMany()
+                .HasForeignKey(pf => pf.FreelancerId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }
