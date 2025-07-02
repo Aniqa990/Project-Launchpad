@@ -1,0 +1,11 @@
+D:\ProjectInternship\ProjectLaunchpad.Models\bin\Debug\net8.0\ProjectLaunchpad.Models.deps.json
+D:\ProjectInternship\ProjectLaunchpad.Models\bin\Debug\net8.0\ProjectLaunchpad.Models.dll
+D:\ProjectInternship\ProjectLaunchpad.Models\bin\Debug\net8.0\ProjectLaunchpad.Models.pdb
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.GeneratedMSBuildEditorConfig.editorconfig
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.AssemblyInfoInputs.cache
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.AssemblyInfo.cs
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.csproj.CoreCompileInputs.cache
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.dll
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\refint\ProjectLaunchpad.Models.dll
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.pdb
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ref\ProjectLaunchpad.Models.dll
