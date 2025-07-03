@@ -19,6 +19,8 @@ namespace ProjectLaunchpad.Models.Models
         [Required]
         public string Description { get; set; } = string.Empty;
 
+        public string? PaymentType { get; set; }
+
         [Required]
         public string CategoryOrDomain { get; set; } = string.Empty;
 

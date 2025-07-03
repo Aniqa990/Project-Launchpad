@@ -13,6 +13,7 @@ namespace ProjectLaunchpad.Models.Models.DTOs
         public string ProjectTitle { get; set; } = string.Empty;
 
         public string Description { get; set; } = string.Empty;
+        public string? PaymentType { get; set; }
 
         public string CategoryOrDomain { get; set; } = string.Empty;
 

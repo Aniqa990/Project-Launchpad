@@ -32,3 +32,4 @@ E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Deb
 E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.pdb
 E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.genruntimeconfig.cache
 E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ref\ProjectLaunchpad.DataAccess.dll
+E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.sourcelink.json

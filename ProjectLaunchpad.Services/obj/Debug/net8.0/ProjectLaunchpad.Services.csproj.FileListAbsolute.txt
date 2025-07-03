@@ -36,3 +36,4 @@ E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.Services\obj\Debug
 E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\refint\ProjectLaunchpad.Services.dll
 E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\ProjectLaunchpad.Services.pdb
 E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\ref\ProjectLaunchpad.Services.dll
+E:\mazik\ProjectInternship\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\ProjectLaunchpad.Services.sourcelink.json
