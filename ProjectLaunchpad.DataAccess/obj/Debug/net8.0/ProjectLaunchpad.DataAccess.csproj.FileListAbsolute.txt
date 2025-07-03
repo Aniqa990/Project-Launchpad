@@ -15,3 +15,4 @@ D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\refint\Project
 D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.pdb
 D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.genruntimeconfig.cache
 D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ref\ProjectLaunchpad.DataAccess.dll
+D:\ProjectInternship\ProjectLaunchpad.DataAccess\obj\Debug\net8.0\ProjectLaunchpad.DataAccess.sourcelink.json

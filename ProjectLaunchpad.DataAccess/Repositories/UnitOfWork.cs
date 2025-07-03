@@ -20,6 +20,12 @@ namespace ProjectLaunchpad.Repositories.Repositories
 
         public IMilestoneRepository MilestoneRepository { get; }
 
+        public IlogRepository logRepository { get; }
+
+        public IDeliverableRepository deliverableRepository { get;}
+
+        public IPaymentRepository PaymentRepository { get; }
+
         // 
 
         public UnitOfWork(ApplicationDbContext db)
@@ -29,6 +35,9 @@ namespace ProjectLaunchpad.Repositories.Repositories
             TaskRepository = new TaskRepository(_db);
             SubTaskRepository = new SubTaskRepository(_db);
             MilestoneRepository = new MilestoneRepository(_db);
+            logRepository = new LogRepository(_db);
+            deliverableRepository = new DeliverableRepository(_db);
+            PaymentRepository = new PaymentRepository(_db);
             ///
         }
 

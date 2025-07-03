@@ -41,6 +41,11 @@ namespace ProjectLaunchpad.DataAccess.Repositories
 
         public void Delete(TaskItem task)
         {
+            // Step 1: Delete logs manually for this task
+            var logsToDelete = _db.logs.Where(l => l.TaskId == task.Id).ToList();
+            _db.logs.RemoveRange(logsToDelete);
+
+            // Step 2: Delete the task
             _db.taskItems.Remove(task);
         }
     }

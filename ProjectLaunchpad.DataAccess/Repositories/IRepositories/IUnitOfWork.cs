@@ -17,6 +17,12 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
 
         IMilestoneRepository MilestoneRepository { get; }
 
+        IlogRepository logRepository { get; }
+
+        IDeliverableRepository deliverableRepository { get; }
+
+        IPaymentRepository PaymentRepository { get; }
+
         Task<int> SaveAsync();
 
     }

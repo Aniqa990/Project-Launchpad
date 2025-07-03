@@ -22,6 +22,66 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Deliverables", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("projectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("uploadFiles")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("deliverables");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Logs", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("logs");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Milestone", b =>
                 {
                     b.Property<int>("Id")
@@ -65,6 +125,49 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("milestones");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MilestoneId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TimesheetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("payments");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Subtask", b =>
@@ -179,6 +282,25 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("users");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Logs", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "Freelancer")
+                        .WithMany()
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProjectLaunchpad.Models.Models.TaskItem", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Subtask", b =>

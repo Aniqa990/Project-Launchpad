@@ -9,3 +9,4 @@ D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.M
 D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\refint\ProjectLaunchpad.Models.dll
 D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.pdb
 D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ref\ProjectLaunchpad.Models.dll
+D:\ProjectInternship\ProjectLaunchpad.Models\obj\Debug\net8.0\ProjectLaunchpad.Models.sourcelink.json

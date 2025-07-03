@@ -17,3 +17,4 @@ D:\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\ProjectLaunchpad
 D:\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\refint\ProjectLaunchpad.Services.dll
 D:\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\ProjectLaunchpad.Services.pdb
 D:\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\ref\ProjectLaunchpad.Services.dll
+D:\ProjectInternship\ProjectLaunchpad.Services\obj\Debug\net8.0\ProjectLaunchpad.Services.sourcelink.json
