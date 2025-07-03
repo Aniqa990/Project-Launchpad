@@ -1,0 +1,18 @@
+﻿using ProjectLaunchpad.Models.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
+{
+    public interface IFreelancerProfileRepository
+    {
+        Task<FreelancerProfile?> GetProfileByUserIdAsync(int userId);
+        Task AddFreelancerProfileAsync(FreelancerProfile profile);
+        Task UpdateFreelancerProfileAsync(FreelancerProfile profile);
+        Task DeleteFreelancerProfileAsync(int userId);
+        Task<List<FreelancerProfile>> GetAllFreelancerProfilesAsync();
+    }
+}

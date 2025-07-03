@@ -26,6 +26,10 @@ namespace ProjectLaunchpad.Repositories.Repositories
 
         public IPaymentRepository PaymentRepository { get; }
 
+        public IFreelancerProfileRepository FreelancerProfiles { get; }
+
+        public IProjectAssignmentRepository ProjectFreelancers { get; }
+
         // 
 
         public UnitOfWork(ApplicationDbContext db)
@@ -38,6 +42,8 @@ namespace ProjectLaunchpad.Repositories.Repositories
             logRepository = new LogRepository(_db);
             deliverableRepository = new DeliverableRepository(_db);
             PaymentRepository = new PaymentRepository(_db);
+            FreelancerProfiles = new FreelancerProfileRepository(_db);
+            ProjectFreelancers = new ProjectAssignmentRepository(_db);
             ///
         }
 
