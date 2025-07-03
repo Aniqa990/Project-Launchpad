@@ -34,23 +34,53 @@ def extract_text_from_resume(uploaded_file):
 
 def call_groq_llm(resume_text, api_key):
     prompt = f"""
-You are an expert resume parser. From the text below, extract a JSON object with keys: name, email, phone, education, experience, and skills.
-Respond with ONLY the raw JSON object.
+You are an expert resume parser. Your task is to convert the following resume text into a standardized JSON format.
+
+🔸 The output JSON must strictly follow this structure:
+{{
+  "name": "Full Name",
+  "email": "email@example.com",
+  "phone": "+1234567890",
+  "summary": "Short professional summary or about me (generate if missing)",
+  "experience": [
+    {{
+      "title": "Job Title",
+      "company": "Company Name",
+      "duration": "e.g., Jan 2020 - Dec 2022",
+      "description": "Responsibilities and accomplishments"
+    }}
+  ],
+  "projects": [
+    {{
+      "title": "Project Title",
+      "description": "What the project is, tools used, outcome"
+    }}
+  ],
+  "skills": ["Python", "SQL", "Machine Learning"]
+}}
+
+🔸 Important:
+- Always return this exact structure (even if fields are empty).
+- If "summary" or "about me" is not in the resume, generate one based on the tone and content.
+- Make sure lists like experience, projects, and skills are always present (even if empty).
+- Respond with **only the raw JSON**, without markdown, comments, or explanation.
 
 Resume Text:
 {resume_text}
 """
+
     headers = {
         'Authorization': f'Bearer {api_key}',
         'Content-Type': 'application/json'
     }
+
     data = {
         'messages': [
             {'role': 'system', 'content': 'You are a helpful assistant.'},
             {'role': 'user', 'content': prompt}
         ],
         'model': 'llama-3.1-8b-instant',
-        'max_tokens': 1024
+        'max_tokens': 2048
     }
 
     response = requests.post(
