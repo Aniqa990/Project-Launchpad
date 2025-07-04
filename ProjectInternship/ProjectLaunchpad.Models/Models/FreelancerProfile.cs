@@ -19,14 +19,20 @@ namespace ProjectLaunchpad.Models
         [Required]
         public string Skills { get; set; }
 
-        public decimal? HourlyRate { get; set; }
-        public decimal? FixedRate { get; set; }
+        [Required]
+        public string Experience { get; set; }
+
+        public decimal HourlyRate { get; set; }
+
         [Required]
         public string Availability { get; set; }
 
         [Required]
         public string WorkingHours { get; set; }
+
         public decimal AvgRating { get; set; }
-    
+
+        public string Summary { get; set; }
+
     }
 }

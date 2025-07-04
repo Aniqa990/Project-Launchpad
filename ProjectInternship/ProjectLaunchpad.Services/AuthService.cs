@@ -16,7 +16,7 @@ namespace ProjectLaunchpad.Services
             _jwt = jwt;
         }
 
-        public async Task<string> RegisterAsync(UserRegisterDTO dto)
+        public async Task<(string token, User user)> RegisterAsync(UserRegisterDTO dto)
         {
             // Validation: Password and ConfirmPassword should match
             if (dto.Password != dto.ConfirmPassword)
@@ -39,16 +39,19 @@ namespace ProjectLaunchpad.Services
             await _unitOfWork.Users.AddUserAsync(user);
             await _unitOfWork.SaveAsync();
 
-            return _jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+            var token = _jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+            return (token, user);
         }
 
-        public async Task<string> LoginAsync(UserLoginDTO dto)
+        public async Task<(string token, User user)> LoginAsync(UserLoginDTO dto)
         {
             var user = await _unitOfWork.Users.GetUserByEmailAsync(dto.Email);
             if (user == null || !PasswordHasher.Verify(dto.Password, user.Password))
                 throw new Exception("Invalid email or password");
 
-            return _jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+            var token = _jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+            return (token, user);
         }
+
     }
 }

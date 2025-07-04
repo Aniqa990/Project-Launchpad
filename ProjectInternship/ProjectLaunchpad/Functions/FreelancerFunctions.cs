@@ -25,7 +25,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> AddFreelancerProfile(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = "freelancer")] HttpRequestData req)
         {
-            var dto = await req.ReadFromJsonAsync<FreelancerProfile>();
+            var dto = await req.ReadFromJsonAsync<FreelancerProfileDTO>();
             await _unit.FreelancerProfiles.AddFreelancerProfileAsync(dto);
             await _unit.SaveAsync();
             var res = req.CreateResponse(HttpStatusCode.Created);
@@ -80,7 +80,6 @@ namespace ProjectLaunchpad.Functions
 
             profile.Skills = dto.Skills ?? profile.Skills;
             profile.HourlyRate = dto.HourlyRate ?? profile.HourlyRate;
-            profile.FixedRate = dto.FixedRate ?? profile.FixedRate;
             profile.AvgRating = dto.AvgRating ?? profile.AvgRating;
             profile.Availability = dto.Availability ?? profile.Availability;
             profile.WorkingHours = dto.WorkingHours ?? profile.WorkingHours;

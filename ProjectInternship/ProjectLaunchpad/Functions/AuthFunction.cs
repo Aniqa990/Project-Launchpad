@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using ProjectLaunchpad.Services;
 
-
 namespace ProjectLaunchpad.Functions
 {
     public class AuthFunctions
@@ -27,23 +26,50 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/register")] HttpRequestData req)
         {
             var dto = await req.ReadFromJsonAsync<UserRegisterDTO>();
-            var token = await _auth.RegisterAsync(dto);
+            var (token, user) = await _auth.RegisterAsync(dto);
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new { token });
+            await response.WriteAsJsonAsync(new
+            {
+                token = token,
+                user = new
+                {
+                    id = user.Id,
+                    email = user.Email,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    role = user.Role,
+                    phone = user.PhoneNo
+                }
+            });
             return response;
         }
 
         [Function("Login")]
         public async Task<HttpResponseData> Login(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestData req)
+     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestData req)
         {
             var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
-            var token = await _auth.LoginAsync(dto);
+            var (token, user) = await _auth.LoginAsync(dto); // Now getting both
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new { token });
+            await response.WriteAsJsonAsync(new
+            {
+                token = token,
+                user = new
+                {
+                    id = user.Id,
+                    email = user.Email,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    role = user.Role,
+                    phone = user.PhoneNo
+                }
+            });
+
             return response;
         }
+
+
     }
 }

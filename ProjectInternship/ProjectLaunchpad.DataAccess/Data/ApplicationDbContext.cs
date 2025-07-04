@@ -34,9 +34,6 @@ namespace ProjectLaunchpad.DataAccess.Data
                 entity.Property(f => f.HourlyRate)
                       .HasPrecision(18, 2);
 
-                entity.Property(f => f.FixedRate)
-                      .HasPrecision(18, 2);
-
                 entity.Property(f => f.AvgRating)
                       .HasPrecision(3, 1);
             });
@@ -51,7 +48,7 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasOne(pf => pf.Project)
                 .WithMany(f => f.AssignedFreelancers)
                 .HasForeignKey(pf => pf.ProjectId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ProjectAssignment>()
                 .HasOne(pf => pf.Freelancer)
