@@ -2,6 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,9 +25,22 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return await _db.freelancerProfiles.FirstOrDefaultAsync(p => p.Id == userId);
         }
 
-        public async Task AddFreelancerProfileAsync(FreelancerProfile profile)
+        public async Task AddFreelancerProfileAsync(FreelancerProfileDTO dto)
         {
-            await _db.freelancerProfiles.AddAsync(profile);
+            var entity = new FreelancerProfile
+            {
+                Id = dto.UserId,
+                Skills = dto.Skills,
+                HourlyRate = dto.HourlyRate ?? 0,
+                AvgRating = dto.AvgRating ?? 0,
+                Availability = dto.Availability,
+                WorkingHours = dto.WorkingHours,
+                Summary = dto.Summary,
+                Experience = dto.Experience
+
+            };
+
+            await _db.freelancerProfiles.AddAsync(entity);
         }
 
         public Task UpdateFreelancerProfileAsync(FreelancerProfile profile)
