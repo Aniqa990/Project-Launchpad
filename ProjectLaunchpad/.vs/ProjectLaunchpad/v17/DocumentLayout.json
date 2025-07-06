@@ -1,0 +1,837 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\ProjectInternship\\ProjectLaunchpad\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\enums\\milestonestatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\functions\\milestonefunctions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:functions\\milestonefunctions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\milestonerepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\functions\\authfunctions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:functions\\authfunctions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\irepositories\\imilestonerepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\milestone.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\milestonedto\\submitmilestonedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\milestonedto\\createmilestonedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B8D54C5-50B9-4472-9C8D-F6429A96A3E0}|..\\ProjectLaunchpad.Services\\ProjectLaunchpad.Services.csproj|d:\\projectinternship\\projectlaunchpad.services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\functions\\subtaskfunction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:functions\\subtaskfunction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\functions\\taskfunctions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:functions\\taskfunctions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\functions\\protectedfunction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:functions\\protectedfunction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\taskdto\\createsubtaskdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\authenticationdto\\userregisterdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\unitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\subtaskrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\irepositories\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\irepositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\enums\\kanbansubtaskstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\taskrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\irepositories\\itaskrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\taskdto\\updatesubtaskdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\taskdto\\createtaskdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\taskitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\projectlaunchpad.models.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\repositories\\irepositories\\isubtaskrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\enums\\kanbantaskprioritylevel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\enums\\kanbantaskstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\subtask.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\taskdto\\updatetaskdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\taskdto\\subtaskdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\authenticationdto\\userlogindto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E6FA8664-78B3-4F41-B2FC-CCA61521AC4D}|..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj|d:\\projectinternship\\projectlaunchpad.models\\models\\dtos\\taskdto\\taskdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\migrations\\20250627111119_adddb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A313F10F-CEA6-4BE5-92F9-ED908C23E480}|..\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj|d:\\projectinternship\\projectlaunchpad.utility\\jwthelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A313F10F-CEA6-4BE5-92F9-ED908C23E480}|..\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj|d:\\projectinternship\\projectlaunchpad.utility\\jwtvalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A313F10F-CEA6-4BE5-92F9-ED908C23E480}|..\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj|d:\\projectinternship\\projectlaunchpad.utility\\passwordhasher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A313F10F-CEA6-4BE5-92F9-ED908C23E480}|..\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj|d:\\projectinternship\\projectlaunchpad.utility\\tokenauthorization.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\local.settings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:local.settings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\projectlaunchpad.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:projectlaunchpad.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2B8D54C5-50B9-4472-9C8D-F6429A96A3E0}|..\\ProjectLaunchpad.Services\\ProjectLaunchpad.Services.csproj|d:\\projectinternship\\projectlaunchpad.services\\projectlaunchpad.services.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A313F10F-CEA6-4BE5-92F9-ED908C23E480}|..\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj|d:\\projectinternship\\projectlaunchpad.utility\\projectlaunchpad.utility.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\projectlaunchpad.dataaccess.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|d:\\projectinternship\\projectlaunchpad\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{23D3FF1B-4DA1-41F8-BFF4-B3F4AD457A80}|ProjectLaunchpad.csproj|solutionrelative:.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\data\\applicationdbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\migrations\\applicationdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\migrations\\20250630064140_updatethestatusfield.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\migrations\\20250630060609_addkanbantodb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DB42A48A-F424-418B-90F1-1FE3C227E0E6}|..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj|d:\\projectinternship\\projectlaunchpad.dataaccess\\migrations\\20250701091055_addmilestonetabletodb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 6,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e506b91c-c606-466a-90a9-123d1d1e12b3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MilestoneFunctions.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\MilestoneFunctions.cs",
+              "RelativeDocumentMoniker": "Functions\\MilestoneFunctions.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\MilestoneFunctions.cs",
+              "RelativeToolTip": "Functions\\MilestoneFunctions.cs",
+              "ViewState": "AQIAAMQAAAAAAAAAAAAIwOAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T10:03:52.434Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MilestoneRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\MilestoneRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\MilestoneRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\MilestoneRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\MilestoneRepository.cs",
+              "ViewState": "AQIAADgAAAAAAAAAAAAcwEsAAABPAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T09:29:31.249Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "AuthFunctions.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\AuthFunctions.cs",
+              "RelativeDocumentMoniker": "Functions\\AuthFunctions.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\AuthFunctions.cs",
+              "RelativeToolTip": "Functions\\AuthFunctions.cs",
+              "ViewState": "AQIAABYAAAAAAAAAAAAAABcAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T12:06:10.168Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MilestoneStatus.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\MilestoneStatus.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\Enums\\MilestoneStatus.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\MilestoneStatus.cs*",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\Enums\\MilestoneStatus.cs*",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAALAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T09:05:31.169Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "IMilestoneRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IMilestoneRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IMilestoneRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IMilestoneRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IMilestoneRepository.cs",
+              "ViewState": "AQIAAAcAAAAAAAAAAAArwBEAAAArAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T09:18:51.089Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Milestone.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Milestone.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\Milestone.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Milestone.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\Milestone.cs",
+              "ViewState": "AQIAABQAAAAAAAAAAAAcwC0AAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T08:42:16.887Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "CreateMilestoneDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\CreateMilestoneDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\CreateMilestoneDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\CreateMilestoneDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\CreateMilestoneDto.cs",
+              "ViewState": "AQIAAAQAAAAAAAAAAAAswBQAAAAjAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T09:52:29.144Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "SubmitMilestoneDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\SubmitMilestoneDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\SubmitMilestoneDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\SubmitMilestoneDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\MilestoneDTO\\SubmitMilestoneDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABUAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T10:02:59.875Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Services\\AuthService.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Services\\AuthService.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Services\\AuthService.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Services\\AuthService.cs",
+              "ViewState": "AQIAABYAAAAAAAAAAAAYwDUAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T12:03:08.579Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "ProtectedFunction.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\ProtectedFunction.cs",
+              "RelativeDocumentMoniker": "Functions\\ProtectedFunction.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\ProtectedFunction.cs",
+              "RelativeToolTip": "Functions\\ProtectedFunction.cs",
+              "ViewState": "AQIAAA4AAAAAAAAAAAAAwBEAAAA5AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T14:50:23.787Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "SubTaskFunction.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\SubTaskFunction.cs",
+              "RelativeDocumentMoniker": "Functions\\SubTaskFunction.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\SubTaskFunction.cs",
+              "RelativeToolTip": "Functions\\SubTaskFunction.cs",
+              "ViewState": "AQIAACgAAAAAAAAAAAAmwEQAAAAnAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T07:22:44.906Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "TaskFunctions.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\TaskFunctions.cs",
+              "RelativeDocumentMoniker": "Functions\\TaskFunctions.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\Functions\\TaskFunctions.cs",
+              "RelativeToolTip": "Functions\\TaskFunctions.cs",
+              "ViewState": "AQIAACEAAAAAAAAAAAAYwDgAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:26:34.295Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "UserRegisterDTO.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserRegisterDTO.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserRegisterDTO.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserRegisterDTO.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserRegisterDTO.cs",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAAAAsAAAAtAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T12:00:19.563Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "CreateSubtaskDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateSubtaskDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateSubtaskDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateSubtaskDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateSubtaskDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAArAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:35:45.166Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "UserRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\UserRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\UserRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\UserRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\UserRepository.cs",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAAB8AAAAvAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T11:52:29.537Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "UnitOfWork.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\UnitOfWork.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\UnitOfWork.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\UnitOfWork.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\UnitOfWork.cs",
+              "ViewState": "AQIAAA4AAAAAAAAAAAAAwB4AAAA/AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-26T09:11:13.047Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "SubTaskRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\SubTaskRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\SubTaskRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\SubTaskRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\SubTaskRepository.cs",
+              "ViewState": "AQIAAA4AAAAAAAAAAAAAwDQAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:14:53.375Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "IUnitOfWork.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUnitOfWork.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUnitOfWork.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUnitOfWork.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUnitOfWork.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAuwBEAAAA5AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T11:56:05.221Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "IUserRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUserRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUserRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUserRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\IUserRepository.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAALAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T11:50:55.916Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 52,
+              "Title": "20250701091055_addMilestoneTableToDb.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250701091055_addMilestoneTableToDb.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250701091055_addMilestoneTableToDb.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250701091055_addMilestoneTableToDb.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250701091055_addMilestoneTableToDb.cs",
+              "ViewState": "AQIAABMAAAAAAAAAAAAQwAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-01T09:10:55.608Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "KanbanSubtaskStatus.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanSubtaskStatus.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanSubtaskStatus.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanSubtaskStatus.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanSubtaskStatus.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAwAAAAMAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:00:55.079Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AQIAAAwAAAAAAAAAAAA8wBcAAAA5AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T15:37:47.092Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "TaskRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\TaskRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\TaskRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\TaskRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\TaskRepository.cs",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAAABsAAAAJAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:08:03.769Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "ITaskRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ITaskRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ITaskRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ITaskRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ITaskRepository.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABIAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:07:29.938Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "UpdateSubTaskDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateSubTaskDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateSubTaskDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateSubTaskDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateSubTaskDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAcAAAA1AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T09:16:14.465Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "CreateTaskDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateTaskDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateTaskDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateTaskDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\CreateTaskDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAkAAAAeAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:30:00.474Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "TaskItem.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\TaskItem.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\TaskItem.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\TaskItem.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\TaskItem.cs",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAwA4AAAAjAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T05:42:14.956Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "User.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\User.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\User.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\User.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\User.cs",
+              "ViewState": "AQIAABcAAAAAAAAAAAA6wCYAAABdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T11:34:56.686Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "ProjectLaunchpad.Models.csproj",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAkAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-26T09:09:27.328Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "ISubTaskRepository.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ISubTaskRepository.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ISubTaskRepository.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ISubTaskRepository.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Repositories\\IRepositories\\ISubTaskRepository.cs",
+              "ViewState": "AQIAAAUAAAAAAAAAAAAewBAAAAANAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:12:39.744Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "KanbanTaskPriorityLevel.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskPriorityLevel.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskPriorityLevel.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskPriorityLevel.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskPriorityLevel.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T05:48:49.62Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "KanbanTaskStatus.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskStatus.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskStatus.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskStatus.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\Enums\\KanbanTaskStatus.cs",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAAAAgAAAADAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T05:48:36.133Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "Subtask.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Subtask.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\Subtask.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\Subtask.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\Subtask.cs",
+              "ViewState": "AQIAABAAAAAAAAAAAAAuwBkAAAAxAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T05:42:51.789Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "UpdateTaskDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateTaskDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateTaskDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateTaskDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\UpdateTaskDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABEAAAAFAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T08:56:48.425Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "SubtaskDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\SubtaskDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\SubtaskDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\SubtaskDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\SubtaskDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABIAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:36:40.551Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "TaskDto.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\TaskDto.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\TaskDto.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\TaskDto.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\TaskDTO\\TaskDto.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABUAAAAeAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:34:50.205Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "UserLoginDTO.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserLoginDTO.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserLoginDTO.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserLoginDTO.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Models\\Models\\DTOs\\AuthenticationDTO\\UserLoginDTO.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAgAAAAdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T12:00:50.686Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 50,
+              "Title": "20250630064140_updatetheStatusField.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250630064140_updatetheStatusField.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250630064140_updatetheStatusField.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250630064140_updatetheStatusField.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250630064140_updatetheStatusField.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:41:40.609Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 51,
+              "Title": "20250630060609_addKanbantoDb.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250630060609_addKanbantoDb.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250630060609_addKanbantoDb.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250630060609_addKanbantoDb.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250630060609_addKanbantoDb.cs",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAAABYAAABPAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-30T06:06:10.117Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "20250627111119_addDb.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250627111119_addDb.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250627111119_addDb.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\20250627111119_addDb.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Migrations\\20250627111119_addDb.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABYAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T11:11:19.559Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "JwtHelper.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\JwtHelper.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Utility\\JwtHelper.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\JwtHelper.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Utility\\JwtHelper.cs",
+              "ViewState": "AQIAAAUAAAAAAAAAAAAowCYAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T12:14:21.121Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "JwtValidator.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\JwtValidator.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Utility\\JwtValidator.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\JwtValidator.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Utility\\JwtValidator.cs",
+              "ViewState": "AQIAAA4AAAAAAAAAAAAAwAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T14:47:29.194Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 39,
+              "Title": "PasswordHasher.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\PasswordHasher.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Utility\\PasswordHasher.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\PasswordHasher.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Utility\\PasswordHasher.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T12:13:02.448Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "TokenAuthorization.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\TokenAuthorization.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Utility\\TokenAuthorization.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\TokenAuthorization.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Utility\\TokenAuthorization.cs",
+              "ViewState": "AQIAAA8AAAAAAAAAAIBJwCYAAAAyAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T14:48:24.582Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AQIAAAoAAAAAAAAAAIBJwB0AAAAqAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-25T07:35:49.102Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 42,
+              "Title": "local.settings.json",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\local.settings.json",
+              "RelativeDocumentMoniker": "local.settings.json",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\local.settings.json",
+              "RelativeToolTip": "local.settings.json",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAUAAAA7AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-27T14:01:33.743Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 43,
+              "Title": "ProjectLaunchpad.csproj",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\ProjectLaunchpad.csproj",
+              "RelativeDocumentMoniker": "ProjectLaunchpad.csproj",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\ProjectLaunchpad.csproj",
+              "RelativeToolTip": "ProjectLaunchpad.csproj",
+              "ViewState": "AQIAAAoAAAAAAAAAAABBwBgAAAAOAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-27T13:42:52.434Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 44,
+              "Title": "ProjectLaunchpad.Services.csproj",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Services\\ProjectLaunchpad.Services.csproj",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Services\\ProjectLaunchpad.Services.csproj",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Services\\ProjectLaunchpad.Services.csproj",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Services\\ProjectLaunchpad.Services.csproj",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-27T12:02:39.667Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 45,
+              "Title": "ProjectLaunchpad.Utility.csproj",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj",
+              "RelativeToolTip": "..\\ProjectLaunchpad.Utility\\ProjectLaunchpad.Utility.csproj",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA8AAAAKAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-25T07:57:07.788Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 46,
+              "Title": "ProjectLaunchpad.DataAccess.csproj",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAkwBwAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-25T07:56:38.639Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 47,
+              "Title": ".gitignore",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad\\.gitignore",
+              "RelativeDocumentMoniker": ".gitignore",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad\\.gitignore",
+              "RelativeToolTip": ".gitignore",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-06-25T09:13:03.969Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 48,
+              "Title": "ApplicationDbContextFactory.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContextFactory.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContextFactory.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContextFactory.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Data\\ApplicationDbContextFactory.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAAFAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T11:17:55.702Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 49,
+              "Title": "ApplicationDbContextModelSnapshot.cs",
+              "DocumentMoniker": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "RelativeDocumentMoniker": "..\\ProjectLaunchpad.DataAccess\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "ToolTip": "D:\\ProjectInternship\\ProjectLaunchpad.DataAccess\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "RelativeToolTip": "..\\ProjectLaunchpad.DataAccess\\Migrations\\ApplicationDbContextModelSnapshot.cs",
+              "ViewState": "AQIAAEAAAAAAAAAAAIBZwAsAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T11:14:11.405Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

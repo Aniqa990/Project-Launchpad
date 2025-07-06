@@ -1,0 +1,596 @@
+[
+  {
+    "name": "Register",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.AuthFunctions.Register",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Anonymous",
+        "methods": [
+          "post"
+        ],
+        "route": "auth/register",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "Login",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.AuthFunctions.Login",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Anonymous",
+        "methods": [
+          "post"
+        ],
+        "route": "auth/login",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "CreateMilestone",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.CreateMilestoneAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "post"
+        ],
+        "route": "milestones",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "SubmitMilestone",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.SubmitMilestoneAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "post"
+        ],
+        "route": "submitmilestone/{milestoneId:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetMilestoneById",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.GetMilestoneByIdAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "get"
+        ],
+        "route": "milestones/{id:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetAllMilestones",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.GetAllMilestonesAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "get"
+        ],
+        "route": "milestones",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "UpdateMilestone",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.UpdateMilestoneAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "put"
+        ],
+        "route": "updatemilestone/{id:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "DeleteMilestone",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.DeleteMilestoneAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "delete"
+        ],
+        "route": "deletemilestones/{id:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetMilestonesByProjectId",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.GetMilestonesByProjectIdAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "get"
+        ],
+        "route": "milestones/project/{projectId:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetPendingMilestones",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.GetPendingMilestonesAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "get"
+        ],
+        "route": "milestones/pending",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetSubmittedMilestones",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.GetSubmittedMilestonesAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "get"
+        ],
+        "route": "milestones/submitted",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetUnderReviewMilestonesAsync",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.MilestoneFunctions.GetUnderReviewMilestonesAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "get"
+        ],
+        "route": "milestones/UnderReview",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetClientDashboard",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.ProtectedFunction.Run",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Anonymous",
+        "methods": [
+          "get"
+        ],
+        "route": "client/dashboard",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetAllSubTask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.SubTaskFunction.GetAllSubTask",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Anonymous",
+        "methods": [
+          "get"
+        ],
+        "route": "subtasks",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetAllSubTaskByParentId",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.SubTaskFunction.GetAllSubTaskByParentId",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Anonymous",
+        "methods": [
+          "get"
+        ],
+        "route": "subtasks/parent/{parentId:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "CreateSubtask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.SubTaskFunction.CreateSubTask",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "post"
+        ],
+        "route": "subtasks",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "UpdateSubTask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.SubTaskFunction.UpdateSubTaskAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "put"
+        ],
+        "route": "subtasks/{id:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "DeleteSubTask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.SubTaskFunction.DeleteSubTaskAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "delete"
+        ],
+        "route": "subtasks/{id:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "GetAllTask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.TaskFunctions.GetAllTask",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Anonymous",
+        "methods": [
+          "get"
+        ],
+        "route": "tasks",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "CreateTask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.TaskFunctions.CreateTaskAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "post"
+        ],
+        "route": "tasks",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "UpdateTask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.TaskFunctions.UpdateTaskAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "put"
+        ],
+        "route": "tasks/{id:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  },
+  {
+    "name": "DeleteTask",
+    "scriptFile": "ProjectLaunchpad.dll",
+    "entryPoint": "ProjectLaunchpad.Functions.TaskFunctions.DeleteTaskAsync",
+    "language": "dotnet-isolated",
+    "properties": {
+      "IsCodeless": false
+    },
+    "bindings": [
+      {
+        "name": "req",
+        "direction": "In",
+        "type": "httpTrigger",
+        "authLevel": "Function",
+        "methods": [
+          "delete"
+        ],
+        "route": "tasks/{id:int}",
+        "properties": {}
+      },
+      {
+        "name": "$return",
+        "type": "http",
+        "direction": "Out"
+      }
+    ]
+  }
+]
