@@ -36,15 +36,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             await _db.logs.AddAsync(log);
         }
 
-        public async Task UpdateStatusAsync(int logId, LogStatus newStatus)
-        {
-            var log = await _db.logs.FindAsync(logId);
-            if (log != null)
-            {
-                log.Status = newStatus;
-                _db.logs.Update(log);
-            }
-        }
+       
 
 
 

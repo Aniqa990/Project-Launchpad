@@ -15,6 +15,5 @@ namespace ProjectLaunchpad.Models.Models.DTOs.LogDTO
         // Optional: Let backend set StartTime (e.g., DateTime.UtcNow)
         public DateTime? StartTime { get; set; }
 
-        public LogStatus Status { get; set; } = LogStatus.Active; // default when starting
     }
 }

@@ -29,11 +29,8 @@ namespace ProjectLaunchpad.DataAccess.Data
 
         public DbSet<Payment> payments { get; set; }
 
-        public DbSet<Project> projects { get; set; }
 
-        public DbSet<ProjectAssignment> projectFreelancers { get; set; }
 
-        public DbSet<FreelancerProfile> freelancerProfiles { get; set; }
 
 
 
@@ -41,45 +38,27 @@ namespace ProjectLaunchpad.DataAccess.Data
         {
             base.OnModelCreating(modelBuilder);
 
-
-            modelBuilder.Entity<FreelancerProfile>(entity =>
-            {
-                entity.Property(f => f.HourlyRate)
-                      .HasPrecision(18, 2);
-
-                entity.Property(f => f.FixedRate)
-                      .HasPrecision(18, 2);
-
-                entity.Property(f => f.AvgRating)
-                      .HasPrecision(3, 1);
-            });
-
-            modelBuilder.Entity<Project>(entity =>
-            {
-                entity.Property(p => p.Budget)
-                      .HasPrecision(18, 2);
-            });
-
-            modelBuilder.Entity<ProjectAssignment>()
-                .HasOne(pf => pf.Project)
-                .WithMany(f => f.AssignedFreelancers)
-                .HasForeignKey(pf => pf.ProjectId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<ProjectAssignment>()
-                .HasOne(pf => pf.Freelancer)
+            // Prevent multiple cascade paths for TaskItem → User
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.AssignedToUser)
                 .WithMany()
-                .HasForeignKey(pf => pf.FreelancerId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .HasForeignKey(t => t.AssignedToUserId)
+                .OnDelete(DeleteBehavior.Restrict); // or NoAction
 
-            // Cascade: delete logs when user is deleted
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(t => t.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict); // or NoAction
+
+            // Logs: delete logs when freelancer (user) is deleted
             modelBuilder.Entity<Logs>()
                 .HasOne(l => l.Freelancer)
                 .WithMany()
                 .HasForeignKey(l => l.FreelancerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Restrict: prevent task deletion if logs exist
+            // Logs: restrict task deletion if logs exist
             modelBuilder.Entity<Logs>()
                 .HasOne(l => l.Task)
                 .WithMany()

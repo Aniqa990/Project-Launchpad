@@ -20,7 +20,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task AddAsync(Logs log);
 
         // Update an existing log (e.g., when timer is paused or stopped)
-        Task UpdateStatusAsync(int logId, LogStatus newStatus);
 
 
 

@@ -28,7 +28,6 @@ namespace ProjectLaunchpad.Models.Models
 
         public DateTime EndTime { get; set; }
 
-        public LogStatus Status { get; set; }
 
 
     }

@@ -36,8 +36,7 @@ namespace ProjectLaunchpad.Functions
             {
                 FreelancerId = log.FreelancerId,
                 TaskId = log.TaskId,
-                StartTime = log.StartTime ?? DateTime.UtcNow,
-                Status = log.Status
+                StartTime = log.StartTime ?? DateTime.UtcNow
             };
 
             await UnitOfWork.logRepository.AddAsync(logEntity);
@@ -76,22 +75,7 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
-        [Function("UpdateLogStatus")]
-        public async Task<HttpResponseData> UpdateLogStatus(
-    [HttpTrigger(AuthorizationLevel.Function, "put", Route = "logs/{logId:int}/status")] HttpRequestData req,
-    int logId)
-        {
-            var dto = await req.ReadFromJsonAsync<UpdateLogDto>();
-            if (dto == null || !Enum.IsDefined(typeof(LogStatus), dto.status))
-            {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
-            }
-
-            await UnitOfWork.logRepository.UpdateStatusAsync(logId, dto.status);
-            await UnitOfWork.SaveAsync();
-
-            return req.CreateResponse(HttpStatusCode.NoContent);
-        }
+        
 
 
     }
