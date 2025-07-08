@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -24,6 +24,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Gender = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProfilePicture = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -32,16 +33,35 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "clientProfiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_clientProfiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_clientProfiles_users_Id",
+                        column: x => x.Id,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "freelancerProfiles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
                     Skills = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Experience = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     HourlyRate = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    FixedRate = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Availability = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WorkingHours = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AvgRating = table.Column<decimal>(type: "decimal(3,1)", precision: 3, scale: 1, nullable: false)
+                    AvgRating = table.Column<decimal>(type: "decimal(3,1)", precision: 3, scale: 1, nullable: false),
+                    Summary = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Projects = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -73,9 +93,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 {
                     table.PrimaryKey("PK_projects", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_projects_users_ClientId",
+                        name: "FK_projects_clientProfiles_ClientId",
                         column: x => x.ClientId,
-                        principalTable: "users",
+                        principalTable: "clientProfiles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -84,30 +104,51 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 name: "projectFreelancers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
                     ProjectId = table.Column<int>(type: "int", nullable: false),
                     FreelancerId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: true)
+                    AssignedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_projectFreelancers", x => x.Id);
+                    table.PrimaryKey("PK_projectFreelancers", x => new { x.ProjectId, x.FreelancerId });
+                    table.ForeignKey(
+                        name: "FK_projectFreelancers_freelancerProfiles_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "freelancerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_projectFreelancers_projects_ProjectId",
                         column: x => x.ProjectId,
                         principalTable: "projects",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "projectRequests",
+                columns: table => new
+                {
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    FreelancerId = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_projectRequests", x => new { x.ProjectId, x.FreelancerId });
                     table.ForeignKey(
-                        name: "FK_projectFreelancers_users_FreelancerId",
+                        name: "FK_projectRequests_freelancerProfiles_FreelancerId",
                         column: x => x.FreelancerId,
-                        principalTable: "users",
-                        principalColumn: "Id");
+                        principalTable: "freelancerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_projectFreelancers_users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "users",
-                        principalColumn: "Id");
+                        name: "FK_projectRequests_projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "projects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -116,14 +157,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 column: "FreelancerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_projectFreelancers_ProjectId",
-                table: "projectFreelancers",
-                column: "ProjectId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_projectFreelancers_UserId",
-                table: "projectFreelancers",
-                column: "UserId");
+                name: "IX_projectRequests_FreelancerId",
+                table: "projectRequests",
+                column: "FreelancerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_projects_ClientId",
@@ -135,13 +171,19 @@ namespace ProjectLaunchpad.DataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "freelancerProfiles");
-
-            migrationBuilder.DropTable(
                 name: "projectFreelancers");
 
             migrationBuilder.DropTable(
+                name: "projectRequests");
+
+            migrationBuilder.DropTable(
+                name: "freelancerProfiles");
+
+            migrationBuilder.DropTable(
                 name: "projects");
+
+            migrationBuilder.DropTable(
+                name: "clientProfiles");
 
             migrationBuilder.DropTable(
                 name: "users");

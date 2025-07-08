@@ -2,6 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,11 +35,15 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 }
         }
 
-        public async Task<List<User>> GetFreelancersByProjectAsync(int projectId)
+        public async Task<List<FreelancerWithUserDTO>> GetFreelancersByProjectAsync(int projectId)
         {
             return await _db.projectFreelancers
                 .Where(pa => pa.ProjectId == projectId)
-                .Select(pa => pa.Freelancer)
+                .Select(pa => new FreelancerWithUserDTO
+                {
+                    Profile = pa.Freelancer,
+                    User = pa.Freelancer.User
+                })
                 .ToListAsync();
         }
 

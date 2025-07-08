@@ -33,6 +33,11 @@ namespace ProjectLaunchpad.Models
         public decimal AvgRating { get; set; }
 
         public string Summary { get; set; }
+        public string Projects { get; set; }
+
+        public ICollection<ProjectAssignment> ProjectAssignments { get; set; } // As Freelancer
+
+        public ICollection<ProjectRequest> ProjectRequests { get; set; } // Requests for project assignments
 
     }
 }

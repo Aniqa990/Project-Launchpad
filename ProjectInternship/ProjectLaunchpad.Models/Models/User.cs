@@ -36,12 +36,13 @@ namespace ProjectLaunchpad.Models.Models
         [Required]
         public string? Role { get; set; }  // e.g., "Client", "Freelancer"
 
-        public string? Gender { get; set; } // Optional (Male/Female/Other/Prefer not to say)
+        public string? Gender { get; set; } // (Male/Female/Other/)
+
+        public string? ProfilePicture { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public ICollection<Project> OwnedProjects { get; set; }  // As Client
-
-        public ICollection<ProjectAssignment> ProjectAssignments { get; set; } // As Freelancer
+        public ClientProfile? ClientProfile { get; set; }
+        public FreelancerProfile? FreelancerProfile { get; set; }
     }
 }

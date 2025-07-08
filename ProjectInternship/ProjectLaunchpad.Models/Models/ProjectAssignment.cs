@@ -10,20 +10,17 @@ namespace ProjectLaunchpad.Models.Models
 {
     public class ProjectAssignment
     {
-        [Key]
-        public int Id { get; set; }
 
         [Required]
         public int ProjectId { get; set; }
-
-        [ForeignKey("ProjectId")]
         public Project Project { get; set; }
 
         [Required]
         public int FreelancerId { get; set; } // freelancer
+        public FreelancerProfile Freelancer { get; set; }
 
-        [ForeignKey("FreelancerId")]
-        public User Freelancer { get; set; }
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+       // public string Role { get; set; } = "UI/UX";
     }
 
 }

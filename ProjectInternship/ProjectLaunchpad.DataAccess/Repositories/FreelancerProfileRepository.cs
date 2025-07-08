@@ -29,14 +29,15 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         {
             var entity = new FreelancerProfile
             {
-                Id = dto.UserId,
+                Id = dto.Id,
                 Skills = dto.Skills,
                 HourlyRate = dto.HourlyRate ?? 0,
                 AvgRating = dto.AvgRating ?? 0,
                 Availability = dto.Availability,
                 WorkingHours = dto.WorkingHours,
                 Summary = dto.Summary,
-                Experience = dto.Experience
+                Experience = dto.Experience,
+                Projects = dto.Projects
 
             };
 

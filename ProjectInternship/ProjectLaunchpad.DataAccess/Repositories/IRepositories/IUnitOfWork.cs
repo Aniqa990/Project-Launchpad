@@ -15,6 +15,8 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
 
         IProjectAssignmentRepository ProjectFreelancers { get; }
 
+        IProjectRequestRepository ProjectRequests { get; }
+
         Task<int> SaveAsync();
 
     }

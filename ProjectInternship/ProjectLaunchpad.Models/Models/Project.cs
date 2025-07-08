@@ -38,9 +38,11 @@ namespace ProjectLaunchpad.Models.Models
         public int ClientId { get; set; }
 
         [ForeignKey("ClientId")]
-        public User Client { get; set; }
+        public ClientProfile Client { get; set; }
 
         public ICollection<ProjectAssignment> AssignedFreelancers { get; set; }
+
+        public ICollection<ProjectRequest> ProjectRequests { get; set; }
     }
 
 }

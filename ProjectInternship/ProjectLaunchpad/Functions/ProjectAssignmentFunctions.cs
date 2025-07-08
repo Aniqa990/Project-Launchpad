@@ -46,6 +46,18 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
+        //[Function("GetProjectsByFreelancer")]
+        //public async Task<HttpResponseData> GetProjectsByFreelancer(
+        //    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancers/{freelancerId}/projects")] HttpRequestData req,
+        //    int freelancerId)
+        //{
+        //    var freelancers = await _unit.ProjectFreelancers.GetFreelancersByProjectAsync(freelancerId);
+
+        //    var response = req.CreateResponse(HttpStatusCode.OK);
+        //    await response.WriteAsJsonAsync(freelancers);
+        //    return response;
+        //}
+
         [Function("RemoveFreelancerFromProject")]
         public async Task<HttpResponseData> RemoveFreelancerFromProject(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "projects/{projectId}/freelancers/{freelancerId}")] HttpRequestData req,

@@ -24,6 +24,9 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<Project> projects { get; set; }
 
         public DbSet<ProjectAssignment> projectFreelancers { get; set; }
+        public DbSet<ProjectRequest> projectRequests { get; set; }
+        public DbSet<ClientProfile> clientProfiles { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +47,15 @@ namespace ProjectLaunchpad.DataAccess.Data
                       .HasPrecision(18, 2);
             });
 
+            modelBuilder.Entity<Project>()
+                .HasOne(p => p.Client)
+                .WithMany(c => c.Projects)
+                .HasForeignKey(p => p.ClientId);
+
+            modelBuilder.Entity<ProjectAssignment>()
+                .HasKey(r => new { r.ProjectId, r.FreelancerId });
+
+
             modelBuilder.Entity<ProjectAssignment>()
                 .HasOne(pf => pf.Project)
                 .WithMany(f => f.AssignedFreelancers)
@@ -52,9 +64,26 @@ namespace ProjectLaunchpad.DataAccess.Data
 
             modelBuilder.Entity<ProjectAssignment>()
                 .HasOne(pf => pf.Freelancer)
-                .WithMany()
+                .WithMany(p => p.ProjectAssignments)
                 .HasForeignKey(pf => pf.FreelancerId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            modelBuilder.Entity<ProjectRequest>()
+                .HasKey(r => new { r.ProjectId, r.FreelancerId });
+
+            modelBuilder.Entity<ProjectRequest>()
+                .HasOne(r => r.Project)
+                .WithMany(p => p.ProjectRequests)
+                .HasForeignKey(r => r.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectRequest>()
+                .HasOne(r => r.Freelancer)
+                .WithMany(f => f.ProjectRequests)
+                .HasForeignKey(r => r.FreelancerId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
+  
 }

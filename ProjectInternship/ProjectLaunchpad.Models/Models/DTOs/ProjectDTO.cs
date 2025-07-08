@@ -10,6 +10,12 @@ namespace ProjectLaunchpad.Models.Models.DTOs
     {
         public string? Title { get; set; }
         public string? Description { get; set; }
-        public int ClientId { get; set; }
+        public string? Category { get; set; }
+        public DateOnly Deadline { get; set; }
+        public string? SkillsRequired { get; set; }
+        public decimal? Budget { get; set; }
+        public string? Status { get; set; } = "Active"; // Default status is "Active"
+
+        public int? ClientId { get; set; }
     }
 }

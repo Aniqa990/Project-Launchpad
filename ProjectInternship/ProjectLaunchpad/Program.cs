@@ -29,6 +29,5 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddSingleton(new JwtHelper(builder.Configuration["JwtSecret"]));
 builder.Services.AddSingleton<JwtValidator>();
 builder.Services.AddScoped<TokenAuthorization>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<AuthService>();
 builder.Build().Run();
