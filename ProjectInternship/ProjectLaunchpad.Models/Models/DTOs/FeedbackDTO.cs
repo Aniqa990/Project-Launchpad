@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.Models.Models.DTOs
 {
-    public class ProjectAssignmentDTO
+    public class FeedbackCreateDTO
     {
         public int ProjectId { get; set; }
         public int FreelancerId { get; set; }
-        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+        public string Review { get; set; } = string.Empty;
+        public decimal Rating { get; set; }
     }
 }

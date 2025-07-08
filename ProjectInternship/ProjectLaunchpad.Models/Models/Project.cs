@@ -43,6 +43,10 @@ namespace ProjectLaunchpad.Models.Models
         public ICollection<ProjectAssignment> AssignedFreelancers { get; set; }
 
         public ICollection<ProjectRequest> ProjectRequests { get; set; }
+        public ICollection<Milestone> Milestones { get; set; }
+
+        public ICollection<Feedback> Feedbacks { get; set; }
+            
     }
 
 }

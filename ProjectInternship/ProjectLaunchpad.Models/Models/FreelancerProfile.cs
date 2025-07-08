@@ -38,6 +38,7 @@ namespace ProjectLaunchpad.Models
         public ICollection<ProjectAssignment> ProjectAssignments { get; set; } // As Freelancer
 
         public ICollection<ProjectRequest> ProjectRequests { get; set; } // Requests for project assignments
+        public ICollection<Feedback> Feedbacks { get; set; } // Feedback given by clients
 
     }
 }
