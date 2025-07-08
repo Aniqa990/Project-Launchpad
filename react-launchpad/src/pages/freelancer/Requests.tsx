@@ -31,15 +31,17 @@ export function FreelancerRequests() {
       try {
         if (user?.id) {
           const data = await getProjectRequests(user.id);
+          console.log(data);
 
           const parsedData: ProjectRequest[] = data.map((req: any) => ({
           ...req,
-          skills: typeof req.skills === 'string'
-            ? JSON.parse(req.skills)
-            : req.skills,
+          skills: typeof req.Skills === 'string'
+            ? JSON.parse(req.Skills)
+            : req.Skills,
         }));
 
         setRequests(parsedData);
+        console.log(parsedData);
         }
       } catch (error: any) {
         toast.error(error.message || 'Failed to load project requests');
@@ -93,49 +95,49 @@ const handleRejectRequest = async (projectId: number) => {
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={request.project.client.avatar} alt={request.project.client.name} />
-              <AvatarFallback>{request.project.client.name[0]}</AvatarFallback>
+              <AvatarImage src={request.clientProfile} alt={request.clientName} />
+              <AvatarFallback>{request.clientName?.[0]}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-gray-900">{request.project.client.name}</p>
+              <p className="font-medium text-gray-900">{request.clientName}</p>
               <p className="text-sm text-gray-500">wants to hire you as</p>
             </div>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.role}</h3>
-          <h4 className="text-md font-medium text-blue-600 mb-2">{request.project.title}</h4>
+          <h4 className="text-md font-medium text-blue-600 mb-2">{request.projectTitle}</h4>
         </div>
         <Badge variant={getStatusColor(request.status) as any}>
           {request.status}
         </Badge>
       </div>
 
-      <p className="text-gray-600 text-sm mb-4 line-clamp-3">{request.message}</p>
+      {/*<p className="text-gray-600 text-sm mb-4 line-clamp-3">{request.message}</p>*/}
 
       <div className="space-y-2 mb-4">
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center">
+          {request.budget && (<div className="flex items-center">
             <DollarSign className="w-4 h-4 mr-1" />
-            ${request.project.budget.toLocaleString()} budget
-          </div>
+            ${request.budget.toLocaleString()} budget
+          </div>)}
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-1" />
-            Due {new Date(request.project.deadline).toLocaleDateString()}
+            Due {new Date(request.deadline).toLocaleDateString()}
           </div>
         </div>
         
-        <div className="flex items-center text-sm text-gray-500">
+        {/* <div className="flex items-center text-sm text-gray-500">
           <Clock className="w-4 h-4 mr-1" />
           Sent {new Date(request.sentAt).toLocaleDateString()}
-        </div>
+        </div> */}
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {request.project.skills.slice(0, 3).map((skill: string) => (
+        {request.skills.slice(0, 3).map((skill: string) => (
           <Badge key={skill} className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">{skill}</Badge>
 
         ))}
-        {request.project.skills.length > 3 && (
-          <Badge className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">+{request.project.skills.length - 3} more</Badge>
+        {request.skills.length > 3 && (
+          <Badge className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">+{request.skills.length - 3} more</Badge>
         )}
       </div>
 

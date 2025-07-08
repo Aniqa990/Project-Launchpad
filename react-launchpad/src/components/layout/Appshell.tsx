@@ -7,6 +7,7 @@ import {
   Search, 
   Bell, 
   Menu, 
+  Star,
   X,
   LayoutDashboard,
   Plus,
@@ -42,6 +43,7 @@ export function AppShell() {
     { path: '/freelancer/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/freelancer/requests', icon: Inbox, label: 'Project Requests' },
     { path: '/freelancer/projects', icon: FolderOpen, label: 'My Projects' },
+    { path: '/freelancer/reviews', icon: Star, label: 'My Reviews' },
     { path: '/freelancer/messages', icon: MessageCircle, label: 'Messages' },
     { path: '/freelancer/settings', icon: Settings, label: 'Settings' }
   ];
