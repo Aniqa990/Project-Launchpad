@@ -1,5 +1,5 @@
 ﻿using ProjectLaunchpad.Models.Models;
-using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
 using ProjectLaunchpad.Utility;
 
