@@ -41,12 +41,14 @@ export function ProfileSetup() {
   const [parsing, setParsing] = useState(false);
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [showParseResults, setShowParseResults] = useState(false);
-
+  const experienceId = useRef(1);
+  const projectId = useRef(1);
 
   const [profileData, setProfileData] = useState<ParsedResumeData>({
     summary: '',
     skills: [],
     experience: [],
+    projects: [],
   });
 
   const [hourlyRate, setHourlyRate] = useState(75);
@@ -82,13 +84,24 @@ export function ProfileSetup() {
     
 
     const experiences = (parsed.experience || []).map((exp: any) => {
+      const id = experienceId.current++;
       return {
-        id: crypto.randomUUID(),
+        id,
         company: exp.company ?? '',
         title: exp.title ?? '',
         startDate: exp.startDate ?? '',
         endDate: exp.endDate ?? '',
-        description: (exp.description || []).join('\n')
+        description: exp.description ?? ''
+      };
+    });
+
+    const projects = (parsed.projects || []).map((exp: any) => {
+      const id = projectId.current++;
+      return {
+        id,
+        title: exp.title ?? '',
+        description: exp.description ?? '',
+        tools: Array.isArray(exp.tools) ? exp.tools : [],
       };
     });
 
@@ -96,6 +109,7 @@ export function ProfileSetup() {
       summary: parsed.summary,
       skills: extractedSkills,
       experience: experiences,
+      projects: projects,
     };
 };
 
@@ -157,7 +171,7 @@ export function ProfileSetup() {
 
   const addExperience = () => {
     const newExp = {
-      id: '',
+      id: experienceId.current++,
       company: '',
       title: '',
       startDate: '',
@@ -167,16 +181,58 @@ export function ProfileSetup() {
     updateProfileField('experience', [...profileData.experience, newExp]);
   };
 
-  const updateExperience = (id: string, field: string, value: any) => {
+  const updateExperience = (id: number, field: string, value: any) => {
     const updated = profileData.experience.map(exp => 
       exp.id === id ? { ...exp, [field]: value } : exp
     );
     updateProfileField('experience', updated);
   };
 
-  const removeExperience = (id: string) => {
+  const removeExperience = (id: number) => {
     updateProfileField('experience', profileData.experience.filter(exp => exp.id !== id));
   };
+
+  const addProject = () => {
+    const newP = {
+      id: projectId.current++,
+      title: '',
+      description: ''
+    };
+    updateProfileField('projects', [...profileData.projects, newP]);
+  };
+
+  const updateProject = (id: number, field: string, value: any) => {
+    const updated = profileData.projects.map(exp => 
+      exp.id === id ? { ...exp, [field]: value } : exp
+    );
+    updateProfileField('projects', updated);
+  };
+
+  const removeProject = (id: number) => {
+    updateProfileField('projects', profileData.projects.filter(p => p.id !== id));
+  };
+
+  const addToolToProject = (projectId: number, tool: string) => {
+  const updatedProjects = profileData.projects.map(p => {
+    if (p.id === projectId && !p.tools.includes(tool)) {
+      return { ...p, tools: [...p.tools, tool] };
+    }
+    return p;
+  });
+  updateProfileField('projects', updatedProjects);
+};
+
+const removeToolFromProject = (projectId: number, tool: string) => {
+  const updatedProjects = profileData.projects.map(p => {
+    if (p.id === projectId) {
+      return { ...p, tools: p.tools.filter(t => t !== tool) };
+    }
+    return p;
+  });
+  updateProfileField('projects', updatedProjects);
+};
+
+
 
   const getCompletionPercentage = () => {
     let completed = 0;
@@ -202,13 +258,14 @@ export function ProfileSetup() {
       case 1: return resumeUploaded || showParseResults;
       case 2: return fullName && email && profileData.skills.length > 0;
       case 3: return profileData.experience.length > 0;
+      case 4: return profileData.projects.length>0;
       default: return true;
     }
   };
 
   const handleSaveProfile = async () => {
   const profilePayload = {
-    userId: user?.id,
+    Id: user?.id,
     hourlyRate,
     workingHours,
     availability,
@@ -216,10 +273,12 @@ export function ProfileSetup() {
     summary: profileData.summary,
     skills: JSON.stringify(profileData.skills),
     experience: JSON.stringify(profileData.experience),
+    projects: JSON.stringify(profileData.projects),
   };
 
   console.log(JSON.stringify(profileData.skills))
   console.log(JSON.stringify(profileData.experience))
+  console.log(JSON.stringify(profileData.projects))
 
   try {
     await addFreelancerProfile(profilePayload);
@@ -549,6 +608,86 @@ export function ProfileSetup() {
     </div>
   );
 
+  const renderStep4 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Projects</h2>
+        <p className="text-muted-foreground">Add your projects</p>
+      </div>
+
+      <div className="space-y-6">
+        {profileData.projects.map((p, index) => (
+          <Card key={p.id}>
+            <CardHeader className="relative">
+              <button
+                onClick={() => removeProject(p.id)}
+                className="absolute top-4 right-4 text-muted-foreground hover:text-destructive"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <CardTitle className="text-lg">Project {index + 1}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    value={p.title}
+                    onChange={(e) => updateProject(p.id, 'title', e.target.value)}
+                    placeholder="Project name"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={p.description}
+                  onChange={(e) => updateProject(p.id, 'description', e.target.value)}
+                  rows={3}
+                  placeholder="Describe what the project is and the outcome..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tools</Label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {p.tools.map(tool => (
+                    <Badge key={tool} variant="secondary" className="flex items-center gap-1">
+                      {tool}
+                      <button
+                        onClick={() => removeToolFromProject(p.id, tool)}
+                        className="ml-1 text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                    ))}
+                  </div>
+                  <Input
+                    placeholder="Type a tool and press Enter"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addToolToProject(p.id, e.currentTarget.value.trim());
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+
+            </CardContent>
+          </Card>
+        ))}
+
+        <Button variant="outline" onClick={addProject} className="w-full">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Project
+        </Button>
+      </div>
+    </div>
+  );
+
   const completionPercentage = getCompletionPercentage();
 
   return (
@@ -571,7 +710,7 @@ export function ProfileSetup() {
 
         {/* Step Indicator */}
         <div className="flex items-center justify-center mb-8">
-          {[1, 2, 3].map((stepNum) => (
+          {[1, 2, 3, 4].map((stepNum) => (
             <div key={stepNum} className="flex items-center">
               <div className={`
                 w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
@@ -580,7 +719,7 @@ export function ProfileSetup() {
               `}>
                 {stepNum < step ? <CheckCircle className="w-5 h-5" /> : stepNum}
               </div>
-              {stepNum < 3 && (
+              {stepNum < 4 && (
                 <div className={`
                   w-16 h-1 mx-2 transition-all duration-300
                   ${stepNum < step ? 'bg-primary' : 'bg-muted'}
@@ -601,6 +740,9 @@ export function ProfileSetup() {
           <div className={`text-sm ${step === 3 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
             Experience
           </div>
+          <div className={`text-sm ${step === 4 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+            Projects
+          </div>
         </div>
 
         {/* Step Content */}
@@ -609,6 +751,7 @@ export function ProfileSetup() {
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
+            {step === 4 && renderStep4()}
           </CardContent>
         </Card>
 
@@ -623,7 +766,7 @@ export function ProfileSetup() {
           </Button>
           
           <div className="flex space-x-4">
-            {step < 3 ? (
+            {step < 4 ? (
               <Button 
                 onClick={() => setStep(step + 1)}
                 disabled={!canProceedToNext()}
@@ -644,7 +787,7 @@ export function ProfileSetup() {
         </div>
 
         {/* Completion Warning */}
-        {completionPercentage < 50 && step === 3 && (
+        {completionPercentage < 50 && step === 4 && (
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center">
               <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />

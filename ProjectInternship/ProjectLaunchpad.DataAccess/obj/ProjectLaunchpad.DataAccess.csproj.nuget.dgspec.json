@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj": {}
+    "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj": {}
   },
   "projects": {
-    "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj": {
+    "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
+        "projectUniqueName": "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
         "projectName": "ProjectLaunchpad.DataAccess",
-        "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
+        "projectPath": "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\ProjectLaunchpad.DataAccess.csproj",
         "packagesPath": "C:\\Users\\aniqa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\obj\\",
+        "outputPath": "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.DataAccess\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,8 +32,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj": {
-                "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj"
+              "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj": {
+                "projectPath": "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj"
               }
             }
           }
@@ -103,14 +103,14 @@
         }
       }
     },
-    "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj": {
+    "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
+        "projectUniqueName": "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
         "projectName": "ProjectLaunchpad.Models",
-        "projectPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
+        "projectPath": "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\ProjectLaunchpad.Models.csproj",
         "packagesPath": "C:\\Users\\aniqa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\aniqa\\source\\repos\\Aniqa990\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\obj\\",
+        "outputPath": "C:\\Users\\aniqa\\OneDrive\\Desktop\\launchpad\\Project-Launchpad\\ProjectInternship\\ProjectLaunchpad.Models\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

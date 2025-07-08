@@ -26,3 +26,22 @@ export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) =
     throw new Error(error.response?.data?.message || 'Failed to save profile');
   }
 };
+
+export const getProjectRequests = async(freelancerId: number) => {
+  try{
+  const response = await api.get(`/requests/${freelancerId}`);
+  return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch requests');
+  }
+};
+
+export const respondToProjectRequest = async (projectId: number, status: string, freelancerId?: number) => {
+  try {
+    const response = await api.patch(`/requests/${freelancerId}/${projectId}`, { status });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update request status');
+  }
+};
+

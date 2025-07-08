@@ -1,3 +1,5 @@
+import { StringToBoolean } from "class-variance-authority/types";
+
 export interface User {
   id?: number;
   firstName: string;
@@ -40,6 +42,7 @@ export interface FreelancerProfile {
   summary: string;
   skills: string;
   experience: string;
+  projects: string;
 }
 
 export interface Freelancer extends User, FreelancerProfile {}
@@ -63,12 +66,18 @@ export interface ParsedResumeData {
   summary: string;
   skills: string[];
   experience: {
-    id: string;
+    id: number;
     company: string;
     title: string;
     startDate: string;
     endDate: string;
     description: string;
+  }[];
+  projects: {
+    id: number;
+    title: string;
+    description: string;
+    tools: string[];
   }[];
 
 }
@@ -115,13 +124,21 @@ export interface Task {
 }
 
 export interface ProjectRequest {
-  id: string;
-  projectId: string;
-  project: Project;
-  freelancerId: string;
+  projectId: number;
+  freelancerId: number;
+  //project: Project;
+  projectTitle: string;
+  projectDescription: string;
+  projectCategory:string;
+  deadline: Date;
+  skills: string[];
+  budget?:number;
+  clientId: number;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  clientProfile?: string;
   status: 'pending' | 'accepted' | 'rejected';
-  role: string;
-  message: string;
   sentAt: string;
 }
 

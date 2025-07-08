@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppShell } from './components/layout/Appshell';
-import { Home } from './pages/Home';
+import { Home } from './pages/LandingPage';
 import { Auth } from './pages/Auth';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
