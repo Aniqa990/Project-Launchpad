@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -15,7 +15,10 @@ import {
   MessageCircle,
   Paperclip,
   Edit3,
-  Trash2
+  Trash2,
+  CheckCircle,
+  PlayCircle,
+  AlertCircle
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask } from '../../types';
 import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask } from '../../apiendpoint';
@@ -87,22 +90,25 @@ function SortableTask({ task, onClick }: SortableTaskProps) {
 
   // Map priority enum to label and badge
   const priorityLabel = task.Priority === KanbanTaskPriorityLevel.Urgent
-    ? 'urgent'
+    ? 'Critical'
     : task.Priority === KanbanTaskPriorityLevel.High
-    ? 'high'
+    ? 'High'
     : task.Priority === KanbanTaskPriorityLevel.Medium
-    ? 'medium'
-    : 'low';
-  const badgeVariant = task.Priority === KanbanTaskPriorityLevel.Urgent
-    ? 'danger'
-    : task.Priority === KanbanTaskPriorityLevel.High
-    ? 'danger'
-    : task.Priority === KanbanTaskPriorityLevel.Medium
-    ? 'warning'
-    : 'default';
+    ? 'Medium'
+    : 'Low';
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'Critical': return 'bg-red-100 text-red-800';
+      case 'High': return 'bg-orange-100 text-orange-800';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800';
+      case 'Low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const createdBy = task.CreatedByUser?.FirstName + (task.CreatedByUser?.LastName ? ' ' + task.CreatedByUser.LastName : '');
   const assignedTo = task.AssignedToUser?.FirstName + (task.AssignedToUser?.LastName ? ' ' + task.AssignedToUser.LastName : '');
+  const assignedAvatar = task.AssignedToUser?.AvatarUrl;
 
   const clickGuard = usePointerClickGuard(onClick);
 
@@ -114,33 +120,51 @@ function SortableTask({ task, onClick }: SortableTaskProps) {
       {...listeners}
       className="mb-3 cursor-pointer"
     >
-      <Card hover padding="sm" className="border border-gray-200">
+      <Card className="hover:shadow-md transition-shadow cursor-pointer">
         <div
-          className="space-y-3"
+          className="p-4 space-y-3"
           onPointerDown={clickGuard.onPointerDown}
           onPointerUp={clickGuard.onPointerUp}
           role="button"
           tabIndex={0}
         >
+          {/* Task Header */}
           <div className="flex items-start justify-between">
-            <h3 className="font-medium text-gray-900 text-sm line-clamp-2">{task.Title}</h3>
-            <Badge 
-              variant={badgeVariant}
-              size="sm"
-            >
-              {priorityLabel}
-            </Badge>
+            <h4 className="font-semibold text-gray-900 text-sm">{task.Title}</h4>
+            <span className={`rounded px-2 py-1 text-xs font-medium ${getPriorityColor(priorityLabel)}`}>{priorityLabel}</span>
           </div>
+          {/* Task Description */}
           <p className="text-xs text-gray-600 line-clamp-2">{task.Description}</p>
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex flex-col">
-              <span>Created by: <span className="font-semibold text-gray-700">{createdBy}</span></span>
-              <span>Assigned to: <span className="font-semibold text-gray-700">{assignedTo}</span></span>
+          {/* Project Name */}
+          <div className="text-xs text-blue-600 font-medium">{task.ProjectName}</div>
+          {/* Task Details */}
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center text-xs">
+              <span className="text-gray-500 mr-1">Assigned to:</span>
+              {assignedAvatar && <Avatar src={assignedAvatar} alt={assignedTo} size="sm" />}
+              <span className="ml-1 font-medium text-blue-600">{assignedTo}</span>
             </div>
-            <div className="flex items-center">
+            <div className="text-xs">
+              <span className="text-gray-500 mr-1">Created by:</span>
+              <span className="font-medium text-gray-900">{createdBy}</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center text-xs text-gray-500">
               <Calendar className="w-3 h-3 mr-1" />
-              {task.EstimatedDeadline ? new Date(task.EstimatedDeadline).toLocaleDateString() : 'No deadline'}
+              Due: {task.EstimatedDeadline ? new Date(task.EstimatedDeadline).toLocaleDateString() : 'No deadline'}
             </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {assignedAvatar && <Avatar src={assignedAvatar} alt={assignedTo} size="sm" />}
+                <span className="text-xs text-gray-600">{assignedTo}</span>
+              </div>
+              <div className="text-xs text-gray-500">ID: {task.CreatedByUserId}</div>
+            </div>
+          </div>
+          {/* Created Date */}
+          <div className="text-xs text-gray-400 border-t pt-2">
+            Created: {task.CreatedAt ? new Date(task.CreatedAt).toLocaleDateString() : ''}
           </div>
         </div>
       </Card>
@@ -205,17 +229,26 @@ function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, 
     ...tasks.map(t => t.Id)
   ];
 
+  // Status icon for header
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'done': return <CheckCircle className="w-4 h-4" />;
+      case 'inprogress': return <PlayCircle className="w-4 h-4" />;
+      case 'todo': return <Clock className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
   return (
-    <div className="flex-1 min-w-80">
-      <div ref={setNodeRef} className={`rounded-lg p-4 ${statusColors[status]}`}> {/* droppable area */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900 capitalize">
-            {title} ({tasks.length + columnSubtasks.length})
-          </h2>
-          <Button variant="ghost" size="sm" icon={Plus} onClick={() => setShowAddTaskModal(true)}>
-            Add Task
-          </Button>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          {getStatusIcon(status)}
+          {title}
+        </h3>
+        <Badge variant="secondary" className="text-xs">{tasks.length + columnSubtasks.length}</Badge>
+      </div>
+      <div ref={setNodeRef} className="rounded-xl p-4 border border-gray-200 shadow-sm"> {/* droppable area */}
         <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
           <div className="space-y-3 min-h-96">
             {/* Render subtask cards for this column */}
@@ -230,6 +263,12 @@ function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, 
                 onClick={() => onTaskClick(task)}
               />
             ))}
+            {(tasks.length + columnSubtasks.length === 0) && (
+              <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm">No {title.toLowerCase()} tasks</p>
+              </div>
+            )}
           </div>
         </SortableContext>
       </div>
@@ -658,18 +697,118 @@ export function KanbanBoard() {
   const doneTasks = tasks.filter(t => t.Status === KanbanTaskStatus.Done)
     .sort((a, b) => b.Priority - a.Priority);
 
+  // Get unique projects and freelancers from tasks
+  const projects = useMemo(() => {
+    const set = new Set(tasks.map(t => t.ProjectName || ''));
+    return Array.from(set).filter(Boolean);
+  }, [tasks]);
+  const freelancers = useMemo(() => {
+    const set = new Set(tasks.map(t => t.AssignedToUser?.FirstName + (t.AssignedToUser?.LastName ? ' ' + t.AssignedToUser.LastName : '')));
+    return Array.from(set).filter(Boolean);
+  }, [tasks]);
+
+  // FILTER STATE
+  const [selectedProject, setSelectedProject] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedFreelancer, setSelectedFreelancer] = useState('all');
+
+  // Unique projects and freelancers from Kanban data
+  const uniqueProjects = useMemo(() => {
+    const set = new Set(tasks.map(t => t.ProjectName || ''));
+    return Array.from(set).filter(Boolean);
+  }, [tasks]);
+  const uniqueFreelancers = useMemo(() => {
+    const set = new Set(tasks.map(t => t.AssignedToUser?.FirstName + (t.AssignedToUser?.LastName ? ' ' + t.AssignedToUser.LastName : '')));
+    return Array.from(set).filter(Boolean);
+  }, [tasks]);
+
+  // FILTERED TASKS
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      const matchesProject = selectedProject === 'all' || task.ProjectName === selectedProject;
+      const matchesStatus = selectedStatus === 'all' ||
+        (selectedStatus === 'To Do' && task.Status === KanbanTaskStatus.ToDo) ||
+        (selectedStatus === 'In Progress' && task.Status === KanbanTaskStatus.InProgress) ||
+        (selectedStatus === 'Done' && task.Status === KanbanTaskStatus.Done);
+      const assignedName = task.AssignedToUser?.FirstName + (task.AssignedToUser?.LastName ? ' ' + task.AssignedToUser.LastName : '');
+      const matchesFreelancer = selectedFreelancer === 'all' || assignedName === selectedFreelancer;
+      return matchesProject && matchesStatus && matchesFreelancer;
+    });
+  }, [tasks, selectedProject, selectedStatus, selectedFreelancer]);
+
+  // GROUP TASKS BY STATUS
+  const tasksByStatus = useMemo(() => ({
+    'To Do': filteredTasks.filter(t => t.Status === KanbanTaskStatus.ToDo),
+    'In Progress': filteredTasks.filter(t => t.Status === KanbanTaskStatus.InProgress),
+    'Done': filteredTasks.filter(t => t.Status === KanbanTaskStatus.Done),
+  }), [filteredTasks]);
+
+  // CLEAR FILTERS
+  const clearFilters = () => {
+    setSelectedProject('all');
+    setSelectedStatus('all');
+    setSelectedFreelancer('all');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Project Tasks</h1>
+          <p className="text-gray-600 mt-1">View and track project tasks (Read-only)</p>
+        </div>
+        <Button icon={Plus} onClick={() => setShowAddTaskModal(true)} className="ml-4" variant="primary">
+          Create Task
+        </Button>
+      </div>
+      {/* Filters */}
+      <Card>
+        <div className="border-b p-4">
+          <div className="font-semibold text-lg">Filter Tasks</div>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="border rounded px-3 py-2">
+              <option value="all">All Projects</option>
+              {uniqueProjects.map(project => (
+                <option key={project} value={project}>{project}</option>
+              ))}
+            </select>
+            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="border rounded px-3 py-2">
+              <option value="all">All Status</option>
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+            <select value={selectedFreelancer} onChange={e => setSelectedFreelancer(e.target.value)} className="border rounded px-3 py-2">
+              <option value="all">All Freelancers</option>
+              {uniqueFreelancers.map(freelancer => (
+                <option key={freelancer} value={freelancer}>{freelancer}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </Card>
+      {/* Kanban Board */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex space-x-6 overflow-x-auto pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <KanbanColumn
             title="To Do"
             status="todo"
-            tasks={todoTasks}
+            tasks={tasksByStatus['To Do']}
             onTaskClick={handleTaskClick}
             setShowAddTaskModal={setShowAddTaskModal}
             subtasks={subtasks}
@@ -678,7 +817,7 @@ export function KanbanBoard() {
           <KanbanColumn
             title="In Progress"
             status="inprogress"
-            tasks={inProgressTasks}
+            tasks={tasksByStatus['In Progress']}
             onTaskClick={handleTaskClick}
             setShowAddTaskModal={setShowAddTaskModal}
             subtasks={subtasks}
@@ -687,7 +826,7 @@ export function KanbanBoard() {
           <KanbanColumn
             title="Done"
             status="done"
-            tasks={doneTasks}
+            tasks={tasksByStatus['Done']}
             onTaskClick={handleTaskClick}
             setShowAddTaskModal={setShowAddTaskModal}
             subtasks={subtasks}
@@ -695,7 +834,41 @@ export function KanbanBoard() {
           />
         </div>
       </DndContext>
-
+      {/* Summary Stats */}
+      <Card>
+        <div className="border-b p-4">
+          <div className="font-semibold text-lg">Task Summary</div>
+          <div className="text-gray-500 text-sm">Overview of all project tasks</div>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-2xl font-bold text-gray-900">{filteredTasks.length}</div>
+              <div className="text-sm text-gray-600">Total Tasks</div>
+            </div>
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{tasksByStatus['In Progress'].length}</div>
+              <div className="text-sm text-blue-700">In Progress</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{tasksByStatus['Done'].length}</div>
+              <div className="text-sm text-green-700">Completed</div>
+            </div>
+            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">{filteredTasks.filter(t => t.Priority === KanbanTaskPriorityLevel.Urgent || t.Priority === KanbanTaskPriorityLevel.High).length}</div>
+              <div className="text-sm text-yellow-700">High Priority</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+      {/* No tasks found */}
+      {filteredTasks.length === 0 && (
+        <div className="text-center py-12">
+          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
+          <p className="text-gray-600">Tasks will appear here when freelancers create them.</p>
+        </div>
+      )}
       {/* Task Detail Modal */}
       <Modal
         isOpen={showTaskModal}
@@ -803,6 +976,6 @@ export function KanbanBoard() {
         loading={formLoading}
         subtask={selectedSubtask}
       />
-    </>
+    </div>
   );
 }
