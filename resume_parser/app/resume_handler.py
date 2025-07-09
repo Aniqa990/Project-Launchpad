@@ -1,4 +1,3 @@
-# app/resume_handler.py
 import os
 import pdfplumber
 from docx import Document
@@ -8,6 +7,7 @@ import json
 
 from app.db import insert_resume, insert_parsed_resume
 from app.utils import extract_json_from_groq_response
+from app.profile_updater import save_freelancer_profile
 
 def extract_text_from_resume(uploaded_file):
     resume_text = ''
@@ -61,9 +61,9 @@ You are an expert resume parser. Your task is to convert the following resume te
 
 🔸 Important:
 - Always return this exact structure (even if fields are empty).
-- If "summary" or "about me" is not in the resume, generate one based on the tone and content.
-- Make sure lists like experience, projects, and skills are always present (even if empty).
-- Respond with **only the raw JSON**, without markdown, comments, or explanation.
+- If 'summary' is missing, generate one based on the resume.
+- Lists like experience, projects, and skills must be included (even if empty).
+- Return **only the raw JSON** (no markdown, no comments).
 
 Resume Text:
 {resume_text}
@@ -100,16 +100,16 @@ def handle_resume_upload(uploaded_file, api_key):
     if not resume_text:
         return None, "No text could be extracted from the file."
 
-    # Save the original file to DB
     file_data = uploaded_file.getvalue()
     resume_id = insert_resume(uploaded_file.name, file_data)
 
-    # Call Groq to parse JSON
     parsed_json, raw_response = call_groq_llm(resume_text, api_key)
     if parsed_json is None:
         return None, "Failed to extract valid JSON from Groq."
 
-    # Store parsed JSON to parsed_resumes
     insert_parsed_resume(resume_id, json.dumps(parsed_json))
+
+    # Save to normalized tables
+    save_freelancer_profile(resume_id, parsed_json)
 
     return parsed_json, None

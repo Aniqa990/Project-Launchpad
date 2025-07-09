@@ -1,85 +1,89 @@
-Here's your complete and updated **`README.md`** based on:
+# 📄 Resume Parser & Profile Builder with Streamlit + Groq + MySQL
 
-* ✅ Two-table MySQL structure (`resumes` and `parsed_resumes`)
-* ✅ Streamlit-based UI
-* ✅ Clean Python module layout (`app/`)
-* ✅ Future integration flexibility (e.g., with React or APIs)
-
----
-
-```markdown
-# 📄 Resume Parser with Streamlit + Groq + MySQL
-
-A powerful tool to upload resumes (PDF/DOCX), extract structured data using **Groq LLM**, and store both the **raw resume file** and the **parsed JSON output** in a **MySQL database**.
+A full-featured resume parsing and profile management system built with **Streamlit**, powered by **Groq LLM** for intelligent extraction, and storing structured data in a **normalized MySQL schema**.
 
 ---
 
 ## 🚀 Features
 
-- ✅ Upload resume via **Streamlit UI**
-- ✅ Support for **PDF** and **DOCX** formats
-- ✅ Extracts resume text using `pdfplumber` and `python-docx`
-- ✅ Sends resume to **Groq LLM** for parsing (name, email, phone, skills, etc.)
-- ✅ Stores:
-  - 🗂️ Original resume file in MySQL (`resumes` table)
-  - 🧠 Parsed JSON result in MySQL (`parsed_resumes` table)
-- ✅ Modular code (ready for React/FastAPI integrations)
+- ✅ Upload resume (PDF or DOCX)
+- ✅ Extract structured JSON via **Groq LLM**
+- ✅ Store original file and parsed data
+- ✅ Normalized DB schema: freelancers, skills, projects, experience
+- ✅ Support for:
+  - 🔹 Manual edits
+  - 🔹 Skill/project/experience addition
+  - 🔹 Deletion from DB
+- ❌ Prevents duplicate freelancer creation via email
+- ✅ Clear error messages on duplicates
 
 ---
 
-## 📁 Project Structure
+## 📁 Directory Structure
 
-```
-
-resume\_parser/
+resume_parser/
 ├── app/
-│   ├── **init**.py              # Marks app as a Python package
-│   ├── db.py                    # Database functions
-│   ├── resume\_handler.py        # Resume extraction and parsing
-│   └── utils.py                 # JSON extraction helper
-├── streamlit\_app.py             # Main Streamlit frontend
-├── .env                         # Secrets and DB config
-├── requirements.txt             # Python dependencies
-└── README.md                    # This file
+│ ├── db.py # DB connection + core insert functions
+│ ├── resume_handler.py # Main logic to handle parsing and DB storage
+│ ├── profile_updater.py # Insert parsed JSON into normalized tables
+│ ├── fetch_profile.py # Fetch profile data for UI
+│ └── utils.py # Utility function to clean LLM JSON
+├── streamlit_app.py # Main Streamlit UI
+├── requirements.txt
+├── .env # API keys and DB config
+└── README.md
 
-````
-
----
-
-## ⚙️ Setup Instructions
-
-### 1. Clone the Repository
-
-```bash
-
-````
-
-### 2. (Optional) Create Virtual Environment
-
-```bash
 python -m venv venv
-source venv/bin/activate    # On Windows: venv\Scripts\activate
-```
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-### 3. Install Dependencies
-
-```bash
 pip install -r requirements.txt
-```
 
----
+DROP DATABASE IF EXISTS resume_db;
+CREATE DATABASE resume_db;
+USE resume_db;
 
-## 🛠️ MySQL Setup
+-- Freelancer Table
+CREATE TABLE freelancers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    resume_id INT,
+    name VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
+    phone VARCHAR(50),
+    summary TEXT
+);
 
-### Step 1: Create Database and Tables
+-- Skills Table
+CREATE TABLE skills (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    freelancer_id INT,
+    skill_name VARCHAR(100),
+    source ENUM('parsed', 'manual') DEFAULT 'parsed',
+    FOREIGN KEY (freelancer_id) REFERENCES freelancers(id) ON DELETE CASCADE
+);
 
-```sql
-CREATE DATABASE `mazik-internship-db`;
+-- Projects Table
+CREATE TABLE projects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    freelancer_id INT,
+    title VARCHAR(255),
+    description TEXT,
+    source ENUM('parsed', 'manual') DEFAULT 'parsed',
+    FOREIGN KEY (freelancer_id) REFERENCES freelancers(id) ON DELETE CASCADE
+);
 
-USE `mazik-internship-db`;
+-- Experience Table
+CREATE TABLE experience (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    freelancer_id INT,
+    title VARCHAR(255),
+    company VARCHAR(255),
+    duration VARCHAR(100),
+    description TEXT,
+    source ENUM('parsed', 'manual') DEFAULT 'parsed',
+    FOREIGN KEY (freelancer_id) REFERENCES freelancers(id) ON DELETE CASCADE
+);
 
--- Table 1: Store uploaded resume files
-DROP TABLE IF EXISTS resumes;
+-- Original Resume Files
 CREATE TABLE resumes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     filename VARCHAR(255),
@@ -87,8 +91,7 @@ CREATE TABLE resumes (
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table 2: Store parsed resume JSON
-DROP TABLE IF EXISTS parsed_resumes;
+-- Parsed JSON (optional for backup)
 CREATE TABLE parsed_resumes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     resume_id INT,
@@ -96,65 +99,12 @@ CREATE TABLE parsed_resumes (
     parsed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (resume_id) REFERENCES resumes(id) ON DELETE CASCADE
 );
-```
 
----
-
-### Step 2: Configure `.env`
-
-Create a `.env` file in the root folder:
-
-```env
 GROQ_API_KEY=your_groq_api_key_here
 
 DB_HOST=localhost
-DB_USER=your_mysql_username
+DB_USER=root
 DB_PASSWORD=your_mysql_password
-DB_NAME=mazik-internship-db
-```
+DB_NAME=resume_db
 
----
-
-## ▶️ Run the Streamlit App
-
-```bash
 streamlit run streamlit_app.py
-```
-
----
-
-## 📤 Output Example
-
-When a resume is uploaded and parsed:
-
-* 📄 The file is stored in MySQL `resumes`
-* 🧠 The parsed JSON is stored in `parsed_resumes`
-
-Example JSON:
-
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "phone": "+1-234-567-890",
-  "education": ["BS Computer Science", "MS Data Science"],
-  "experience": ["Software Engineer at X", "Data Analyst at Y"],
-  "skills": ["Python", "SQL", "Machine Learning"]
-}
-```
-
-
-
-## 📦 Dependencies (`requirements.txt`)
-
-```txt
-streamlit
-pdfplumber
-python-docx
-requests
-python-dotenv
-pymysql
-```
-
----
-
