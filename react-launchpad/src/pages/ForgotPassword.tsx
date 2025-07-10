@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Rocket, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
-export function ForgotPasswordPage() {
+function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
@@ -144,3 +144,5 @@ export function ForgotPasswordPage() {
     </div>
   );
 } 
+
+export default ForgotPasswordPage;

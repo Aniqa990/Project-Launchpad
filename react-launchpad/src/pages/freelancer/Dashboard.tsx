@@ -208,7 +208,7 @@ export function FreelancerDashboard() {
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse mr-3"></div>
               <div>
                 <p className="font-medium text-green-900">Currently clocked in</p>
-                <p className="text-sm text-green-700">Started at 9:00 AM • 6 hours 32 minutes</p>
+                <p className="text-sm text-green-700">Started at 9:00 AM â€¢ 6 hours 32 minutes</p>
               </div>
             </div>
             <div className="text-right">
@@ -352,11 +352,11 @@ export function FreelancerDashboard() {
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">Basic Info</span>
-                <span className="text-green-600 font-medium">✓ Complete</span>
+                <span className="text-green-600 font-medium">âœ“ Complete</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">Skills & Experience</span>
-                <span className="text-green-600 font-medium">✓ Complete</span>
+                <span className="text-green-600 font-medium">âœ“ Complete</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">Portfolio</span>
