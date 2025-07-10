@@ -94,8 +94,7 @@ export interface Project {
   skills: string[];
   team: User[];
   progress: number;
-  createdAt: string;
-  milestones: Milestone[];
+  milestones: { name: string }[];
 }
 
 export interface Milestone {

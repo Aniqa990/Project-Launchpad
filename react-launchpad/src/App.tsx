@@ -10,6 +10,7 @@ import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import {FreelancerRequests} from './pages/freelancer/Requests';
 import { FreelancerReviews } from './pages/freelancer/Reviews';
 import { FreelancerProjects } from './pages/freelancer/Projects';
+import ForgotPasswordPage from './pages/ForgotPassword';
 
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
@@ -35,6 +36,7 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Auth mode="login" />} />
       <Route path="/signup" element={<Auth mode="signup" />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       
       {/* Freelancer Profile Setup */}
       <Route path="/freelancer/profile-setup" element={

@@ -45,3 +45,12 @@ export const respondToProjectRequest = async (projectId: number, status: string,
   }
 };
 
+export const getFreelancerProjects = async (freelancerId: number) => {
+  try {
+    const response = await api.get(`/freelancers/${freelancerId}/projects`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch freelancer projects');
+  }
+};
+
