@@ -51,7 +51,7 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancers/{freelancerId}/projects")] HttpRequestData req,
             int freelancerId)
         {
-            var projects = await _unit.ProjectFreelancers.GetFreelancersByProjectAsync(freelancerId);
+            var projects = await _unit.ProjectFreelancers.GetProjectsByFreelancerAsync(freelancerId);
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(projects);

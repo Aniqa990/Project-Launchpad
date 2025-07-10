@@ -12,8 +12,8 @@ using ProjectLaunchpad.DataAccess.Data;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250708221125_merge-latest")]
-    partial class mergelatest
+    [Migration("20250710085713_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -125,7 +125,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.HasIndex("FreelancerId");
 
-                    b.ToTable("feedbacks");
+                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Logs", b =>
@@ -405,6 +405,50 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.ToTable("taskItems");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.TimeSheet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateOfWork")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("FreelancerName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("HourlyRate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ProjectName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReviewerComments")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("WorkDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TimeSheets");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.User", b =>

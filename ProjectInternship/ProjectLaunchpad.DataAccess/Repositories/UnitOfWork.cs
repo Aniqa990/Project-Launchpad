@@ -15,8 +15,8 @@ namespace ProjectLaunchpad.Repositories.Repositories
         private readonly ApplicationDbContext _db;
         public IUserRepository Users { get; }
         public IFreelancerProfileRepository FreelancerProfiles { get; }
+        public IClientProfileRepository ClientProfiles { get; }
         public ITaskRepository TaskRepository { get; }
-
         public IProjectAssignmentRepository ProjectFreelancers { get; }
         public ISubTaskRepository SubTaskRepository { get; }
 
@@ -28,8 +28,8 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IDeliverableRepository deliverableRepository { get;}
 
         public IPaymentRepository PaymentRepository { get; }
-
-
+        public ITimeSheetRepository TimeSheet { get; }
+        public IFeedbackRepository Feedbacks { get; }
         // 
 
         public UnitOfWork(ApplicationDbContext db)
@@ -45,6 +45,10 @@ namespace ProjectLaunchpad.Repositories.Repositories
             logRepository = new LogRepository(_db);
             deliverableRepository = new DeliverableRepository(_db);
             PaymentRepository = new PaymentRepository(_db);
+            ClientProfiles = new ClientProfileRepository(_db);
+            TimeSheet = new TimeSheetRepository(_db);
+            Feedbacks = new FeedbackRepository(_db);
+
             ///
         }
 

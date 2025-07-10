@@ -27,10 +27,21 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/register")] HttpRequestData req)
         {
             var dto = await req.ReadFromJsonAsync<UserRegisterDTO>();
-            var token = await _auth.RegisterAsync(dto);
+            var (token, user) = await _auth.RegisterAsync(dto);
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new { token });
+            await response.WriteAsJsonAsync(new
+            {
+                token = token,
+                user = new
+                {
+                    id = user.Id,
+                    email = user.Email,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    role = user.Role
+                }
+            });
             return response;
         }
 

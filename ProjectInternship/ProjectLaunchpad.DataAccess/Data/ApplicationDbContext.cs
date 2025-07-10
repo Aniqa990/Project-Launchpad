@@ -26,14 +26,14 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<Project> projects { get; set; }
         public DbSet<Subtask> subtasks { get; set; }
         public DbSet<TaskItem> taskItems { get; set; }
-
+        public DbSet<TimeSheet> TimeSheets { get; set; }
         public DbSet<ProjectAssignment> projectFreelancers { get; set; }
         public DbSet<ProjectRequest> projectRequests { get; set; }
         public DbSet<ClientProfile> clientProfiles { get; set; }
         public DbSet<Milestone> milestones { get; set; }
         public DbSet<Deliverables> deliverables { get; set; }
         public DbSet<Payment> payments { get; set; }
-        public DbSet<Feedback> feedbacks { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<Logs> logs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
