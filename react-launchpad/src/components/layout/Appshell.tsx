@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '../ui/Button';
-import { Avatar } from '../ui/Avatar';
+import { Avatar } from '../ui/avatar';
 import { 
   Rocket, 
   Search, 
@@ -122,9 +121,9 @@ export function AppShell() {
             
             <div className="relative group">
               <button className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50">
-                <Avatar src={user?.avatar} alt={user?.name} size="sm" />
+                <Avatar src={user?.avatar} alt={user?.firstName} size="sm" />
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{user?.firstName}</p>
                   <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                 </div>
               </button>
