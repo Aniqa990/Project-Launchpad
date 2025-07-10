@@ -157,18 +157,18 @@ export function FreelancerRequests() {
           <>
             <Button 
               size="sm" 
-              variant="default"
+              variant="primary"
+              icon={Check}
               onClick={() => handleAcceptRequest(request.projectId)}
             >
-              <Check className="w-4 h-4" />
               Accept
             </Button>
             <Button 
               size="sm" 
               variant="outline"
+              icon={X}
               onClick={() => handleRejectRequest(request.projectId)}
             >
-              <X className="w-4 h-4" />
               Decline
             </Button>
           </>

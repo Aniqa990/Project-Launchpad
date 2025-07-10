@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Avatar } from '../../components/ui/avatar';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar } from '../../components/ui/Avatar';
 import { 
   Plus, 
   FolderOpen, 
@@ -14,41 +14,98 @@ import {
   Clock,
   ArrowRight
 } from 'lucide-react';
-import { mockProjects } from '../../utils/mockData';
+import { getProjects } from '../../apiendpoints';
 
 export function ClientDashboard() {
   const navigate = useNavigate();
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Calculate real-time statistics from project data
+  const statistics = useMemo(() => {
+    if (!projects.length) {
+      return {
+        activeProjects: 0,
+        totalFreelancers: 0,
+        totalBudget: 0,
+        successRate: 0
+      };
+    }
+
+    const activeProjects = projects.filter(project => 
+      project.Status === 'Active' || project.Status === 'In Progress' || !project.Status
+    ).length;
+
+    const totalFreelancers = projects.reduce((sum, project) => 
+      sum + (parseInt(project.NumberOfFreelancers) || 0), 0
+    );
+
+    const totalBudget = projects.reduce((sum, project) => 
+      sum + (parseFloat(project.Budget) || 0), 0
+    );
+
+    // Calculate success rate based on completed projects
+    const completedProjects = projects.filter(project => 
+      project.Status === 'Completed' || project.Status === 'Finished'
+    ).length;
+    const successRate = projects.length > 0 ? Math.round((completedProjects / projects.length) * 100) : 0;
+
+    return {
+      activeProjects,
+      totalFreelancers,
+      totalBudget,
+      successRate
+    };
+  }, [projects]);
 
   const stats = [
     {
       label: 'Active Projects',
-      value: '3',
+      value: statistics.activeProjects.toString(),
       icon: FolderOpen,
       color: 'bg-blue-500',
-      change: '+2 this month'
+      change: `${projects.length} total projects`
     },
     {
       label: 'Freelancers Hired',
-      value: '12',
+      value: statistics.totalFreelancers.toString(),
       icon: Users,
       color: 'bg-green-500',
-      change: '+4 this month'
+      change: `Across ${projects.length} projects`
     },
     {
-      label: 'Total Spent',
-      value: '$24,500',
+      label: 'Total Budget',
+      value: `$${statistics.totalBudget.toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-purple-500',
-      change: '+12% vs last month'
+      change: `Average: $${projects.length > 0 ? Math.round(statistics.totalBudget / projects.length).toLocaleString() : 0}`
     },
     {
       label: 'Success Rate',
-      value: '96%',
+      value: `${statistics.successRate}%`,
       icon: TrendingUp,
       color: 'bg-orange-500',
-      change: 'Above average'
+      change: `${projects.length} total projects`
     }
   ];
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await getProjects();
+        console.log('Fetched projects:', data);
+        setProjects(data);
+      } catch (err) {
+        setError('Failed to load projects.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -105,40 +162,50 @@ export function ClientDashboard() {
             </div>
             
             <div className="space-y-4">
-              {mockProjects.slice(0, 3).map((project) => (
-                <div key={project.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">{project.title}</h3>
-                      <p className="text-gray-600 text-sm line-clamp-2">{project.description}</p>
-                    </div>
-                    <Badge variant={project.status === 'active' ? 'success' : 'default'}>
-                      {project.status}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-1" />
-                        {project.team.length} members
+              {loading ? (
+                <div className="text-gray-500">Loading projects...</div>
+              ) : error ? (
+                <div className="text-red-500">{error}</div>
+              ) : projects.length === 0 ? (
+                <div className="text-gray-500">No projects found.</div>
+              ) : (
+                projects.slice(0, 3).map((project, idx) => (
+                  <div key={project.Id || idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-1">{project.ProjectTitle}</h3>
+                        <p className="text-gray-600 text-sm line-clamp-2 mb-1">{project.Description}</p>
+                        <div className="flex flex-wrap gap-2 mb-1">
+                          <Badge variant="info">{project.PaymentType}</Badge>
+                          <Badge variant="info">{project.CategoryOrDomain}</Badge>
+                          <Badge variant="info">Budget: ${project.Budget}</Badge>
+                          <Badge variant="info">Freelancers: {project.NumberOfFreelancers}</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-1">
+                          <Badge variant="info">Skills: {project.RequiredSkills}</Badge>
+                          <Badge variant="info">Milestones: {project.Milestones}</Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        Due {new Date(project.deadline).toLocaleDateString()}
-                      </div>
+                      <Badge variant={project.status === 'active' ? 'success' : 'default'}>
+                        {project.status || 'active'}
+                      </Badge>
                     </div>
-                    <div className="text-blue-600 font-medium">{project.progress}%</div>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 mr-1" />
+                          {project.NumberOfFreelancers || 1} members
+                        </div>
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="text-blue-600 font-medium">${project.Budget}</div>
+                    </div>
                   </div>
-                  
-                  <div className="mt-3 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${project.progress}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
         </div>

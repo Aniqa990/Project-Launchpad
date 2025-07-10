@@ -394,6 +394,7 @@ export const mockTasks: Task[] = [
   }
 ];
 
+<<<<<<< HEAD
 export const mockSubtasks = [
   { Id: 1, Title: 'Wireframe Header', Description: 'Design the header section', DueDate: '2024-01-18', Status: 0, TaskItemId: 1 },
   { Id: 2, Title: 'Wireframe Footer', Description: 'Design the footer section', DueDate: '2024-01-19', Status: 0, TaskItemId: 1 },
@@ -403,6 +404,8 @@ export const mockSubtasks = [
   { Id: 6, Title: 'Auth API', Description: 'API for authentication', DueDate: '2024-01-23', Status: 0, TaskItemId: 3 },
 ];
 
+=======
+>>>>>>> origin/moiz
 export const mockProjectRequests: ProjectRequest[] = [
   {
     id: '1',

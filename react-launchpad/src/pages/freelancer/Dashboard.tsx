@@ -175,21 +175,13 @@ export function FreelancerDashboard() {
         
         {/* Clock In/Out */}
         <div className="mt-4 md:mt-0">
-          <Button
+          <Button 
+            variant={isClocked ? 'danger' : 'primary'}
+            icon={isClocked ? Pause : Play}
             onClick={() => setIsClocked(!isClocked)}
-            className={`mr-3 ${isClocked ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+            className="mr-3"
           >
-            {isClocked ? (
-              <>
-                <Pause className="w-4 h-4 mr-2" />
-                Clock out
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 mr-2" />
-                Clock in
-              </>
-            )}
+            {isClocked ? 'Clock Out' : 'Clock In'}
           </Button>
           <Button 
             variant="outline"
@@ -222,27 +214,25 @@ export function FreelancerDashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {dashboardStats.map((stat, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
-            <CardContent>
-              <div className="flex items-center">
-                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="ml-4 flex-1">
-                  <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                </div>
+          <Card key={index} hover>
+            <div className="flex items-center">
+              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
+                <stat.icon className="w-6 h-6 text-white" />
               </div>
-              <div className="mt-4">
-                <p className="text-sm text-gray-500">{stat.change}</p>
+              <div className="ml-4 flex-1">
+                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
               </div>
-            </CardContent>
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-gray-500">{stat.change}</p>
+            </div>
           </Card>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Active Projects */}
+        {/* Active Tasks */}
         <div className="lg:col-span-2">
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -352,11 +342,11 @@ export function FreelancerDashboard() {
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">Basic Info</span>
-                <span className="text-green-600 font-medium">âœ“ Complete</span>
+                <span className="text-green-600 font-medium">✓ Complete</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">Skills & Experience</span>
-                <span className="text-green-600 font-medium">âœ“ Complete</span>
+                <span className="text-green-600 font-medium">✓ Complete</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">Portfolio</span>

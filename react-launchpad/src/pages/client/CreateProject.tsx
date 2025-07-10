@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar } from '../../components/ui/Avatar';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -16,65 +16,116 @@ import {
 } from 'lucide-react';
 import { mockFreelancers } from '../../utils/mockData';
 import toast from 'react-hot-toast';
+import { createProject } from '../../apiendpoints';
 
 export function CreateProject() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [projectData, setProjectData] = useState({
-    title: '',
-    description: '',
-    skills: [] as string[],
-    files: [] as File[],
-    budget: '',
-    deadline: '',
-    budgetType: 'fixed' as 'fixed' | 'hourly'
+    ProjectTitle: '',
+    Description: '',
+    Skills: [] as string[],
+    Files: [] as File[],
+    Budget: '',
+    Deadline: '',
+    PaymentType: 'Fixed',
+    CategoryOrDomain: '',
+    NumberOfFreelancers: 1,
+    Milestones: '',
   });
   const [skillInput, setSkillInput] = useState('');
   const [matchingFreelancers, setMatchingFreelancers] = useState(mockFreelancers);
   const [selectedFreelancers, setSelectedFreelancers] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  // Milestone fields
+  const [milestoneInput, setMilestoneInput] = useState({
+    title: '',
+    description: '',
+    amount: '',
+    dueDate: '',
+  });
+  const [milestoneError, setMilestoneError] = useState('');
+  const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone'>('fixed');
+  const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddSkill = (skill: string) => {
-    if (skill && !projectData.skills.includes(skill)) {
-      handleInputChange('skills', [...projectData.skills, skill]);
+    if (skill && !projectData.Skills.includes(skill)) {
+      handleInputChange('Skills', [...projectData.Skills, skill]);
       setSkillInput('');
     }
   };
 
   const handleRemoveSkill = (skill: string) => {
-    handleInputChange('skills', projectData.skills.filter(s => s !== skill));
+    handleInputChange('Skills', projectData.Skills.filter(s => s !== skill));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    handleInputChange('files', [...projectData.files, ...files]);
+    handleInputChange('Files', [...projectData.Files, ...files]);
   };
 
   const handleRemoveFile = (index: number) => {
-    const newFiles = projectData.files.filter((_, i) => i !== index);
-    handleInputChange('files', newFiles);
+    const newFiles = projectData.Files.filter((_, i) => i !== index);
+    handleInputChange('Files', newFiles);
   };
 
   const handleNextStep = () => {
-    if (step < 4) {
+    if (step === 4 && budgetDivision === 'fixed') {
+      setStep(6);
+    } else {
       setStep(step + 1);
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1) {
+    if (step === 6 && budgetDivision === 'fixed') {
+      setStep(4);
+    } else {
       setStep(step - 1);
     }
   };
 
-  const handleSubmitProject = () => {
+  const handleAddMilestone = () => {
+    if (!milestoneInput.title || !milestoneInput.description || !milestoneInput.amount || !milestoneInput.dueDate) {
+      setMilestoneError('All fields are required.');
+      return;
+    }
+    setMilestones(prev => [...prev, milestoneInput]);
+    setMilestoneInput({ title: '', description: '', amount: '', dueDate: '' });
+    setMilestoneError('');
+  };
+
+  const handleRemoveMilestone = (index: number) => {
+    setMilestones(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitProject = async () => {
     setSubmitted(true);
-    toast.success('Project created successfully!');
-    // In a real app, this would create the project and send invites
+    try {
+      const payload: any = {
+        ProjectTitle: projectData.ProjectTitle,
+        Description: projectData.Description,
+        PaymentType: projectData.PaymentType,
+        CategoryOrDomain: projectData.CategoryOrDomain,
+        Deadline: projectData.Deadline,
+        RequiredSkills: projectData.Skills.join(','),
+        Budget: Number(projectData.Budget),
+        NumberOfFreelancers: projectData.NumberOfFreelancers,
+        Milestones: budgetDivision === 'milestone'
+          ? milestones.map(m => m.title).join(',')
+          : 'initial milestone',
+        AttachedDocumentPath: projectData.Files[0]?.name || '',
+      };
+      await createProject(payload);
+      toast.success('Project created successfully!');
+    } catch (err) {
+      toast.error('Failed to create project.');
+      setSubmitted(false);
+    }
   };
 
   const toggleFreelancerSelection = (freelancerId: string) => {
@@ -89,7 +140,9 @@ export function CreateProject() {
     'Project Details',
     'Skills & Requirements',
     'Files & Resources',
-    'Budget & Timeline'
+    'Budget & Timeline',
+    'Milestones',
+    'Review & Submit',
   ];
 
   if (submitted) {
@@ -168,14 +221,14 @@ export function CreateProject() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Create New Project</h1>
-          <p className="text-gray-600">Step {step} of 4: {stepTitles[step - 1]}</p>
+          <p className="text-gray-600">Step {step} of 6: {stepTitles[step - 1]}</p>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center">
-          {[1, 2, 3, 4].map((stepNum) => (
+          {[1, 2, 3, 4, 5, 6].map((stepNum) => (
             <div key={stepNum} className="flex items-center">
               <div className={`
                 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
@@ -183,7 +236,7 @@ export function CreateProject() {
               `}>
                 {stepNum}
               </div>
-              {stepNum < 4 && (
+              {stepNum < 6 && (
                 <div className={`
                   w-12 h-1 mx-2
                   ${stepNum < step ? 'bg-blue-600' : 'bg-gray-200'}
@@ -204,8 +257,8 @@ export function CreateProject() {
               </label>
               <input
                 type="text"
-                value={projectData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+                value={projectData.ProjectTitle}
+                onChange={(e) => handleInputChange('ProjectTitle', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., E-commerce Website Development"
               />
@@ -216,8 +269,8 @@ export function CreateProject() {
                 Project Description *
               </label>
               <textarea
-                value={projectData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
+                value={projectData.Description}
+                onChange={(e) => handleInputChange('Description', e.target.value)}
                 rows={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Describe your project in detail. What are you looking to build? What are your requirements and expectations?"
@@ -246,7 +299,7 @@ export function CreateProject() {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {projectData.skills.map((skill) => (
+                {projectData.Skills.map((skill) => (
                   <div key={skill} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                     {skill}
                     <button
@@ -301,9 +354,9 @@ export function CreateProject() {
                 </label>
               </div>
               
-              {projectData.files.length > 0 && (
+              {projectData.Files.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  {projectData.files.map((file, index) => (
+                  {projectData.Files.map((file, index) => (
                     <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                       <span className="text-sm text-gray-700">{file.name}</span>
                       <button
@@ -325,32 +378,22 @@ export function CreateProject() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Budget Type *
+                Budget Division *
               </label>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex gap-4">
                 <button
-                  onClick={() => handleInputChange('budgetType', 'fixed')}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                    projectData.budgetType === 'fixed' 
-                      ? 'border-blue-600 bg-blue-50' 
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
+                  type="button"
+                  className={`px-4 py-2 rounded-lg border-2 ${budgetDivision === 'fixed' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
+                  onClick={() => setBudgetDivision('fixed')}
                 >
-                  <DollarSign className="w-6 h-6 text-blue-600 mb-2" />
-                  <h3 className="font-medium text-gray-900">Fixed Price</h3>
-                  <p className="text-sm text-gray-600">Pay a set amount for the entire project</p>
+                  Fixed
                 </button>
                 <button
-                  onClick={() => handleInputChange('budgetType', 'hourly')}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                    projectData.budgetType === 'hourly' 
-                      ? 'border-blue-600 bg-blue-50' 
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
+                  type="button"
+                  className={`px-4 py-2 rounded-lg border-2 ${budgetDivision === 'milestone' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
+                  onClick={() => setBudgetDivision('milestone')}
                 >
-                  <Clock className="w-6 h-6 text-blue-600 mb-2" />
-                  <h3 className="font-medium text-gray-900">Hourly Rate</h3>
-                  <p className="text-sm text-gray-600">Pay based on time worked</p>
+                  Milestone-based
                 </button>
               </div>
             </div>
@@ -363,14 +406,14 @@ export function CreateProject() {
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="number"
-                  value={projectData.budget}
-                  onChange={(e) => handleInputChange('budget', e.target.value)}
+                  value={projectData.Budget}
+                  onChange={(e) => handleInputChange('Budget', e.target.value)}
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={projectData.budgetType === 'fixed' ? '5000' : '75'}
+                  placeholder={projectData.PaymentType === 'Fixed' ? '5000' : '75'}
                 />
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {projectData.budgetType === 'fixed' ? 'Total project budget' : 'Hourly rate'}
+                {projectData.PaymentType === 'Fixed' ? 'Total project budget' : 'Hourly rate'}
               </p>
             </div>
 
@@ -380,11 +423,93 @@ export function CreateProject() {
               </label>
               <input
                 type="date"
-                value={projectData.deadline}
-                onChange={(e) => handleInputChange('deadline', e.target.value)}
+                value={projectData.Deadline}
+                onChange={(e) => handleInputChange('Deadline', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+          </div>
+        )}
+
+        {/* Step 5: Milestones (only if milestone-based) */}
+        {step === 5 && budgetDivision === 'milestone' && (
+          <div className="space-y-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Project Milestones</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={milestoneInput.title}
+                  onChange={e => setMilestoneInput({ ...milestoneInput, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Milestone title"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
+                <input
+                  type="number"
+                  value={milestoneInput.amount}
+                  onChange={e => setMilestoneInput({ ...milestoneInput, amount: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Amount"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <textarea
+                  value={milestoneInput.description}
+                  onChange={e => setMilestoneInput({ ...milestoneInput, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Milestone description"
+                  rows={2}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date *</label>
+                <input
+                  type="date"
+                  value={milestoneInput.dueDate}
+                  onChange={e => setMilestoneInput({ ...milestoneInput, dueDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            {milestoneError && <div className="text-red-500 text-sm">{milestoneError}</div>}
+            <Button onClick={handleAddMilestone} className="mt-2">Add Milestone</Button>
+            <div className="mt-6">
+              <h3 className="font-medium text-gray-800 mb-2">Milestones List</h3>
+              {milestones.length === 0 && <div className="text-gray-500">No milestones added yet.</div>}
+              <ul className="space-y-2">
+                {milestones.map((m, idx) => (
+                  <li key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                    <div>
+                      <div className="font-semibold">{m.title}</div>
+                      <div className="text-sm text-gray-600">{m.description}</div>
+                      <div className="text-sm text-gray-600">Amount: ${m.amount} | Due: {m.dueDate}</div>
+                    </div>
+                    <Button variant="outline" onClick={() => handleRemoveMilestone(idx)} size="sm">Remove</Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Review & Submit */}
+        {step === 6 && (
+          <div className="space-y-6 text-center">
+            <h2 className="text-xl font-bold">Review & Submit</h2>
+            <p>Review your project details and submit when ready.</p>
+            <Button onClick={handleSubmitProject} disabled={
+              !projectData.ProjectTitle || !projectData.Description ||
+              projectData.Skills.length === 0 ||
+              !projectData.Budget || !projectData.Deadline ||
+              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate)))
+            }>
+              Create Project
+            </Button>
           </div>
         )}
 
@@ -397,25 +522,20 @@ export function CreateProject() {
           >
             Previous
           </Button>
-          
-          {step < 4 ? (
+          {step < 6 ? (
             <Button 
               onClick={handleNextStep}
               icon={ArrowRight}
               iconPosition="right"
               disabled={
-                (step === 1 && (!projectData.title || !projectData.description)) ||
-                (step === 2 && projectData.skills.length === 0) ||
-                (step === 4 && (!projectData.budget || !projectData.deadline))
+                (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
+                (step === 2 && projectData.Skills.length === 0) ||
+                (step === 4 && (!projectData.Budget || !projectData.Deadline))
               }
             >
               Next Step
             </Button>
-          ) : (
-            <Button onClick={handleSubmitProject}>
-              Create Project
-            </Button>
-          )}
+          ) : null}
         </div>
       </Card>
     </div>

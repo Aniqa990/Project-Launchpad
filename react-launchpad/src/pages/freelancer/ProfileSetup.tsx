@@ -35,7 +35,6 @@ export function ProfileSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [step, setStep] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);

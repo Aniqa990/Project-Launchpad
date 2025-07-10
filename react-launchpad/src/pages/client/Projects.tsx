@@ -17,10 +17,12 @@ import {
   Eye,
   Edit,
   Archive,
-  Star
+  Star,
+  X
 } from 'lucide-react';
-import { mockProjects } from '../../utils/mockData';
+import { getProjects, updateProject } from '../../apiendpoints';
 import toast from 'react-hot-toast';
+import { EditProjectForm } from '../../components/ui/EditProjectForm';
 
 export function ClientProjects() {
   const navigate = useNavigate();
@@ -29,10 +31,33 @@ export function ClientProjects() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingProject, setViewingProject] = useState<any>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<any>(null);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const filteredProjects = mockProjects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await getProjects();
+        setProjects(data);
+      } catch (err) {
+        setError('Failed to load projects.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = (project.ProjectTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (project.Description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -64,12 +89,55 @@ export function ClientProjects() {
     setShowReviewModal(false);
   };
 
+  const handleViewProject = (project: any) => {
+    setViewingProject(project);
+    setShowViewModal(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setViewingProject(null);
+  };
+
+  const handleEditProject = (project: any) => {
+    setEditingProject(project);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingProject(null);
+  };
+
+  const handleUpdateProject = async (updatedData: any) => {
+    try {
+      await updateProject(editingProject.Id, updatedData);
+      toast.success('Project updated successfully!');
+      handleCloseEditModal();
+      // Refresh projects
+      const data = await getProjects();
+      setProjects(data);
+    } catch (err) {
+      toast.error('Failed to update project.');
+    }
+  };
+
+  // Calculate progress based on milestones
+  const calculateProgress = (project: any) => {
+    if (!project.Milestones || project.Milestones === 'initial milestone') {
+      return 0;
+    }
+    // For now, return a random progress between 0-100
+    // In a real app, you'd track completed milestones
+    return Math.floor(Math.random() * 100);
+  };
+
   const ProjectCard = ({ project }: { project: any }) => (
     <Card hover className="h-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.title}</h3>
-          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{project.description}</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.ProjectTitle}</h3>
+          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{project.Description}</p>
         </div>
         <div className="flex items-center space-x-2 ml-4">
           <Badge variant={getStatusColor(project.status) as any}>
@@ -85,54 +153,56 @@ export function ClientProjects() {
         <div className="flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-1" />
-            Due {new Date(project.deadline).toLocaleDateString()}
+            Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : 'N/A'}
           </div>
           <div className="flex items-center">
             <DollarSign className="w-4 h-4 mr-1" />
-            ${project.budget.toLocaleString()}
+            ${project.Budget?.toLocaleString()}
           </div>
         </div>
 
         <div className="flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center">
             <Users className="w-4 h-4 mr-1" />
-            {project.team.length} team members
+            {project.NumberOfFreelancers || 1} team members
           </div>
-          <div className="text-blue-600 font-medium">{project.progress}%</div>
+          <div className="text-blue-600 font-medium">{calculateProgress(project)}%</div>
         </div>
 
         <div className="bg-gray-200 rounded-full h-2">
           <div 
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${project.progress}%` }}
+            style={{ width: `${calculateProgress(project)}%` }}
           />
         </div>
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex -space-x-2">
-          {project.team.slice(0, 3).map((member: any) => (
-            <Avatar 
-              key={member.id} 
-              src={member.avatar} 
-              alt={member.name} 
-              size="sm"
-              className="border-2 border-white"
-            />
-          ))}
-          {project.team.length > 3 && (
-            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
-              +{project.team.length - 3}
-            </div>
-          )}
-        </div>
-        
+        {/* Only show avatars if project.team exists and is an array */}
+        {Array.isArray(project.team) && (
+          <div className="flex -space-x-2">
+            {project.team.slice(0, 3).map((member: any) => (
+              <Avatar 
+                key={member.id} 
+                src={member.avatar} 
+                alt={member.name} 
+                size="sm"
+                className="border-2 border-white"
+              />
+            ))}
+            {project.team.length > 3 && (
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
+                +{project.team.length - 3}
+              </div>
+            )}
+          </div>
+        )}
         <div className="flex space-x-2">
           <Button 
             size="sm" 
             variant="outline"
             icon={Eye}
-            onClick={() => navigate(`/workspace/${project.id}`)}
+            onClick={() => handleViewProject(project)}
           >
             View
           </Button>
@@ -150,6 +220,7 @@ export function ClientProjects() {
             size="sm" 
             variant="outline"
             icon={Edit}
+            onClick={() => handleEditProject(project)}
           >
             Edit
           </Button>
@@ -222,7 +293,21 @@ export function ClientProjects() {
       </Card>
 
       {/* Projects Grid/List */}
-      {filteredProjects.length === 0 ? (
+      {loading ? (
+        <Card className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Plus className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading projects...</h3>
+        </Card>
+      ) : error ? (
+        <Card className="text-center py-12">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Plus className="w-8 h-8 text-red-400" />
+          </div>
+          <h3 className="text-lg font-medium text-red-600 mb-2">{error}</h3>
+        </Card>
+      ) : filteredProjects.length === 0 ? (
         <Card className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Plus className="w-8 h-8 text-gray-400" />
@@ -245,8 +330,8 @@ export function ClientProjects() {
           ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-6' 
           : 'space-y-4'
         }>
-          {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+          {filteredProjects.map((project, idx) => (
+            <ProjectCard key={project.Id || idx} project={project} />
           ))}
         </div>
       )}
@@ -255,25 +340,25 @@ export function ClientProjects() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
         <Card className="text-center">
           <div className="text-2xl font-bold text-blue-600">
-            {mockProjects.filter(p => p.status === 'active').length}
+            {projects.filter(p => p.status === 'active').length}
           </div>
           <div className="text-sm text-gray-600">Active Projects</div>
         </Card>
         <Card className="text-center">
           <div className="text-2xl font-bold text-green-600">
-            {mockProjects.filter(p => p.status === 'completed').length}
+            {projects.filter(p => p.status === 'completed').length}
           </div>
           <div className="text-sm text-gray-600">Completed</div>
         </Card>
         <Card className="text-center">
           <div className="text-2xl font-bold text-purple-600">
-            ${mockProjects.reduce((sum, p) => sum + p.budget, 0).toLocaleString()}
+            ${projects.reduce((sum, p) => sum + p.budget, 0).toLocaleString()}
           </div>
           <div className="text-sm text-gray-600">Total Budget</div>
         </Card>
         <Card className="text-center">
           <div className="text-2xl font-bold text-orange-600">
-            {Math.round(mockProjects.reduce((sum, p) => sum + p.progress, 0) / mockProjects.length)}%
+            {Math.round(projects.reduce((sum, p) => sum + p.progress, 0) / projects.length)}%
           </div>
           <div className="text-sm text-gray-600">Avg Progress</div>
         </Card>
@@ -287,6 +372,107 @@ export function ClientProjects() {
           project={selectedProject}
           onSubmitReview={handleSubmitReview}
         />
+      )}
+
+      {/* Project View Modal */}
+      {viewingProject && (
+        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${showViewModal ? 'block' : 'hidden'}`}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Project Details</h2>
+              <button
+                onClick={handleCloseViewModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Project Title</h3>
+                <p className="text-gray-600">{viewingProject.ProjectTitle}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Description</h3>
+                <p className="text-gray-600">{viewingProject.Description}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Payment Type</h3>
+                  <p className="text-gray-600">{viewingProject.PaymentType}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Category</h3>
+                  <p className="text-gray-600">{viewingProject.CategoryOrDomain}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Budget</h3>
+                  <p className="text-gray-600">${viewingProject.Budget?.toLocaleString()}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Freelancers</h3>
+                  <p className="text-gray-600">{viewingProject.NumberOfFreelancers}</p>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Deadline</h3>
+                <p className="text-gray-600">
+                  {viewingProject.Deadline ? new Date(viewingProject.Deadline).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Required Skills</h3>
+                <p className="text-gray-600">{viewingProject.RequiredSkills}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">Milestones</h3>
+                <p className="text-gray-600">{viewingProject.Milestones}</p>
+              </div>
+              
+              {viewingProject.AttachedDocumentPath && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Attached Document</h3>
+                  <p className="text-gray-600">{viewingProject.AttachedDocumentPath}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end mt-6">
+              <Button variant="outline" onClick={handleCloseViewModal}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {editingProject && (
+        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${showEditModal ? 'block' : 'hidden'}`}>
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Edit Project</h2>
+              <button
+                onClick={handleCloseEditModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <EditProjectForm 
+              project={editingProject}
+              onSave={handleUpdateProject}
+              onCancel={handleCloseEditModal}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

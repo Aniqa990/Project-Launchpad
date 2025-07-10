@@ -5,18 +5,20 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import { Home } from './pages/Home';
 import { Auth } from './pages/Auth';
-import { FreelancerDashboard } from './pages/freelancer/Dashboard';
-import { ProfileSetup } from './pages/freelancer/ProfileSetup';
-import {FreelancerRequests} from './pages/freelancer/Requests';
-import { FreelancerProjects } from './pages/freelancer/Projects';
 import { Settings } from './pages/Settings';
 import { ClientDashboard } from './pages/client/Dashboard';
 import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
 import { ClientPayments } from './pages/client/Payments';
+import { ClientMessages } from './pages/client/Messages';
+import { FreelancerDashboard } from './pages/freelancer/Dashboard';
+import { FreelancerProjects } from './pages/freelancer/Projects';
+import { FreelancerRequests } from './pages/freelancer/Requests';
+import { FreelancerMessages } from './pages/freelancer/Messages';
+import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
-
+import TimesheetApproval from './pages/client/TimesheetApproval';
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
   const { isAuthenticated, user } = useAuth();
@@ -59,10 +61,11 @@ function AppRoutes() {
         <Route path="create-project" element={<CreateProject />} />
         <Route path="projects" element={<ClientProjects />} />
         <Route path="payments" element={<ClientPayments />} />
-        <Route path="messages" element={<div className="p-6">Messages page coming soon...</div>} />
+        <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="timesheet-approval" element={<TimesheetApproval />} />
       </Route>
-
+      
       <Route path="/freelancer/*" element={
         <ProtectedRoute requiredRole="freelancer">
           <AppShell />
@@ -80,7 +83,6 @@ function AppRoutes() {
       }>
         <Route path="" element={<ProjectWorkspace />} />
       </Route>
-
 
       {/* Redirect authenticated users */}
       <Route path="*" element={

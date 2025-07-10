@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 import { 
   Rocket, 
   Users, 
@@ -10,6 +10,7 @@ import {
   Zap, 
   Target,
   ArrowRight,
+  Check,
   Star
 } from 'lucide-react';
 
@@ -128,9 +129,8 @@ export function Home() {
 
           <div className="flex justify-center space-x-4">
             <Link to="/signup">
-              <Button size="lg">
+              <Button size="lg" icon={ArrowRight} iconPosition="right">
                 {activeTab === 'client' ? 'Post Your Project' : 'Find Great Projects'}
-                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
             <Button variant="outline" size="lg">
@@ -154,14 +154,12 @@ export function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="text-center hover:shadow-md transition-shadow">
-                <CardContent className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </CardContent>
+              <Card key={index} hover className="text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
               </Card>
             ))}
           </div>
@@ -243,9 +241,8 @@ export function Home() {
             to deliver exceptional results.
           </p>
           <Link to="/signup">
-            <Button variant="secondary" size="lg">
+            <Button variant="secondary" size="lg" icon={ArrowRight} iconPosition="right">
               Get Started Today
-              <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
         </div>

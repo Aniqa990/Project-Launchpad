@@ -1,5 +1,3 @@
-import { StringToBoolean } from "class-variance-authority/types";
-
 export interface User {
   id?: number;
   firstName: string;
