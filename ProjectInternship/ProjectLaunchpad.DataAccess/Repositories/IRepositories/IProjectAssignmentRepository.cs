@@ -12,7 +12,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
     {
         Task AssignFreelancersAsync(int projectId, int freelancerId);
         Task<List<FreelancerWithUserDTO>> GetFreelancersByProjectAsync(int projectId);
-        Task<List<Project>> GetProjectsByFreelancerAsync(int freelancerId);
+        Task<List<object>> GetProjectsByFreelancerAsync(int freelancerId);
         Task RemoveFreelancerFromProjectAsync(int projectId, int freelancerId);
     }
 

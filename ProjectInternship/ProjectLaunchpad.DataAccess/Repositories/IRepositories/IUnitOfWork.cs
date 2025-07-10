@@ -12,7 +12,7 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
     {
         IUserRepository Users { get; }
         IFreelancerProfileRepository FreelancerProfiles { get; }
-
+        IClientProfileRepository ClientProfiles { get; }
         IProjectAssignmentRepository ProjectFreelancers { get; }
         ITaskRepository TaskRepository { get; }
 
@@ -26,8 +26,9 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
 
         IPaymentRepository PaymentRepository { get; }
 
-
+        ITimeSheetRepository TimeSheet { get; }
         IProjectRequestRepository ProjectRequests { get; }
+        IFeedbackRepository Feedbacks { get; }
 
         Task<int> SaveAsync();
 
