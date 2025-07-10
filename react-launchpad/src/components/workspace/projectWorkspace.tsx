@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Avatar } from '../ui/Avatar';
+import { Card } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Avatar } from '../ui/avatar';
 import { KanbanBoard } from './KanbanBoard';
 import { 
   Users, 
@@ -21,10 +21,33 @@ import {
 } from 'lucide-react';
 import { mockProjects, mockTasks, mockTimeEntries, mockMessages } from '../../utils/mockData';
 import { useAuth } from '../../contexts/AuthContext';
-import { getMilestones, updateMilestone, getDeliverables, createDeliverable, updateDeliverable, deleteDeliverable } from '../../apiendpoint';
+import { getMilestones, updateMilestone, getDeliverables, createDeliverable, updateDeliverable, deleteDeliverable } from '../../apiendpoints';
 import { Modal } from '../ui/Modal';
 import { Deliverable } from '../../types';
 import HourlyLogViewer from './HourlyLogViewer';
+import { getTimesheets, createTimesheet, approveTimesheet, rejectTimesheet } from '../../apiendpoints';
+
+interface TimeSheetEntry {
+  Id: number;
+  ProjectName: string;
+  FreelancerName: string;
+  DateOfWork: string;
+  StartTime: string;
+  EndTime: string;
+  TotalHours: number;
+  WorkDescription: string;
+  HourlyRate: number;
+  CalculatedAmount: number;
+  ApprovalStatus: string;
+  ReviewerComments?: string | null;
+}
+
+// Helper to ensure time is in HH:mm:ss format
+function padTime(t: string) {
+  if (t.length === 8) return t;
+  if (t.length === 5) return t + ':00';
+  return t;
+}
 
 export function ProjectWorkspace() {
   const { projectId } = useParams();
@@ -187,6 +210,114 @@ export function ProjectWorkspace() {
       e.preventDefault();
       onSubmit(milestone.Id, form);
     };
+
+    // Timesheet state
+  const [timeEntries, setTimeEntries] = useState<TimeSheetEntry[]>([]);
+  const [loadingTimesheets, setLoadingTimesheets] = useState(true);
+  const [timesheetError, setTimesheetError] = useState('');
+  const [showTimesheetModal, setShowTimesheetModal] = useState(false);
+  const [submittingTimesheet, setSubmittingTimesheet] = useState(false);
+  const [reviewModal, setReviewModal] = useState<{ open: boolean; id: number | null; action: string; comments: string }>({ open: false, id: null, action: '', comments: '' });
+
+  // Timesheet form state
+  const [timesheetForm, setTimesheetForm] = useState({
+    DateOfWork: '',
+    StartTime: '',
+    EndTime: '',
+    WorkDescription: '',
+    HourlyRate: project?.team?.find(m => m.name === user?.name)?.hourlyRate || 0,
+  });
+
+  // Fetch timesheets for this project
+  useEffect(() => {
+    const fetchTimesheets = async () => {
+      setLoadingTimesheets(true);
+      setTimesheetError('');
+      try {
+        const data: TimeSheetEntry[] = await getTimesheets();
+        // Filter by project name (case-insensitive)
+        const filtered = data.filter(
+          (entry: TimeSheetEntry) => project && entry.ProjectName.toLowerCase() === project.title.toLowerCase()
+        );
+        setTimeEntries(filtered);
+      } catch (err) {
+        setTimesheetError('Failed to load timesheets.');
+        setTimeEntries([]);
+      } finally {
+        setLoadingTimesheets(false);
+      }
+    };
+    if (project?.title) fetchTimesheets();
+  }, [project?.title]);
+
+  // Handle timesheet form input
+  const handleTimesheetInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setTimesheetForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Submit new timesheet
+  const submitTimesheet = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmittingTimesheet(true);
+    try {
+      if (!project || !user) throw new Error('Missing project or user');
+      await createTimesheet({
+        ProjectName: project.title,
+        FreelancerName: user.name,
+        DateOfWork: timesheetForm.DateOfWork,
+        StartTime: padTime(timesheetForm.StartTime),
+        EndTime: padTime(timesheetForm.EndTime),
+        WorkDescription: timesheetForm.WorkDescription,
+        HourlyRate: parseFloat(timesheetForm.HourlyRate.toString()),
+      });
+      setShowTimesheetModal(false);
+      setTimesheetForm({ DateOfWork: '', StartTime: '', EndTime: '', WorkDescription: '', HourlyRate: project?.team?.find(m => m.name === user?.name)?.hourlyRate || 0 });
+      // Refresh timesheets
+      const data: TimeSheetEntry[] = await getTimesheets();
+      const filtered = data.filter(
+        (entry: TimeSheetEntry) => project && entry.ProjectName.toLowerCase() === project.title.toLowerCase()
+      );
+      setTimeEntries(filtered);
+    } catch (err) {
+      alert('Failed to submit timesheet.');
+    } finally {
+      setSubmittingTimesheet(false);
+    }
+  };
+
+  // Approve/Reject timesheet
+  const handleReview = async () => {
+    if (!reviewModal.id) return;
+    try {
+      if (reviewModal.action === 'approve') {
+        await approveTimesheet(reviewModal.id!, reviewModal.comments);
+      } else if (reviewModal.action === 'reject') {
+        await rejectTimesheet(reviewModal.id!, reviewModal.comments);
+      }
+      setReviewModal({ open: false, id: null, action: '', comments: '' });
+      // Refresh timesheets
+      const data: TimeSheetEntry[] = await getTimesheets();
+      const filtered = data.filter(
+        (entry: TimeSheetEntry) => project && entry.ProjectName.toLowerCase() === project.title.toLowerCase()
+      );
+      setTimeEntries(filtered);
+    } catch (err) {
+      alert('Failed to update timesheet.');
+    }
+  };
+
+  if (!project) {
+    return (
+      <div className="p-6">
+        <Card className="text-center py-12">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Project not found</h2>
+          <p className="text-gray-600">The project you're looking for doesn't exist or you don't have access to it.</p>
+        </Card>
+      </div>
+    );
+  }
+  
     return (
       <Modal isOpen={isOpen} onClose={onClose} title="Milestone Details" size="md">
         <form onSubmit={handleSubmit} className="space-y-4">

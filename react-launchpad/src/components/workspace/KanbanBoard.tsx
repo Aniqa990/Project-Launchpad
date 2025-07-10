@@ -21,7 +21,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask } from '../../apiendpoint';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
 // Remove import { mockSubtasks } from '../../utils/mockData';
 

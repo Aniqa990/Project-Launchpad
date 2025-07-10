@@ -3,7 +3,7 @@ import { Download, Filter, Search, Clock, Calendar, User } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { getHourlyLogs } from '../../apiendpoint';
+import { getHourlyLogs } from '../../apiendpoints';
 
 interface HourlyLog {
   logId: string;
@@ -279,7 +279,7 @@ const HourlyLogViewer: React.FC = () => {
                       <span className="text-sm text-gray-900">{log.endTime}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="default">
                         {log.projectName}
                       </Badge>
                     </td>
@@ -296,7 +296,7 @@ const HourlyLogViewer: React.FC = () => {
                 <div className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-blue-600">{log.logId}</span>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="default">
                       {log.projectName}
                     </Badge>
                   </div>

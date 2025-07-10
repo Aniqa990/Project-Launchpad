@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { AppShell } from '../layout/AppShell';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -116,8 +115,7 @@ export default function Milestones({
 
   // UI rendering
   return (
-    <AppShell>
-      <div className="space-y-6 p-4 md:p-8">
+    <div className="space-y-6 p-4 md:p-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -432,6 +430,5 @@ export default function Milestones({
           ))}
         </div>
       </div>
-    </AppShell>
   );
 } 

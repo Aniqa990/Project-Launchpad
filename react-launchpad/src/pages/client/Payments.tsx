@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Avatar } from '../../components/ui/Avatar';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { 
   DollarSign,
@@ -26,14 +26,14 @@ export function ClientPayments() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Flatten all milestones from all projects
-  const allMilestones = mockProjects.flatMap(project => 
-    project.milestones.map(milestone => ({
+  const allMilestones = mockProjects.flatMap((project: any) => 
+    project.milestones.map((milestone: any) => ({
       ...milestone,
       project: project
     }))
   );
 
-  const filteredMilestones = allMilestones.filter(milestone => {
+  const filteredMilestones = allMilestones.filter((milestone: any) => {
     const matchesSearch = milestone.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          milestone.project.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || milestone.status === statusFilter;
@@ -67,9 +67,9 @@ export function ClientPayments() {
   const calculatePlatformFee = (amount: number) => amount * 0.05; // 5% platform fee
   const calculateFreelancerAmount = (amount: number) => amount - calculatePlatformFee(amount);
 
-  const totalPaid = allMilestones.filter(m => m.status === 'paid').reduce((sum, m) => sum + m.amount, 0);
-  const totalPending = allMilestones.filter(m => m.status === 'approved').reduce((sum, m) => sum + m.amount, 0);
-  const totalBudget = mockProjects.reduce((sum, p) => sum + p.budget, 0);
+  const totalPaid = allMilestones.filter((m: any) => m.status === 'paid').reduce((sum: number, m: any) => sum + m.amount, 0);
+  const totalPending = allMilestones.filter((m: any) => m.status === 'approved').reduce((sum: number, m: any) => sum + m.amount, 0);
+  const totalBudget = mockProjects.reduce((sum: number, p: any) => sum + p.budget, 0);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -156,7 +156,7 @@ export function ClientPayments() {
 
       {/* Milestones List */}
       <div className="space-y-4">
-        {filteredMilestones.map((milestone) => {
+        {filteredMilestones.map((milestone: any) => {
           const StatusIcon = getStatusIcon(milestone.status);
           return (
             <Card key={milestone.id} hover>
@@ -191,7 +191,7 @@ export function ClientPayments() {
                   <div className="mt-3">
                     <p className="text-sm font-medium text-gray-700 mb-1">Deliverables:</p>
                     <div className="flex flex-wrap gap-2">
-                      {milestone.deliverables.map((deliverable, index) => (
+                      {milestone.deliverables.map((deliverable: any, index: number) => (
                         <Badge key={index} variant="info" size="sm">{deliverable}</Badge>
                       ))}
                     </div>

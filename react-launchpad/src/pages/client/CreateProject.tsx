@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Avatar } from '../../components/ui/Avatar';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Avatar } from '../../components/ui/avatar';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -14,7 +14,6 @@ import {
   Clock,
   Send
 } from 'lucide-react';
-import { mockFreelancers } from '../../utils/mockData';
 import toast from 'react-hot-toast';
 import { createProject } from '../../apiendpoints';
 
@@ -34,7 +33,7 @@ export function CreateProject() {
     Milestones: '',
   });
   const [skillInput, setSkillInput] = useState('');
-  const [matchingFreelancers, setMatchingFreelancers] = useState(mockFreelancers);
+  //const [matchingFreelancers, setMatchingFreelancers] = useState();
   const [selectedFreelancers, setSelectedFreelancers] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   // Milestone fields
@@ -153,13 +152,13 @@ export function CreateProject() {
             <Send className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Created Successfully!</h1>
-          <p className="text-gray-600 mb-8">
+          {/* <p className="text-gray-600 mb-8">
             We've found {matchingFreelancers.length} matching freelancers for your project.
             Review and invite the ones you'd like to work with.
-          </p>
+          </p> */}
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {matchingFreelancers.map((freelancer) => (
+          {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            {matchingFreelancers.map((freelancer: any) => (
               <Card key={freelancer.id} hover className="text-left">
                 <div className="flex items-start space-x-4 mb-4">
                   <Avatar src={freelancer.avatar} alt={freelancer.name} size="lg" />
@@ -178,7 +177,7 @@ export function CreateProject() {
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {freelancer.skills?.slice(0, 3).map((skill) => (
+                  {freelancer.skills?.slice(0, 3).map((skill: string) => (
                     <Badge key={skill} variant="info" size="sm">{skill}</Badge>
                   ))}
                 </div>
@@ -192,7 +191,7 @@ export function CreateProject() {
                 </Button>
               </Card>
             ))}
-          </div>
+          </div> */}
 
           <div className="flex justify-center space-x-4 mt-8">
             <Button variant="outline" onClick={() => navigate('/client/projects')}>

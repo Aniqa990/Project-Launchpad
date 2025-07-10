@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { getProjectRequests, getFreelancerProjects } from '@/apiendpoints';
+import { getProjectRequests, getFreelancerProjects } from '../../apiendpoints';
 import { Project, ProjectRequest } from '@/types';
 import { 
   Inbox, 

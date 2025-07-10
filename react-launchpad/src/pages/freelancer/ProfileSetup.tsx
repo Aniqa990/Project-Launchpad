@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {addFreelancerProfile} from '../../apiendpoints';
 import { ParsedResumeData } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -456,7 +456,7 @@ const removeToolFromProject = (projectId: number, tool: string) => {
         </Label>
         <div className="flex flex-wrap gap-2 mb-3">
           {profileData.skills.map(skill => (
-            <Badge key={skill} variant="secondary" className="flex items-center gap-1">
+            <Badge key={skill} variant="info">
               {skill}
               <button
                 onClick={() => removeSkill(skill)}
@@ -538,16 +538,19 @@ const removeToolFromProject = (projectId: number, tool: string) => {
       <div className="space-y-6">
         {profileData.experience.map((exp, index) => (
           <Card key={exp.id}>
-            <CardHeader className="relative">
+            <div className="relative">
               <button
                 onClick={() => removeExperience(exp.id)}
                 className="absolute top-4 right-4 text-muted-foreground hover:text-destructive"
               >
                 <X className="w-4 h-4" />
               </button>
-              <CardTitle className="text-lg">Experience {index + 1}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              <div className="flex items-center">
+                <Briefcase className="w-5 h-5 text-muted-foreground mr-2" />
+                <h3 className="text-lg font-semibold text-foreground">Experience {index + 1}</h3>
+              </div>
+            </div>
+            <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Company</Label>
@@ -595,7 +598,7 @@ const removeToolFromProject = (projectId: number, tool: string) => {
                   placeholder="Describe your responsibilities and achievements..."
                 />
               </div>
-            </CardContent>
+            </div>
           </Card>
         ))}
 
@@ -617,16 +620,19 @@ const removeToolFromProject = (projectId: number, tool: string) => {
       <div className="space-y-6">
         {profileData.projects.map((p, index) => (
           <Card key={p.id}>
-            <CardHeader className="relative">
+            <div className="relative">
               <button
                 onClick={() => removeProject(p.id)}
                 className="absolute top-4 right-4 text-muted-foreground hover:text-destructive"
               >
                 <X className="w-4 h-4" />
               </button>
-              <CardTitle className="text-lg">Project {index + 1}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              <div className="flex items-center">
+                <Briefcase className="w-5 h-5 text-muted-foreground mr-2" />
+                <h3 className="text-lg font-semibold text-foreground">Project {index + 1}</h3>
+              </div>
+            </div>
+            <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Title</Label>
@@ -652,7 +658,7 @@ const removeToolFromProject = (projectId: number, tool: string) => {
                 <Label>Tools</Label>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {p.tools.map(tool => (
-                    <Badge key={tool} variant="secondary" className="flex items-center gap-1">
+                    <Badge key={tool} variant="info">
                       {tool}
                       <button
                         onClick={() => removeToolFromProject(p.id, tool)}
@@ -675,7 +681,7 @@ const removeToolFromProject = (projectId: number, tool: string) => {
                   />
                 </div>
 
-            </CardContent>
+            </div>
           </Card>
         ))}
 
@@ -746,12 +752,12 @@ const removeToolFromProject = (projectId: number, tool: string) => {
 
         {/* Step Content */}
         <Card className="mb-8">
-          <CardContent className="p-6">
+          <div className="p-6">
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
             {step === 4 && renderStep4()}
-          </CardContent>
+          </div>
         </Card>
 
         {/* Navigation */}

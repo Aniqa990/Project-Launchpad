@@ -3,7 +3,7 @@ import {getProjectRequests, respondToProjectRequest} from '../../apiendpoints';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
@@ -102,10 +102,7 @@ export function FreelancerRequests() {
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={request.clientProfile} alt={request.clientName} />
-              <AvatarFallback>{request.clientName?.[0]}</AvatarFallback>
-            </Avatar>
+            <Avatar src={request.clientProfile} size="sm" />
             <div>
               <p className="font-medium text-gray-900">{request.clientName}</p>
               <p className="text-sm text-gray-500">wants to hire you as</p>
@@ -135,10 +132,10 @@ export function FreelancerRequests() {
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
         {request.skills.slice(0, 3).map((skill: string) => (
-          <Badge key={skill} className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">{skill}</Badge>
+          <Badge key={skill} variant="info" size="sm">{skill}</Badge>
         ))}
         {request.skills.length > 3 && (
-          <Badge className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">+{request.skills.length - 3} more</Badge>
+          <Badge variant="info" size="sm">+{request.skills.length - 3} more</Badge>
         )}
       </div>
       <div className="flex space-x-2">
@@ -265,15 +262,7 @@ export function FreelancerRequests() {
             <div className="space-y-6">
               {/* Client Info */}
               <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage
-                    src={selectedRequest.clientProfile}
-                    alt={selectedRequest.clientName}
-                  />
-                  <AvatarFallback>
-                    {selectedRequest.clientName?.[0] || "C"}
-                  </AvatarFallback>
-                </Avatar>
+                <Avatar src={selectedRequest.clientProfile} size="sm" />
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">
                     {selectedRequest.clientName}
@@ -313,9 +302,7 @@ export function FreelancerRequests() {
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {selectedRequest.skills.map((skill: string) => (
-                      <Badge key={skill} variant="secondary">
-                        {skill}
-                      </Badge>
+                      <Badge key={skill} variant="info" size="sm">{skill}</Badge>
                     ))}
                   </div>
                 </div>

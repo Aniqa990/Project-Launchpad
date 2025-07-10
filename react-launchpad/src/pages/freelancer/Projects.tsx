@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { 
   Search, 
   Filter,
@@ -113,10 +113,7 @@ export function FreelancerProjects() {
           <Badge variant={getStatusColor(project.status) as any}>{project.status}</Badge>
         </div>
         <div className="flex items-center space-x-3 mb-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={project.client?.avatar} alt={project.client?.firstName} />
-            <AvatarFallback>{project.client?.firstName?.[0]}</AvatarFallback>
-          </Avatar>
+          <Avatar src={project.client?.avatar} size="sm" />
           <div>
             <p className="text-xs font-medium text-gray-900">{project.client?.firstName} {project.client?.lastName}</p>
             <p className="text-xs text-gray-500">Client</p>

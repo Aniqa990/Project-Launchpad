@@ -1,4 +1,4 @@
-import { Project, Task, ProjectRequest, User, Milestone, TimeEntry, Message } from '../types';
+import { Project, Task, User, Milestone, TimeEntry, Message } from '../types';
 
 export const mockClients: User[] = [
   {
@@ -394,7 +394,6 @@ export const mockTasks: Task[] = [
   }
 ];
 
-<<<<<<< HEAD
 export const mockSubtasks = [
   { Id: 1, Title: 'Wireframe Header', Description: 'Design the header section', DueDate: '2024-01-18', Status: 0, TaskItemId: 1 },
   { Id: 2, Title: 'Wireframe Footer', Description: 'Design the footer section', DueDate: '2024-01-19', Status: 0, TaskItemId: 1 },
@@ -404,40 +403,6 @@ export const mockSubtasks = [
   { Id: 6, Title: 'Auth API', Description: 'API for authentication', DueDate: '2024-01-23', Status: 0, TaskItemId: 3 },
 ];
 
-=======
->>>>>>> origin/moiz
-export const mockProjectRequests: ProjectRequest[] = [
-  {
-    id: '1',
-    projectId: '2',
-    project: mockProjects[1],
-    freelancerId: '2',
-    status: 'pending',
-    role: 'Backend Developer',
-    message: 'We would love to have you work on the backend API for our food delivery app. Your experience with Node.js and GraphQL makes you a perfect fit.',
-    sentAt: '2024-01-22'
-  },
-  {
-    id: '2',
-    projectId: '4',
-    project: mockProjects[3],
-    freelancerId: '2',
-    status: 'pending',
-    role: 'Full Stack Developer',
-    message: 'Your expertise in React and Node.js would be valuable for our infrastructure monitoring dashboard.',
-    sentAt: '2024-01-20'
-  },
-  {
-    id: '3',
-    projectId: '1',
-    project: mockProjects[0],
-    freelancerId: '4',
-    status: 'accepted',
-    role: 'Backend Developer',
-    message: 'We need help with the backend architecture for our e-commerce platform.',
-    sentAt: '2024-01-18'
-  }
-];
 
 export const mockTimeEntries: TimeEntry[] = [
   {
