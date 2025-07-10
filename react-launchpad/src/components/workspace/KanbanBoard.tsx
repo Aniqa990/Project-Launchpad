@@ -3,11 +3,11 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
-import { Avatar } from '../ui/Avatar';
+import { Card } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Avatar } from '../ui/avatar';
 import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 import { 
   Plus, 
   Clock, 

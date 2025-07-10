@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Avatar } from '../components/ui/Avatar';
-import { Badge } from '../components/ui/Badge';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Avatar } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   User, 

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '../ui/Button';
-import { Avatar } from '../ui/Avatar';
+import { Button } from '../ui/button';
+import { Avatar } from '../ui/avatar';
 import { 
   Rocket, 
   Search, 

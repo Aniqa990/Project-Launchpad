@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Modal } from './Modal';
-import { Button } from './Button';
-import { Avatar } from './Avatar';
-import { Badge } from './Badge';
+import { Button } from './button';
+import { Avatar } from './avatar';
+import { Badge } from './badge';
 import { Star, Send, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 

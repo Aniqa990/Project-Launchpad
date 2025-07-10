@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { AppShell } from '../layout/AppShell';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
-import { Avatar } from '../ui/Avatar';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Avatar } from '../ui/avatar';
 import { Modal } from '../ui/Modal';
 import { Calendar, DollarSign, Download, CheckSquare, Clock, FileText, User, Eye, MessageSquare, Filter, AlertCircle } from 'lucide-react';
 
