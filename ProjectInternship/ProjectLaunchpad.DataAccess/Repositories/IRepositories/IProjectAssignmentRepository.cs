@@ -1,0 +1,19 @@
+﻿using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
+{
+    public interface IProjectAssignmentRepository
+    {
+        Task AssignFreelancersAsync(int projectId, int freelancerId);
+        Task<List<FreelancerWithUserDTO>> GetFreelancersByProjectAsync(int projectId);
+        Task<List<object>> GetProjectsByFreelancerAsync(int freelancerId);
+        Task RemoveFreelancerFromProjectAsync(int projectId, int freelancerId);
+    }
+
+}
