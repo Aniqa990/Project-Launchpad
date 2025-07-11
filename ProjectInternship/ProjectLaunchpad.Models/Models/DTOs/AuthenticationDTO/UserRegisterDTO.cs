@@ -13,7 +13,6 @@ namespace ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO
         public string? Email { get; set; }
         public string? PhoneNo { get; set; }
         public string? Password { get; set; }
-        public string? ConfirmPassword { get; set; }
         public string? Role { get; set; }       // "Client" / "Freelancer"
         public string? Gender { get; set; }     // Optional
     }

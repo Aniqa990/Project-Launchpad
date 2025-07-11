@@ -47,9 +47,9 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return await _db.payments.Where(p => p.FreelancerId == freelancerId).ToListAsync();
         }
 
-        public async Task<IEnumerable<Payment>> GetPaymentsByClientIdAsync(int clientId)
-        {
-            return await _db.payments.Where(p => p.ClientId == clientId).ToListAsync();
-        }
+        //public async Task<IEnumerable<Payment>> GetPaymentsByClientIdAsync(int clientId)
+        //{
+        //    return await _db.payments.Where(p => p.ClientId == clientId).ToListAsync();
+        //}
     }
 }

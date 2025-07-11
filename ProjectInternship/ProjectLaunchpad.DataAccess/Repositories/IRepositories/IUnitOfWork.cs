@@ -15,7 +15,7 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
         IClientProfileRepository ClientProfiles { get; }
         IProjectAssignmentRepository ProjectFreelancers { get; }
         ITaskRepository TaskRepository { get; }
-
+        IProjectRepository ProjectRepository { get; }
         ISubTaskRepository SubTaskRepository { get; }
 
         IMilestoneRepository MilestoneRepository { get; }

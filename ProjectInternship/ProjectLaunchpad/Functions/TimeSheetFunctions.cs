@@ -40,8 +40,8 @@ namespace ProjectLaunchpad.Functions
 
                 var timesheet = new TimeSheet
                 {
-                    ProjectName = dto.ProjectName,
-                    FreelancerName = dto.FreelancerName,
+                    ProjectId = dto.ProjectId,
+                    FreelancerId = dto.FreelancerId,
                     DateOfWork = dto.DateOfWork,
                     StartTime = dto.StartTime,
                     EndTime = dto.EndTime,
@@ -96,9 +96,9 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetTimeSheetsByFreelancer")]
         public async Task<HttpResponseData> GetTimeSheetsByFreelancer(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "timesheets/freelancer/{name}")] HttpRequestData req, string name)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "timesheets/freelancer/{name}")] HttpRequestData req, int freelancerId)
         {
-            var timesheets = await _unitOfWork.TimeSheet.GetTimeSheetsByFreelancerAsync(name);
+            var timesheets = await _unitOfWork.TimeSheet.GetTimeSheetsByFreelancerAsync(freelancerId);
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(timesheets);
             return response;

@@ -39,6 +39,9 @@ namespace ProjectLaunchpad.Models
 
         public ICollection<ProjectRequest> ProjectRequests { get; set; } // Requests for project assignments
         public ICollection<Feedback> Feedbacks { get; set; } // Feedback given by clients
+        public ICollection<TimeSheet> TimeSheets { get; set; } // Timesheets for work done
+        public ICollection<Logs> Logs { get; set; }
+
 
     }
 }

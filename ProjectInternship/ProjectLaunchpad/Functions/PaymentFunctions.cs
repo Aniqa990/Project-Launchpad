@@ -67,15 +67,15 @@ namespace ProjectLaunchpad.Functions
         }
 
 
-        [Function("GetPaymentsByClientId")]
-        public async Task<HttpResponseData> GetPaymentsByClientId(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/client/{clientId:int}")] HttpRequestData req, int clientId)
-        {
-            var payments = await _unitOfWork.PaymentRepository.GetPaymentsByClientIdAsync(clientId);
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(payments);
-            return response;
-        }
+        //[Function("GetPaymentsByClientId")]
+        //public async Task<HttpResponseData> GetPaymentsByClientId(
+        //    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/client/{clientId:int}")] HttpRequestData req, int clientId)
+        //{
+        //    var payments = await _unitOfWork.PaymentRepository.GetPaymentsByClientIdAsync(clientId);
+        //    var response = req.CreateResponse(HttpStatusCode.OK);
+        //    await response.WriteAsJsonAsync(payments);
+        //    return response;
+        //}
 
         [Function("AddPayment")]
         public async Task<HttpResponseData> AddPayment(
@@ -89,7 +89,6 @@ namespace ProjectLaunchpad.Functions
 
             var newPayment = new Payment
             {
-                ClientId = paymentDto.ClientId,
                 ProjectId = paymentDto.ProjectId,
                 FreelancerId = paymentDto.FreelancerId,
                 PaymentType = paymentDto.PaymentType,

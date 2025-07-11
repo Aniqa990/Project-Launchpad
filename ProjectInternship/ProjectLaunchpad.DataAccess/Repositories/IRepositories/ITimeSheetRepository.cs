@@ -12,9 +12,9 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task AddTimeSheetAsync(TimeSheet timeSheet);
         Task<IEnumerable<TimeSheet>> GetAllTimeSheetsAsync();
         Task<TimeSheet?> GetTimeSheetByIdAsync(int id);
-        Task<IEnumerable<TimeSheet>> GetTimeSheetsByFreelancerAsync(string freelancerName);
+        Task<IEnumerable<TimeSheet>> GetTimeSheetsByFreelancerAsync(int freelancerId);
         Task<IEnumerable<TimeSheet>> GetTimeSheetsByDateAsync(DateTime date);
-        Task<IEnumerable<TimeSheet>> GetTimeSheetsByProjectAsync(string projectName);
+        Task<IEnumerable<TimeSheet>> GetTimeSheetsByProjectAsync(int projectId);
         Task ApproveTimeSheetAsync(int id, string reviewerComments = "");
         Task RejectTimeSheetAsync(int id, string reviewerComments = "");
         Task DeleteTimeSheetAsync(int id);

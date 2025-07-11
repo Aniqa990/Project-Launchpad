@@ -13,7 +13,7 @@ namespace ProjectLaunchpad.Models.Models.DTOs
         public string? ProjectTitle { get; set; }
         public string? ProjectDescription { get; set; }
         public string? ProjectCategory { get; set; }
-        public DateOnly? Deadline { get; set; }
+        public DateTime? Deadline { get; set; }
         public string? Skills { get; set; }
         public decimal? Budget { get; set; }
         public int? ClientId { get; set; }

@@ -17,7 +17,7 @@ namespace ProjectLaunchpad.Models.Models
         public int FreelancerId { get; set; }
 
         [ForeignKey("FreelancerId")]
-        public User? Freelancer { get; set; }
+        public FreelancerProfile? Freelancer { get; set; }
 
         public int TaskId { get; set; }
 

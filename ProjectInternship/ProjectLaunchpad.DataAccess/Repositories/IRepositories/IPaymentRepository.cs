@@ -15,7 +15,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task<IEnumerable<Payment>> GetPaymentsByProjectIdAsync(int projectId);
         Task<IEnumerable<Payment>> GetPaymentsByFreelancerIdAsync(int freelancerId);
 
-        Task<IEnumerable<Payment>> GetPaymentsByClientIdAsync(int clientId);
+        //Task<IEnumerable<Payment>> GetPaymentsByClientIdAsync(int clientId);
 
     }
 }

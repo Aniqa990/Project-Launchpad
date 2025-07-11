@@ -1,25 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.Models.Models
 {
-    //once the project is merged then all the fk must be added
     public class Payment
     {
         [Key]
         public int Id { get; set; }
-
-        //fk
-        public int ClientId { get; set; }
-
-        //fk
         public int ProjectId { get; set; }
-        //fk
+
+        [ForeignKey("ProjectId")]
+        public Project Project { get; set; }
         public int FreelancerId { get; set; }
+
+        [ForeignKey("FreelancerId")]
+        public FreelancerProfile Freelancer { get; set; }
 
         // Milestone or Hourly — should match Project.PaymentType
         public string? PaymentType { get; set; }

@@ -32,11 +32,11 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task<IEnumerable<Project>> GetProjectsByCategoryAsync(string categoryOrDomain)
         {
             return await _db.projects
-                            .Where(p => p.Category.ToLower() == categoryOrDomain.ToLower())
+                            .Where(p => p.CategoryOrDomain.ToLower() == categoryOrDomain.ToLower())
                             .ToListAsync();
         }
 
-        public async Task<IEnumerable<Project>> GetProjectsByDeadlineRangeAsync(DateOnly start, DateOnly end)
+        public async Task<IEnumerable<Project>> GetProjectsByDeadlineRangeAsync(DateTime start, DateTime end)
         {
             return await _db.projects
                             .Where(p => p.Deadline >= start && p.Deadline <= end)

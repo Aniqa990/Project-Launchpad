@@ -36,10 +36,11 @@ namespace ProjectLaunchpad.Models.Models
         public string? FreelancerComments { get; set; }
 
         public bool IsApproved { get; set; } = false;
-
-        // Foreign key to be added once the project is merge with other modules
         public int ProjectId { get; set; }
 
-        
+        [ForeignKey("ProjectId")]
+        public Project project { get; set; }
+
+
     }
 }

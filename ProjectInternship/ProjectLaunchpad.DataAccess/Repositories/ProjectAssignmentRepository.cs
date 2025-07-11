@@ -2,7 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models.Models;
-using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +53,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .Where(pa => pa.FreelancerId == freelancerId)
                 .Select(pa => new {
                     Id = pa.Project.Id,
-                    Title = pa.Project.Title,
+                    Title = pa.Project.ProjectTitle,
                     Description = pa.Project.Description,
                     Status = pa.Project.Status,
                     Budget = pa.Project.Budget,
@@ -74,7 +74,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                             CreatedAt = pa.Project.Client.User.CreatedAt
                         }
                     },
-                    SkillsRequired = pa.Project.SkillsRequired,
+                    SkillsRequired = pa.Project.RequiredSkills,
                     AssignedFreelancers = pa.Project.AssignedFreelancers.Select(af => new {
                         Freelancer = new
                         {

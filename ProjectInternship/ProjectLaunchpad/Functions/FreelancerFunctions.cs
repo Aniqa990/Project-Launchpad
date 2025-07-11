@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models;
-using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
 using System;
 using System.Collections.Generic;
