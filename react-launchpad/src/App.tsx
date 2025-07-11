@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AppShell } from './components/layout/AppShell';
-import { Home } from './pages/Home';
+import { AppShell } from './components/layout/Appshell';
+import LandingPage from './pages/LandingPage';
 import { Auth } from './pages/Auth';
 import { Settings } from './pages/Settings';
 import { ClientDashboard } from './pages/client/Dashboard';
@@ -16,7 +16,7 @@ import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
 import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
-import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
+import { ProjectWorkspace } from './components/workspace/projectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 
@@ -40,7 +40,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Auth mode="login" />} />
       <Route path="/signup" element={<Auth mode="signup" />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

@@ -21,12 +21,9 @@ export function Auth({ mode }: AuthProps) {
     gender: "",
     role: "freelancer" as "client" | "freelancer",
   });
-  const [verificationCode, setVerificationCode] = useState('');
-  const [sentCode, setSentCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const { login, signup, isAuthenticated, user } = useAuth();
@@ -43,49 +40,15 @@ export function Auth({ mode }: AuthProps) {
   }, [isAuthenticated, user, navigate, mode]);
 
   const handleNext = () => {
-    if (step < 4) setStep(step + 1);
+    if (step < 3) setStep(step + 1);
   };
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const sendVerificationCode = async () => {
-    setIsLoading(true);
-    // Generate a simple 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setSentCode(code);
-    
-    // Mock email sending - in production, you'd send this to your backend
-    console.log(`Verification code sent to ${formData.email}: ${code}`);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    toast.success(`Verification code sent to ${formData.email}. For demo purposes, the code is: ${code}`);
-  };
-
-  const handleVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsVerifying(true);
-    
-    if (verificationCode === sentCode) {
-      try {
-        await signup(formData);
-        toast.success("Account created successfully!");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Signup failed");
-      }
-    } else {
-      toast.error('Invalid verification code. Please try again.');
-    }
-    
-    setIsVerifying(false);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (mode === "login") {
       setLoading(true);
       try {
@@ -97,14 +60,20 @@ export function Auth({ mode }: AuthProps) {
         setLoading(false);
       }
     } else {
-      // For signup, validate passwords and send verification code
+      // For signup, validate passwords and submit directly after step 3
       if (formData.password !== formData.confirmPassword) {
         toast.error('Passwords do not match');
         return;
       }
-      
-      await sendVerificationCode();
-      handleNext();
+      setIsLoading(true);
+      try {
+        await signup(formData);
+        toast.success("Account created successfully!");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Signup failed");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -242,7 +211,7 @@ export function Auth({ mode }: AuthProps) {
     );
   }
 
-  // Signup mode - show 4-step process
+  // Signup mode - show 3-step process
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -263,18 +232,18 @@ export function Auth({ mode }: AuthProps) {
           {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-gray-600">Step {step} of 4</span>
-              <span className="text-sm text-gray-500">{Math.round((step / 4) * 100)}% Complete</span>
+              <span className="text-sm font-medium text-gray-600">Step {step} of 3</span>
+              <span className="text-sm text-gray-500">{Math.round((step / 3) * 100)}% Complete</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(step / 4) * 100}%` }}
+                style={{ width: `${(step / 3) * 100}%` }}
               ></div>
             </div>
           </div>
 
-          <form onSubmit={step === 4 ? handleVerification : handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Step 1: Role Selection */}
             {step === 1 && (
               <>
@@ -515,66 +484,7 @@ export function Auth({ mode }: AuthProps) {
                     disabled={isLoading}
                     className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? 'Sending Code...' : 'Send Verification Code'}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Step 4: Email Verification */}
-            {step === 4 && (
-              <>
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Verify Your Email</h1>
-                  <p className="text-gray-600">
-                    We've sent a verification code to<br />
-                    <span className="font-semibold text-gray-800">{formData.email}</span>
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Verification Code
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-center text-xl font-mono tracking-wider"
-                    placeholder="Enter 6-digit code"
-                    maxLength={6}
-                  />
-                </div>
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={sendVerificationCode}
-                    disabled={isLoading}
-                    className="text-blue-600 hover:text-blue-700 font-medium text-sm disabled:opacity-50"
-                  >
-                    {isLoading ? 'Sending...' : 'Resend verification code'}
-                  </button>
-                </div>
-
-                <div className="flex space-x-4">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isVerifying || verificationCode.length !== 6}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isVerifying ? 'Verifying...' : 'Verify & Create Account'}
+                    {isLoading ? 'Signing Up...' : 'Sign Up'}
                   </button>
                 </div>
               </>

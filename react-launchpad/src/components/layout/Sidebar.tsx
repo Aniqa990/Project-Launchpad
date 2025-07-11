@@ -28,24 +28,25 @@ export function Sidebar() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client/dashboard' },
     { icon: Plus, label: 'Create Project', path: '/client/create-project' },
     { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
-    { icon: Kanban, label: 'View Tasks', path: '/client/tasks/1' },
-    { icon: Users, label: 'Find Freelancers', path: '/client/freelancer-suggestions/1' },
-    { icon: Clock, label: 'Time Logs', path: '/client/hourly-logs/1' },
-    { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval/1' },
-    { icon: CheckSquare, label: 'Milestones', path: '/client/milestones/1' },
-    { icon: CreditCard, label: 'Payments', path: '/client/payment/1' },
-    { icon: MessageSquare, label: 'Messages', path: '/chat/1' },
+    { icon: Kanban, label: 'View Tasks', path: '/client/tasks' },
+    { icon: Users, label: 'Find Freelancers', path: '/client/freelancer-suggestions' },
+    { icon: Clock, label: 'Time Logs', path: '/client/hourly-logs' },
+    { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
+    { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
+    { icon: CreditCard, label: 'Payments', path: '/client/payments' },
+    { icon: MessageSquare, label: 'Messages', path: '/messages' },
   ];
 
   const freelancerMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/freelancer/dashboard' },
     { icon: User, label: 'Profile Setup', path: '/freelancer/profile' },
-    { icon: Kanban, label: 'Task Board', path: '/freelancer/kanban/1' },
-    { icon: Clock, label: 'Submit Timesheet', path: '/freelancer/submit-timesheet/1' },
-    { icon: Upload, label: 'Submit Work', path: '/freelancer/submit-deliverables/1' },
+    { icon: Clock, label: 'Requests', path: '/freelancer/requests' },
+    { icon: Kanban, label: 'Task Board', path: '/freelancer/kanban' },
+    { icon: Clock, label: 'Submit Timesheet', path: '/freelancer/submit-timesheet' },
+    { icon: Upload, label: 'Submit Work', path: '/freelancer/submit-deliverables' },
     { icon: DollarSign, label: 'Earnings', path: '/freelancer/payment' },
-    { icon: MessageSquare, label: 'Messages', path: '/chat/1' },
-    { icon: Star, label: 'Feedback', path: '/feedback/1' },
+    { icon: MessageSquare, label: 'Messages', path: '/chat' },
+    { icon: Star, label: 'Feedback', path: '/feedback' },
   ];
 
   const menuItems = user.role === 'client' ? clientMenuItems : freelancerMenuItems;
