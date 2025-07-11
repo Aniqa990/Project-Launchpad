@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 // import DashboardLayout from '../../components/Layout/DashboardLayout';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 // Use native elements for textarea, select, input
