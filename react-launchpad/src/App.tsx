@@ -3,14 +3,22 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppShell } from './components/layout/Appshell';
-import { Home } from './pages/Home';
+import LandingPage from './pages/LandingPage';
 import { Auth } from './pages/Auth';
+import { Settings } from './pages/Settings';
+import { ClientDashboard } from './pages/client/Dashboard';
+import { CreateProject } from './pages/client/CreateProject';
+import { ClientProjects } from './pages/client/Projects';
+import { ClientPayments } from './pages/client/Payments';
+import { ClientMessages } from './pages/client/Messages';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
-import { ProfileSetup } from './pages/freelancer/ProfileSetup';
-import {FreelancerRequests} from './pages/freelancer/Requests';
-import { FreelancerReviews } from './pages/freelancer/Reviews';
 import { FreelancerProjects } from './pages/freelancer/Projects';
-
+import { FreelancerRequests } from './pages/freelancer/Requests';
+import { FreelancerMessages } from './pages/freelancer/Messages';
+import { ProfileSetup } from './pages/freelancer/ProfileSetup';
+import { ProjectWorkspace } from './components/workspace/projectWorkspace';
+import ForgotPasswordPage from './pages/ForgotPassword';
+import TimesheetApproval from './pages/client/TimesheetApproval';
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
   const { isAuthenticated, user } = useAuth();
@@ -32,9 +40,10 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Auth mode="login" />} />
       <Route path="/signup" element={<Auth mode="signup" />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       
       {/* Freelancer Profile Setup */}
       <Route path="/freelancer/profile-setup" element={
@@ -43,6 +52,19 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
+      <Route path="/client/*" element={
+        <ProtectedRoute requiredRole="client">
+          <AppShell />
+        </ProtectedRoute>
+      }>
+        <Route path="dashboard" element={<ClientDashboard />} />
+        <Route path="create-project" element={<CreateProject />} />
+        <Route path="projects" element={<ClientProjects />} />
+        <Route path="payments" element={<ClientPayments />} />
+        <Route path="messages" element={<ClientMessages />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="timesheet-approval" element={<TimesheetApproval />} />
+      </Route>
       
       <Route path="/freelancer/*" element={
         <ProtectedRoute requiredRole="freelancer">
@@ -52,7 +74,14 @@ function AppRoutes() {
         <Route path="dashboard" element={<FreelancerDashboard />} />
         <Route path="requests" element={<FreelancerRequests />} />
         <Route path="projects" element={<FreelancerProjects />} />
-        <Route path="reviews" element={<FreelancerReviews />} />
+      </Route>
+
+      <Route path="/workspace/:projectId" element={
+        <ProtectedRoute>
+          <AppShell />
+        </ProtectedRoute>
+      }>
+        <Route path="" element={<ProjectWorkspace />} />
       </Route>
 
       {/* Redirect authenticated users */}

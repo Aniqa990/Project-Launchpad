@@ -3,9 +3,10 @@ import {getProjectRequests, respondToProjectRequest} from '../../apiendpoints';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
 import { 
   Calendar,
   DollarSign,
@@ -18,7 +19,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProjectRequest } from '@/types';
-
 
 export function FreelancerRequests() {
   const { user } = useAuth();
@@ -34,76 +34,81 @@ export function FreelancerRequests() {
           console.log(data);
 
           const parsedData: ProjectRequest[] = data.map((req: any) => ({
-          ...req,
-          skills: typeof req.Skills === 'string'
-            ? JSON.parse(req.Skills)
-            : req.Skills,
-        }));
-
-        setRequests(parsedData);
-        console.log(parsedData);
+            projectId: req.ProjectId,
+            freelancerId: req.FreelancerId,
+            projectTitle: req.ProjectTitle,
+            projectDescription: req.ProjectDescription,
+            projectCategory: req.ProjectCategory,
+            deadline: req.Deadline ? new Date(req.Deadline) : undefined,
+            skills: typeof req.Skills === 'string' ? JSON.parse(req.Skills) : req.Skills || [],
+            budget: req.Budget,
+            clientId: req.ClientId,
+            clientName: req.ClientName,
+            clientEmail: req.ClientEmail,
+            clientPhone: req.ClientPhoneNumber,
+            clientProfile: req.ClientProfilePicture,
+            status: req.Status,
+            sentAt: req.RequestedAt ? new Date(req.RequestedAt) : undefined,
+          }));
+          setRequests(parsedData);
+          console.log(parsedData);
         }
       } catch (error: any) {
         toast.error(error.message || 'Failed to load project requests');
       }
     };
-
     fetchRequests();
   }, [user?.id]);
 
+  const handleAcceptRequest = async (projectId: number) => {
+    try {
+      await respondToProjectRequest(projectId, 'accepted', user?.id);
+      setRequests((prev) => prev.map((req) =>
+        req.projectId === projectId ? { ...req, status: 'accepted' } : req
+      ));
+      toast.success('Project request accepted!');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setShowDetailDialog(false);
+    }
+  };
 
-const handleAcceptRequest = async (projectId: number) => {
-  try {
-    await respondToProjectRequest(projectId, 'accepted', user?.id);
-    setRequests(prev => prev.map(req => 
-      req.projectId === projectId ? { ...req, status: 'accepted' } : req
-    ));
-    toast.success('Project request accepted!');
-  } catch (err: any) {
-    toast.error(err.message);
-  } finally {
-    setShowDetailDialog(false);
-  }
-};
-
-const handleRejectRequest = async (projectId: number) => {
-  try {
-    await respondToProjectRequest(projectId, 'rejected', user?.id);
-    setRequests(prev => prev.map(req => 
-      req.projectId === projectId ? { ...req, status: 'rejected' } : req
-    ));
-    toast.success('Project request declined');
-  } catch (err: any) {
-    toast.error(err.message);
-  } finally {
-    setShowDetailDialog(false);
-  }
-};
+  const handleRejectRequest = async (projectId: number) => {
+    try {
+      await respondToProjectRequest(projectId, 'rejected', user?.id);
+      setRequests((prev) => prev.map((req) =>
+        req.projectId === projectId ? { ...req, status: 'rejected' } : req
+      ));
+      toast.success('Project request declined');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setShowDetailDialog(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'accepted': return 'success';
-      case 'rejected': return 'danger';
-      case 'pending': return 'warning';
+      case 'accepted': return 'default';
+      case 'rejected': return 'destructive';
+      case 'pending': return 'secondary';
       default: return 'default';
     }
   };
 
-  const RequestCard = ({ request }: { request: any }) => (
+  const RequestCard = ({ request }: { request: ProjectRequest }) => (
     <Card className="transition-shadow hover:shadow-md cursor-pointer">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={request.clientProfile} alt={request.clientName} />
-              <AvatarFallback>{request.clientName?.[0]}</AvatarFallback>
-            </Avatar>
+            <Avatar src={request.clientProfile} size="sm" />
             <div>
               <p className="font-medium text-gray-900">{request.clientName}</p>
               <p className="text-sm text-gray-500">wants to hire you as</p>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.role}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.projectCategory}</h3>
           <h4 className="text-md font-medium text-blue-600 mb-2">{request.projectTitle}</h4>
         </div>
         <Badge variant={getStatusColor(request.status) as any}>
@@ -121,30 +126,22 @@ const handleRejectRequest = async (projectId: number) => {
           </div>)}
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-1" />
-            Due {new Date(request.deadline).toLocaleDateString()}
+            Due {request.deadline ? format(request.deadline, 'dd MMM yyyy') : ''}
           </div>
         </div>
-        
-        {/* <div className="flex items-center text-sm text-gray-500">
-          <Clock className="w-4 h-4 mr-1" />
-          Sent {new Date(request.sentAt).toLocaleDateString()}
-        </div> */}
       </div>
-
       <div className="flex flex-wrap gap-2 mb-4">
         {request.skills.slice(0, 3).map((skill: string) => (
-          <Badge key={skill} className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">{skill}</Badge>
-
+          <Badge key={skill} variant="info" size="sm">{skill}</Badge>
         ))}
         {request.skills.length > 3 && (
-          <Badge className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">+{request.skills.length - 3} more</Badge>
+          <Badge variant="info" size="sm">+{request.skills.length - 3} more</Badge>
         )}
       </div>
-
       <div className="flex space-x-2">
         <Button 
           variant="outline" 
-          size = "sm" 
+          size="sm" 
           onClick={() => {
             setSelectedRequest(request);
             setShowDetailDialog(true);
@@ -153,23 +150,22 @@ const handleRejectRequest = async (projectId: number) => {
           <Eye className="w-4 h-4" />
           View Details
         </Button>
-
         {request.status === 'pending' && (
           <>
             <Button 
               size="sm" 
-              variant="default"
-              onClick={() => handleAcceptRequest(request.id)}
+              variant="primary"
+              icon={Check}
+              onClick={() => handleAcceptRequest(request.projectId)}
             >
-              <Check className="w-4 h-4" />
               Accept
             </Button>
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => handleRejectRequest(request.id)}
+              icon={X}
+              onClick={() => handleRejectRequest(request.projectId)}
             >
-              <X className="w-4 h-4" />
               Decline
             </Button>
           </>
@@ -178,8 +174,8 @@ const handleRejectRequest = async (projectId: number) => {
     </Card>
   );
 
-  const pendingRequests = requests.filter(req => req.status === 'pending');
-  const respondedRequests = requests.filter(req => req.status !== 'pending');
+  const pendingRequests = requests.filter((req) => req.status === 'pending');
+  const respondedRequests = requests.filter((req) => req.status !== 'pending');
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -188,7 +184,6 @@ const handleRejectRequest = async (projectId: number) => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Project Requests</h1>
         <p className="text-gray-600">Review and respond to project invitations</p>
       </div>
-
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
@@ -210,13 +205,12 @@ const handleRejectRequest = async (projectId: number) => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Accepted</p>
               <p className="text-2xl font-bold text-gray-900">
-                {requests.filter(r => r.status === 'accepted').length}
+                {requests.filter((r) => r.status === 'accepted').length}
               </p>
             </div>
           </div>
         </Card>
       </div>
-
       {/* Pending Requests */}
       {pendingRequests.length > 0 && (
         <div className="mb-8">
@@ -230,7 +224,6 @@ const handleRejectRequest = async (projectId: number) => {
           </div>
         </div>
       )}
-
       {/* Previous Responses */}
       {respondedRequests.length > 0 && (
         <div>
@@ -244,7 +237,6 @@ const handleRejectRequest = async (projectId: number) => {
           </div>
         </div>
       )}
-
       {/* Empty State */}
       {requests.length === 0 && (
         <Card className="text-center py-12">
@@ -257,115 +249,83 @@ const handleRejectRequest = async (projectId: number) => {
           </p>
         </Card>
       )}
-
       {/* Request Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-  <DialogContent className="max-w-3xl">
-    <DialogHeader>
-      <DialogTitle>Project Request Details</DialogTitle>
-      <DialogDescription>
-        Review full project details before responding.
-      </DialogDescription>
-    </DialogHeader>
-
-    {selectedRequest && (
-      <div className="space-y-6">
-        {/* Client Info */}
-        <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-          <Avatar className="h-10 w-10">
-            <AvatarImage
-              src={selectedRequest.clientProfile}
-              alt={selectedRequest.clientName}
-            />
-            <AvatarFallback>
-              {selectedRequest.clientName?.[0] || "C"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">
-              {selectedRequest.clientName}
-            </h3>
-            <p className="text-gray-600">Client</p>
-            <div className="flex items-center mt-1">
-              <Star className="w-4 h-4 text-yellow-400 fill-current" />
-              <span className="text-sm text-gray-600 ml-1">
-                4.8 (23 reviews)
-              </span>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Project Request Details</DialogTitle>
+            <DialogDescription>
+              Review full project details before responding.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-6">
+              {/* Client Info */}
+              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <Avatar src={selectedRequest.clientProfile} size="sm" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">
+                    {selectedRequest.clientName}
+                  </h3>
+                  <p className="text-gray-600">Client</p>
+                </div>
+              </div>
+              {/* Project Details */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">
+                  Project: {selectedRequest.projectTitle}
+                </h4>
+                <p className="text-gray-600 mb-4">
+                  {selectedRequest.projectDescription}
+                </p>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {selectedRequest.budget && (<div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Budget
+                    </label>
+                    <p className="text-lg font-semibold text-green-600">
+                      ${selectedRequest.budget.toLocaleString()}
+                    </p>
+                  </div>)}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Deadline
+                    </label>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {selectedRequest.deadline ? format(selectedRequest.deadline, 'dd MMM yyyy') : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Required Skills
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRequest.skills.map((skill: string) => (
+                      <Badge key={skill} variant="info" size="sm">{skill}</Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Actions */}
+              {selectedRequest.status === "pending" && (
+                <div className="flex space-x-4 pt-4 border-t">
+                  <Button className="flex-1" onClick={() => handleAcceptRequest(selectedRequest.projectId)}>
+                    Accept Project
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleRejectRequest(selectedRequest.projectId)}
+                  >
+                    Decline
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Project Details */}
-        <div>
-          <h4 className="font-semibold text-gray-900 mb-2">
-            Project: {selectedRequest.projectTitle}
-          </h4>
-          <p className="text-gray-600 mb-4">
-            {selectedRequest.projectDescription}
-          </p>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            {selectedRequest.budget && (<div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Budget
-              </label>
-              <p className="text-lg font-semibold text-green-600">
-                ${selectedRequest.budget.toLocaleString()}
-              </p>
-            </div>)}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Deadline
-              </label>
-              <p className="text-lg font-semibold text-gray-900">
-                {new Date(selectedRequest.deadline).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Required Skills
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {selectedRequest.skills.map((skill: string) => (
-                <Badge key={skill} variant="secondary">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Role & Message */}
-        {/* <div>
-          <h4 className="font-semibold text-gray-900 mb-2">
-            Role: {selectedRequest.role}
-          </h4>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-gray-700">{selectedRequest.message}</p>
-          </div>
-        </div> */}
-
-        {/* Actions */}
-        {selectedRequest.status === "pending" && (
-          <div className="flex space-x-4 pt-4 border-t">
-            <Button className="flex-1" onClick={() => handleAcceptRequest(selectedRequest.projectId)}>
-              Accept Project
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => handleRejectRequest(selectedRequest.projectId)}
-            >
-              Decline
-            </Button>
-          </div>
-        )}
-      </div>
-    )}
-  </DialogContent>
-</Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,3 @@
-import { StringToBoolean } from "class-variance-authority/types";
-
 export interface User {
   id?: number;
   firstName: string;
@@ -94,8 +92,7 @@ export interface Project {
   skills: string[];
   team: User[];
   progress: number;
-  createdAt: string;
-  milestones: Milestone[];
+  milestones: { name: string }[];
 }
 
 export interface Milestone {
@@ -142,6 +139,21 @@ export interface ProjectRequest {
   sentAt: string;
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'todo' | 'inprogress' | 'done';
+  assigneeId: string;
+  assignee: User;
+  projectId: string;
+  priority: 'low' | 'medium' | 'high';
+  estimatedHours: number;
+  actualHours: number;
+  createdAt: string;
+  dueDate: string;
+}
+
 export interface TimeEntry {
   id: string;
   userId: string;
@@ -178,14 +190,65 @@ export interface Payment {
 }
 
 export interface Deliverable {
-  id: string;
-  projectId: string;
-  milestoneId: string;
-  name: string;
-  type: string;
-  size: number;
-  uploadedAt: string;
-  uploadedBy: string;
-  url: string;
-  isLocked: boolean;
+  Id: number;
+  uploadFiles: string;
+  projectId: number;
+  comment: string;
+  Status: string;
+  status?: string;
+}
+
+// Kanban Task Status Enum (backend: 0=ToDo, 1=InProgress, 2=Done)
+export enum KanbanTaskStatus {
+  ToDo = 0,
+  InProgress = 1,
+  Done = 2,
+}
+
+// Kanban Task Priority Level (backend: 0=Low, 1=Medium, 2=High, 3=Urgent)
+export enum KanbanTaskPriorityLevel {
+  Low = 0,
+  Medium = 1,
+  High = 2,
+  Urgent = 3,
+}
+
+// User structure as per API response (for CreatedByUser, AssignedToUser)
+export interface KanbanUser {
+  Id: number;
+  FirstName: string;
+  LastName: string | null;
+  Email: string | null;
+  PhoneNo: string | null;
+  Password: string | null;
+  ConfirmPassword: string | null;
+  Role: string | null;
+  Gender: string | null;
+  AvatarUrl: string | null;
+}
+
+// Subtask structure as per API response
+export interface KanbanSubtask {
+  Id: number;
+  Title: string;
+  Description: string | null;
+  DueDate: string | null;
+  Status: KanbanTaskStatus;
+  TaskItemId: number;
+}
+
+// Task structure as per API response
+export interface KanbanTask {
+  Id: number;
+  Title: string;
+  Description: string | null;
+  EstimatedDeadline: string | null;
+  Priority: KanbanTaskPriorityLevel;
+  Status: KanbanTaskStatus;
+  CreatedByUserId: number;
+  CreatedByUser: KanbanUser;
+  AssignedToUserId: number;
+  AssignedToUser: KanbanUser;
+  CreatedAt: string;
+  Subtasks: KanbanSubtask[];
 }

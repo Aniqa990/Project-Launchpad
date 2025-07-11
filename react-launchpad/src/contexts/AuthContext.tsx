@@ -17,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Set Axios auth header
   useEffect(() => {
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(JSON.parse(savedUser));
       setToken(savedToken);
     }
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string, role: 'client' | 'freelancer') => {
@@ -63,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, login, logout, token, signup, isAuthenticated: !!user }}>
-      {children}
+      {loading ? <div className="min-h-screen flex items-center justify-center text-lg text-gray-500">Loading...</div> : children}
     </AuthContext.Provider>
   );
 }
