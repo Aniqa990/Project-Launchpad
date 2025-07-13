@@ -4,6 +4,7 @@ using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs.TaskDTO;
 using ProjectLaunchpad.Models.Models.Enums;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Utility;
 using System;
 using System.IO;
 using System.Net;
@@ -15,16 +16,19 @@ namespace ProjectLaunchpad.Functions
     public class TaskFunctions
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly TokenAuthorization _auth;
 
-        public TaskFunctions(IUnitOfWork unitOfWork)
+        public TaskFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
         {
             _unitOfWork = unitOfWork;
+            _auth = auth;
         }
 
         [Function("GetAllTask")]
         public async Task<HttpResponseData> GetAllTask(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "tasks")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "tasks")] HttpRequestData req)
         {
+
             var tasks = await _unitOfWork.TaskRepository.GetAllAsync();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -34,9 +38,12 @@ namespace ProjectLaunchpad.Functions
 
         [Function("CreateTask")]
         public async Task<HttpResponseData> CreateTaskAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "tasks")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "tasks")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
 
+            if (!isAuthorized)
+                return unauthorizedResponse!;
             
             var dto = await req.ReadFromJsonAsync<CreateTaskDto>();
 
@@ -65,8 +72,13 @@ namespace ProjectLaunchpad.Functions
 
         [Function("UpdateTask")]
         public async Task<HttpResponseData> UpdateTaskAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "tasks/{id:int}")] HttpRequestData req, int id)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "tasks/{id:int}")] HttpRequestData req, int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<UpdateTaskDto>();
             if (dto == null)
                 return req.CreateResponse(HttpStatusCode.BadRequest);
@@ -90,8 +102,13 @@ namespace ProjectLaunchpad.Functions
 
         [Function("DeleteTask")]
         public async Task<HttpResponseData> DeleteTaskAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "tasks/{id:int}")] HttpRequestData req, int id)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "tasks/{id:int}")] HttpRequestData req, int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var task = await _unitOfWork.TaskRepository.GetByIdAsync(id);
             if (task == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);

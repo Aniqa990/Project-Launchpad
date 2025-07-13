@@ -3,10 +3,12 @@ using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs.PaymentDTO;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,10 +17,12 @@ namespace ProjectLaunchpad.Functions
     public class PaymentFunctions
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly TokenAuthorization _auth;
 
-        public PaymentFunctions(IUnitOfWork unitOfWork)
+        public PaymentFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
         {
             _unitOfWork = unitOfWork;
+            _auth = auth;
         }
 
         [Function("GetAllPayments")]
@@ -79,8 +83,13 @@ namespace ProjectLaunchpad.Functions
 
         [Function("AddPayment")]
         public async Task<HttpResponseData> AddPayment(
-     [HttpTrigger(AuthorizationLevel.Function, "post", Route = "payments")] HttpRequestData req)
+     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "payments")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var paymentDto = await req.ReadFromJsonAsync<CreatePaymentDto>();
             if (paymentDto == null)
             {

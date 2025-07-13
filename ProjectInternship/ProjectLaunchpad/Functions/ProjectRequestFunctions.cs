@@ -9,22 +9,30 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using ProjectLaunchpad.Utility;
+using System.Security.Claims;
 
 namespace ProjectLaunchpad.Functions
 {
     public class ProjectRequestFunctions
     {
         private readonly IUnitOfWork _unit;
+        private readonly TokenAuthorization _auth;
 
-        public ProjectRequestFunctions(IUnitOfWork unit)
+        public ProjectRequestFunctions(IUnitOfWork unit, TokenAuthorization auth)
         {
             _unit = unit;
+            _auth = auth;
         }
 
         [Function("CreateProjectRequest")]
         public async Task<HttpResponseData> CreateProjectRequest(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "projects/requests")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects/requests")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<ProjectRequestDTO>();
 
 
@@ -49,8 +57,12 @@ namespace ProjectLaunchpad.Functions
 
         [Function("UpdateRequestStatus")]
         public async Task<HttpResponseData> UpdateRequestStatus(
-            [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "requests/{freelancerId}/{projectId}")] HttpRequestData req, int freelancerId, int projectId)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "requests/{freelancerId}/{projectId}")] HttpRequestData req, int freelancerId, int projectId)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<ProjectRequestDTO>();
             var request = await _unit.ProjectRequests.GetRequestByFreelancerAndProjectAsync(freelancerId, projectId);
 

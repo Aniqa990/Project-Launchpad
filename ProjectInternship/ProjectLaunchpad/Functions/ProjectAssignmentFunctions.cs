@@ -8,22 +8,31 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using ProjectLaunchpad.Utility;
+using System.Security.Claims;
 
 namespace ProjectLaunchpad.Functions
 {
     public class ProjectAssignmentFunctions
     {
         private readonly IUnitOfWork _unit;
+        private readonly TokenAuthorization _auth;
 
-        public ProjectAssignmentFunctions(IUnitOfWork unit)
+        public ProjectAssignmentFunctions(IUnitOfWork unit, TokenAuthorization auth)
         {
             _unit = unit;
+            _auth = auth;
         }
 
         [Function("AssignFreelancersToProject")]
         public async Task<HttpResponseData> AssignFreelancersToProject(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "projects/assign")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects/assign")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<ProjectAssignmentDTO>();
 
             await _unit.ProjectFreelancers.AssignFreelancersAsync(dto.ProjectId, dto.FreelancerId);
@@ -60,9 +69,14 @@ namespace ProjectLaunchpad.Functions
 
         [Function("RemoveFreelancerFromProject")]
         public async Task<HttpResponseData> RemoveFreelancerFromProject(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "projects/{projectId}/freelancers/{freelancerId}")] HttpRequestData req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "projects/{projectId}/freelancers/{freelancerId}")] HttpRequestData req,
             int projectId, int freelancerId)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             await _unit.ProjectFreelancers.RemoveFreelancerFromProjectAsync(projectId, freelancerId);
             await _unit.SaveAsync();
 

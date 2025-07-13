@@ -3,10 +3,12 @@ using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,16 +17,23 @@ namespace ProjectLaunchpad.Functions
     public class FreelancerFunctions
     {
         private readonly IUnitOfWork _unit;
+        private readonly TokenAuthorization _auth;
 
-        public FreelancerFunctions(IUnitOfWork unit)
+        public FreelancerFunctions(IUnitOfWork unit, TokenAuthorization auth)
         {
             _unit = unit;
+            _auth = auth;
         }
 
         [Function("AddFreelancerProfile")]
         public async Task<HttpResponseData> AddFreelancerProfile(
-        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "freelancer")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "freelancer")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<FreelancerProfileDTO>();
             await _unit.FreelancerProfiles.AddFreelancerProfileAsync(dto);
             await _unit.SaveAsync();
@@ -35,9 +44,14 @@ namespace ProjectLaunchpad.Functions
 
         [Function("DeleteFreelancerProfile")]
         public async Task<HttpResponseData> DeleteFreelancerProfileAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "freelancer/{id:int}")] HttpRequestData req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "freelancer/{id:int}")] HttpRequestData req,
             int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
             if (profile is null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
@@ -48,9 +62,14 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetFreelancerById")]
         public async Task<HttpResponseData> GetFreelancerById(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancer/{id:int}")] HttpRequestData req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "freelancer/{id:int}")] HttpRequestData req,
             int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
             if (profile is null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
@@ -61,8 +80,13 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetAllFreelancers")]
         public async Task<HttpResponseData> GetAllFreelancers(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancers")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "freelancers")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var profiles = await _unit.FreelancerProfiles.GetAllFreelancerProfilesAsync();
             var res = req.CreateResponse(HttpStatusCode.OK);
             await res.WriteAsJsonAsync(profiles);
@@ -71,8 +95,13 @@ namespace ProjectLaunchpad.Functions
 
         [Function("UpdateFreelancerProfile")]
         public async Task<HttpResponseData> Update(
-            [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "freelancer/{id}")] HttpRequestData req, int id)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "freelancer/{id}")] HttpRequestData req, int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<FreelancerProfileDTO>();
             var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
 
