@@ -34,10 +34,10 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return await _db.TimeSheets.FindAsync(id);
         }
 
-        public async Task<IEnumerable<TimeSheet>> GetTimeSheetsByFreelancerAsync(string freelancerName)
+        public async Task<IEnumerable<TimeSheet>> GetTimeSheetsByFreelancerAsync(int freelancerId)
         {
             return await _db.TimeSheets
-                .Where(t => t.FreelancerName.ToLower() == freelancerName.ToLower())
+                .Where(t => t.FreelancerId == freelancerId)
                 .ToListAsync();
         }
 
@@ -48,10 +48,10 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<TimeSheet>> GetTimeSheetsByProjectAsync(string projectName)
+        public async Task<IEnumerable<TimeSheet>> GetTimeSheetsByProjectAsync(int projectId)
         {
             return await _db.TimeSheets
-                .Where(t => t.ProjectName.ToLower() == projectName.ToLower())
+                .Where(t => t.ProjectId == projectId)
                 .ToListAsync();
         }
 

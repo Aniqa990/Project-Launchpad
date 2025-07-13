@@ -29,10 +29,6 @@ namespace ProjectLaunchpad.Models.Models
         [Required]
         public string? Password { get; set; }
 
-        [NotMapped] // <== this is important
-        [Compare("Password", ErrorMessage = "Passwords do not match.")]
-        public string? ConfirmPassword { get; set; }
-
         [Required]
         public string? Role { get; set; }  // e.g., "Client", "Freelancer"
 

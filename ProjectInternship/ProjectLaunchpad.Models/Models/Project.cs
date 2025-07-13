@@ -14,26 +14,33 @@ namespace ProjectLaunchpad.Models.Models
         public int Id { get; set; }
 
         [Required]
-        public string Title { get; set; }
+        public string ProjectTitle { get; set; } = string.Empty;
 
         [Required]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
+
+        public string? PaymentType { get; set; }
 
         [Required]
-        public string Category { get; set; }
+        public string CategoryOrDomain { get; set; } = string.Empty;
 
         [Required]
-        public DateOnly Deadline { get; set; }
+        public DateTime Deadline { get; set; }
+
+        [NotMapped]
+        public TimeSpan Duration => Deadline - DateTime.Now;
 
         [Required]
-        public string SkillsRequired { get; set; }
+        public string RequiredSkills { get; set; } = string.Empty;
 
         [Required]
-        public decimal Budget { get; set; }
+        public decimal Budget { get; set; } 
 
         [Required]
-        public string Status { get; set; } = "Active";
+        public int NumberOfFreelancers { get; set; }
+        public string? Status { get; set; } = "Open"; // Open, Closed, In Progress
 
+        public string? AttachedDocumentPath { get; set; }
         [Required]
         public int ClientId { get; set; }
 
@@ -46,7 +53,7 @@ namespace ProjectLaunchpad.Models.Models
         public ICollection<Milestone> Milestones { get; set; }
 
         public ICollection<Feedback> Feedbacks { get; set; }
-            
+        public ICollection<Deliverables> Deliverables { get; set; }
+        public ICollection<TimeSheet> TimeSheets { get; set; }
     }
-
 }

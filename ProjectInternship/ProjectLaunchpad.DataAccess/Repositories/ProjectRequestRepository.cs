@@ -46,11 +46,11 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .Select(pr => new ProjectRequestDTO
                 {
                     ProjectId = pr.ProjectId,
-                    ProjectTitle = pr.Project.Title,
+                    ProjectTitle = pr.Project.ProjectTitle,
                     ProjectDescription = pr.Project.Description,
-                    ProjectCategory = pr.Project.Category,
+                    ProjectCategory = pr.Project.CategoryOrDomain,
                     Deadline = pr.Project.Deadline,
-                    Skills = pr.Project.SkillsRequired,
+                    Skills = pr.Project.RequiredSkills,
                     ClientId = pr.Project.ClientId,
                     ClientName = pr.Project.Client.User.FirstName + " " + pr.Project.Client.User.LastName,
                     ClientEmail = pr.Project.Client.User.Email,

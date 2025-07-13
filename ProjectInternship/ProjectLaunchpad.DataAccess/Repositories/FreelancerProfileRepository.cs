@@ -2,7 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models;
-using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 using System;
 using System.Collections.Generic;
 using System.Linq;

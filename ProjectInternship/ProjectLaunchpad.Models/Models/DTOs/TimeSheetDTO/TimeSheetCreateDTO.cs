@@ -8,8 +8,8 @@ namespace ProjectLaunchpad.Models.Models.DTOs
 {
     public class TimeSheetCreateDTO
     {
-        public string ProjectName { get; set; } = string.Empty;
-        public string FreelancerName { get; set; } = string.Empty;
+        public int ProjectId { get; set; }
+        public int FreelancerId { get; set; }
         public DateTime DateOfWork { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }

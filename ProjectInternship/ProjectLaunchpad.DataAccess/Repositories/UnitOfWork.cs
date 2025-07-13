@@ -16,6 +16,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IUserRepository Users { get; }
         public IFreelancerProfileRepository FreelancerProfiles { get; }
         public IClientProfileRepository ClientProfiles { get; }
+        public IProjectRepository ProjectRepository { get; }
         public ITaskRepository TaskRepository { get; }
         public IProjectAssignmentRepository ProjectFreelancers { get; }
         public ISubTaskRepository SubTaskRepository { get; }
@@ -38,6 +39,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
             Users = new UserRepository(_db);
             FreelancerProfiles = new FreelancerProfileRepository(_db);
             ProjectFreelancers = new ProjectAssignmentRepository(_db);
+            ProjectRepository = new ProjectRepository(_db);
             ProjectRequests = new ProjectRequestRepository(_db);
             TaskRepository = new TaskRepository(_db);
             SubTaskRepository = new SubTaskRepository(_db);

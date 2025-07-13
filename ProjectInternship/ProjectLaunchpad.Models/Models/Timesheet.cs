@@ -15,11 +15,13 @@ namespace ProjectLaunchpad.Models.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        public string ProjectName { get; set; } = string.Empty;
+        public int ProjectId { get; set; }
+        [ForeignKey("ProjectId")]
+        public Project Project { get; set; }
 
-        [Required]
-        public string FreelancerName { get; set; } = string.Empty;
+        public int FreelancerId { get; set; }
+        [ForeignKey("FreelancerId")]
+        public FreelancerProfile Freelancer { get; set; }
 
         [Required]
         public DateTime DateOfWork { get; set; }

@@ -18,9 +18,6 @@ namespace ProjectLaunchpad.Services
 
         public async Task<(string token, User user)> RegisterAsync(UserRegisterDTO dto)
         {
-            // Validation: Password and ConfirmPassword should match
-            if (dto.Password != dto.ConfirmPassword)
-                throw new Exception("Password and Confirm Password do not match.");
 
             if (await _unitOfWork.Users.UserExistsAsync(dto.Email))
                 throw new Exception("Email already in use");
