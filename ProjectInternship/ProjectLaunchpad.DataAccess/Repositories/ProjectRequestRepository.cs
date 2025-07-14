@@ -2,7 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models.Models;
-using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models.Models.DTOs.ProjectRequestDTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +20,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             _db = db;
         }
 
-        public async Task CreateRequestAsync(ProjectRequestDTO request)
+        public async Task CreateRequestAsync(ProjectRequestCreateDTO request)
         {
             var exists = await _db.projectRequests
                 .AnyAsync(pa => pa.ProjectId == request.ProjectId && pa.FreelancerId == request.FreelancerId);
@@ -32,18 +32,18 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                     ProjectId = request.ProjectId,
                     FreelancerId = request.FreelancerId,
                     RequestedAt = DateTime.UtcNow,
-                    Status = "Pending"
+                    Status = "pending"
                 });
             }
         }
-        public async Task<List<ProjectRequestDTO>> GetRequestsByFreelancerAsync(int freelancerId)
+        public async Task<List<ProjectRequestResponseDTO>> GetRequestsByFreelancerAsync(int freelancerId)
         {
             return await _db.projectRequests
                 .Where(pr => pr.FreelancerId == freelancerId)
                 .Include(pr => pr.Project)
                     .ThenInclude(p => p.Client)
                         .ThenInclude(c => c.User)
-                .Select(pr => new ProjectRequestDTO
+                .Select(pr => new ProjectRequestResponseDTO
                 {
                     ProjectId = pr.ProjectId,
                     ProjectTitle = pr.Project.ProjectTitle,

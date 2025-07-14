@@ -38,7 +38,7 @@ namespace ProjectLaunchpad.Models.Models
 
         [Required]
         public int NumberOfFreelancers { get; set; }
-        public string? Status { get; set; } = "Open"; // Open, Closed, In Progress
+        public string? Status { get; set; } = "active"; // active, closed, in progress
 
         public string? AttachedDocumentPath { get; set; }
         [Required]

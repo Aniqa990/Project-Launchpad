@@ -22,6 +22,8 @@ namespace ProjectLaunchpad.Models.Models
         [Required]
         public decimal Rating { get; set; }
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         public Project Project { get; set; }
         public FreelancerProfile Freelancer { get; set; }
     }

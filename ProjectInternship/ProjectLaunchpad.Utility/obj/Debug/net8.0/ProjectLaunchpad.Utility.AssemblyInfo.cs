@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProjectLaunchpad.Utility")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6989acc9244456666270df6dccb6403ff9a0a193")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0f5b3c55b2040cd54f980de0f6d32115f05c86dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProjectLaunchpad.Utility")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProjectLaunchpad.Utility")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

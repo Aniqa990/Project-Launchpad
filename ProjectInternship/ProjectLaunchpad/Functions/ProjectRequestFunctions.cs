@@ -1,6 +1,5 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
 using System;
 using System.Collections.Generic;
@@ -11,6 +10,7 @@ using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using ProjectLaunchpad.Utility;
 using System.Security.Claims;
+using ProjectLaunchpad.Models.Models.DTOs.ProjectRequestDTO;
 
 namespace ProjectLaunchpad.Functions
 {
@@ -33,7 +33,7 @@ namespace ProjectLaunchpad.Functions
             if (!isAuthorized)
                 return unauthorizedResponse!;
 
-            var dto = await req.ReadFromJsonAsync<ProjectRequestDTO>();
+            var dto = await req.ReadFromJsonAsync<ProjectRequestCreateDTO>();
 
 
             await _unit.ProjectRequests.CreateRequestAsync(dto);
@@ -63,7 +63,7 @@ namespace ProjectLaunchpad.Functions
             if (!isAuthorized)
                 return unauthorizedResponse!;
 
-            var dto = await req.ReadFromJsonAsync<ProjectRequestDTO>();
+            var dto = await req.ReadFromJsonAsync<ProjectRequestResponseDTO>();
             var request = await _unit.ProjectRequests.GetRequestByFreelancerAndProjectAsync(freelancerId, projectId);
 
             if (request == null) return req.CreateResponse(HttpStatusCode.NotFound);
