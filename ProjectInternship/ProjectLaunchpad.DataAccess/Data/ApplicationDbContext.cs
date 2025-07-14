@@ -33,6 +33,12 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<Payment> payments { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<Logs> logs { get; set; }
+        public DbSet<Skill> skills { get; set; }
+        public DbSet<Resume> resumes { get; set; }
+        public DbSet<ParsedResume> parsedResumes { get; set; }
+        public DbSet<ResumeProject> resumeProjects { get; set; }
+        public DbSet<Experience> experiences { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -185,6 +191,29 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasForeignKey(ts => ts.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<ResumeProject>()
+                .HasOne(rp => rp.Freelancer)
+                .WithMany(f => f.ResumeProjects)
+                .HasForeignKey(rp => rp.FreelancerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Skill>()
+                .HasOne(s => s.Freelancer)
+                .WithMany(f => f.Skills)
+                .HasForeignKey(s => s.FreelancerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Experience>()
+                .HasOne(e => e.Freelancer)
+                .WithMany(f => f.Experiences)
+                .HasForeignKey(e => e.FreelancerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ParsedResume>()
+                .HasOne(pr => pr.Resume)
+                .WithMany()
+                .HasForeignKey(pr => pr.ResumeId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
     }

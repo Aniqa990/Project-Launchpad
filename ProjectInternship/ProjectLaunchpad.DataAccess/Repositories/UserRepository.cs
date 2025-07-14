@@ -26,6 +26,10 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return await _db.users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
+        public async Task<User> GetUserByIdAsync(int id)
+        {
+            return await _db.users.FirstOrDefaultAsync(u => u.Id == id);
+        }
         public async Task<bool> UserExistsAsync(string email)
         {
             return await _db.users.AnyAsync(u => u.Email == email);

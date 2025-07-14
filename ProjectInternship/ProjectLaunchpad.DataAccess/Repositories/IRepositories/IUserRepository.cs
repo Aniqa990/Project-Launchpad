@@ -13,6 +13,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
     {
         // for login and Signup
         Task<User> GetUserByEmailAsync(string email);
+        Task<User> GetUserByIdAsync(int id);
         Task<bool> UserExistsAsync(string email);
         Task AddUserAsync(User user);
         

@@ -12,65 +12,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "deliverables",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    uploadFiles = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    projectId = table.Column<int>(type: "int", nullable: false),
-                    comment = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_deliverables", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "payments",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ClientId = table.Column<int>(type: "int", nullable: false),
-                    ProjectId = table.Column<int>(type: "int", nullable: false),
-                    FreelancerId = table.Column<int>(type: "int", nullable: false),
-                    PaymentType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    MilestoneId = table.Column<int>(type: "int", nullable: true),
-                    TimesheetId = table.Column<int>(type: "int", nullable: true),
-                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    PaymentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PaymentStatus = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TransactionReference = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_payments", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TimeSheets",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ProjectName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FreelancerName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateOfWork = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
-                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
-                    WorkDescription = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    HourlyRate = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ApprovalStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ReviewerComments = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TimeSheets", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "users",
                 columns: table => new
                 {
@@ -171,13 +112,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ProjectTitle = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Deadline = table.Column<DateOnly>(type: "date", nullable: false),
-                    SkillsRequired = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PaymentType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CategoryOrDomain = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Deadline = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RequiredSkills = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Budget = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    NumberOfFreelancers = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AttachedDocumentPath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClientId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -206,17 +150,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 {
                     table.PrimaryKey("PK_logs", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_logs_freelancerProfiles_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "freelancerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_logs_taskItems_TaskId",
                         column: x => x.TaskId,
                         principalTable: "taskItems",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_logs_users_FreelancerId",
-                        column: x => x.FreelancerId,
-                        principalTable: "users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -238,6 +182,28 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         name: "FK_subtasks_taskItems_TaskItemId",
                         column: x => x.TaskItemId,
                         principalTable: "taskItems",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "deliverables",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    uploadFiles = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    projectId = table.Column<int>(type: "int", nullable: false),
+                    comment = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_deliverables", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_deliverables_projects_projectId",
+                        column: x => x.projectId,
+                        principalTable: "projects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -297,6 +263,39 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "payments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    FreelancerId = table.Column<int>(type: "int", nullable: false),
+                    PaymentType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MilestoneId = table.Column<int>(type: "int", nullable: true),
+                    TimesheetId = table.Column<int>(type: "int", nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PaymentStatus = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TransactionReference = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_payments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_payments_freelancerProfiles_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "freelancerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_payments_projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "projects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "projectFreelancers",
                 columns: table => new
                 {
@@ -347,6 +346,44 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "TimeSheets",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    FreelancerId = table.Column<int>(type: "int", nullable: false),
+                    DateOfWork = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    StartTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeSpan>(type: "time", nullable: false),
+                    WorkDescription = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    HourlyRate = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    ApprovalStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ReviewerComments = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TimeSheets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TimeSheets_freelancerProfiles_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "freelancerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TimeSheets_projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "projects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_deliverables_projectId",
+                table: "deliverables",
+                column: "projectId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Feedbacks_FreelancerId",
                 table: "Feedbacks",
@@ -365,6 +402,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_milestones_ProjectId",
                 table: "milestones",
+                column: "ProjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_payments_FreelancerId",
+                table: "payments",
+                column: "FreelancerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_payments_ProjectId",
+                table: "payments",
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
@@ -396,6 +443,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 name: "IX_taskItems_CreatedByUserId",
                 table: "taskItems",
                 column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TimeSheets_FreelancerId",
+                table: "TimeSheets",
+                column: "FreelancerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TimeSheets_ProjectId",
+                table: "TimeSheets",
+                column: "ProjectId");
         }
 
         /// <inheritdoc />
@@ -429,13 +486,13 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 name: "TimeSheets");
 
             migrationBuilder.DropTable(
+                name: "taskItems");
+
+            migrationBuilder.DropTable(
                 name: "freelancerProfiles");
 
             migrationBuilder.DropTable(
                 name: "projects");
-
-            migrationBuilder.DropTable(
-                name: "taskItems");
 
             migrationBuilder.DropTable(
                 name: "clientProfiles");
