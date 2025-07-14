@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Stripe.net" Version="48.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ProjectLaunchpad.DataAccess\ProjectLaunchpad.DataAccess.csproj" />
     <ProjectReference Include="..\ProjectLaunchpad.Models\ProjectLaunchpad.Models.csproj" />
     <ProjectReference Include="..\ProjectLaunchpad.Utility\ProjectLaunchpad.Utility.csproj" />

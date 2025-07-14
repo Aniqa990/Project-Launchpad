@@ -6,6 +6,7 @@ import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
 import { Modal } from '../ui/Modal';
 import { Calendar, DollarSign, Download, CheckSquare, Clock, FileText, User, Eye, MessageSquare, Filter, AlertCircle } from 'lucide-react';
+import { createStripeCheckoutSession } from '../../apiendpoint';
 
 export default function Milestones({
   milestones,
@@ -39,16 +40,12 @@ export default function Milestones({
 
   // Map status to string for filter
   const statusMap = {
-    0: 'pending',
-    1: 'approved',
-    2: 'paid',
-    'Pending': 'pending',
-    'Approved': 'approved',
-    'Paid': 'paid',
-    'Submitted': 'submitted',
-    'In Progress': 'in-progress',
-    'Under Review': 'under-review',
-    'Rejected': 'rejected',
+    0: 'Pending',
+    1: 'UnderReview',
+    2: 'Submitted',
+    'Pending': 'Pending',
+    'UnderReview': 'UnderReview',
+    'Submitted': 'Submitted',
   };
 
   // Filtering logic
@@ -72,13 +69,9 @@ export default function Milestones({
       case 0:
       case 'Pending': return 'bg-gray-100 text-gray-800';
       case 1:
-      case 'Approved': return 'bg-green-100 text-green-800';
+      case 'UnderReview': return 'bg-orange-100 text-orange-800';
       case 2:
-      case 'Paid': return 'bg-purple-100 text-purple-800';
       case 'Submitted': return 'bg-yellow-100 text-yellow-800';
-      case 'In Progress': return 'bg-blue-100 text-blue-800';
-      case 'Under Review': return 'bg-orange-100 text-orange-800';
-      case 'Rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -112,6 +105,27 @@ export default function Milestones({
   const clearFilters = () => {
     setSelectedProject('all');
     setSelectedStatus('all');
+  };
+
+  // Pay Now handler for Stripe Checkout
+  const handlePayNow = async (milestone: any) => {
+    try {
+      // You may want to get clientId, freelancerId, projectId from milestone or props
+      const { url } = await createStripeCheckoutSession({
+        clientId: milestone.ClientId || milestone.clientId || 1,
+        freelancerId: milestone.FreelancerId || milestone.freelancerId || 2,
+        projectId: milestone.ProjectId || milestone.projectId || projectId,
+        paymentType: 'Milestone',
+        milestoneId: milestone.Id || milestone.id,
+        timesheetId: null,
+        amount: milestone.Amount || milestone.amount || 0,
+      });
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (err) {
+      alert('Error redirecting to Stripe Checkout.');
+    }
   };
 
   // UI rendering
@@ -203,13 +217,9 @@ export default function Milestones({
               </select>
               <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="border rounded-lg px-3 py-2">
                 <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
-                <option value="submitted">Submitted</option>
-                <option value="under-review">Under Review</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="paid">Paid</option>
+                <option value="Pending">Pending</option>
+                <option value="UnderReview">Under Review</option>
+                <option value="Submitted">Submitted</option>
               </select>
             </div>
           </div>
@@ -255,7 +265,7 @@ export default function Milestones({
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900">{milestone.Title || milestone.title}</h3>
                     <Badge className={getStatusColor(milestone.Status || milestone.status)}>
-                      {milestone.Status === 2 || milestone.status === 'Paid' ? 'Paid' : milestone.Status === 1 || milestone.status === 'Approved' ? 'Approved' : milestone.Status === 0 || milestone.status === 'Pending' ? 'Pending' : milestone.Status || milestone.status}
+                      {statusMap[milestone.Status] || statusMap[milestone.status] || milestone.Status || milestone.status}
                     </Badge>
                   </div>
                   <p className="text-gray-600 mb-3">{milestone.Description || milestone.description}</p>
@@ -305,9 +315,13 @@ export default function Milestones({
                     >
                       {selectedMilestone && (selectedMilestone.Id || selectedMilestone.id) === (milestone.Id || milestone.id) ? 'Hide Details' : 'View Details'}
                     </Button>
-                    {(milestone.Status === 'Submitted' || milestone.status === 'Submitted') && (
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowApprovalDialog(milestone.Id || milestone.id)}>
-                        Review
+                    {(milestone.Status === 2 || milestone.status === 'Submitted') && (
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handlePayNow(milestone)}
+                      >
+                        Pay Now
                       </Button>
                     )}
                     {(milestone.Status === 1 || milestone.status === 'Approved') && (

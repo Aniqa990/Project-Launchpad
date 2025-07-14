@@ -131,4 +131,41 @@ export const deleteDeliverable = async (id: number): Promise<void> => {
 export const getHourlyLogs = async (): Promise<any[]> => {
   const response = await api.get('/logs');
   return response.data;
+};
+
+// Stripe Payment API
+export const createStripePaymentIntent = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ clientSecret: string }> => {
+  // Note: This uses the backend port 7053
+  const response = await axios.post(
+    'http://localhost:7053/api/payments/create-intent',
+    params,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return response.data;
+};
+
+// New: Stripe Checkout Session API
+export const createStripeCheckoutSession = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ url: string }> => {
+  const response = await axios.post(
+    'http://localhost:7053/api/payments/create-checkout-session',
+    params,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return response.data;
 }; 

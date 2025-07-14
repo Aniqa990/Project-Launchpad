@@ -25,6 +25,8 @@ import { getMilestones, updateMilestone, getDeliverables, createDeliverable, upd
 import { Modal } from '../ui/Modal';
 import { Deliverable } from '../../types';
 import HourlyLogViewer from './HourlyLogViewer';
+import StripeWrapper from './StripeWrapper';
+import InvoicePage from '../../pages/client/InvoicePage';
 
 export function ProjectWorkspace() {
   const { projectId } = useParams();
@@ -41,6 +43,8 @@ export function ProjectWorkspace() {
   const [selectedDeliverable, setSelectedDeliverable] = useState<Deliverable | null>(null);
   const [deliverableFormLoading, setDeliverableFormLoading] = useState(false);
   const [deliverableError, setDeliverableError] = useState<string | null>(null);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
 
   const project = mockProjects.find(p => p.id === projectId);
   const projectTasks = mockTasks.filter(t => t.projectId === projectId);
@@ -208,8 +212,8 @@ export function ProjectWorkspace() {
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="milestone-status">Status</label>
           <select id="milestone-status" name="status" value={form.status || 0} onChange={handleChange} className="w-full border p-2 rounded">
             <option value={0}>Pending</option>
-            <option value={1}>Approved</option>
-            <option value={2}>Paid</option>
+            <option value={1}>UnderReview</option>
+            <option value={2}>Submitted</option>
           </select>
           <div className="flex justify-end">
             <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
@@ -218,6 +222,28 @@ export function ProjectWorkspace() {
       </Modal>
     );
   }
+
+  // Stripe Checkout redirect effect
+  useEffect(() => {
+    if (activeTab === 'payment') {
+      const redirectToStripeCheckout = async () => {
+        try {
+          const response = await fetch('http://localhost:7053/api/payments/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: 50.75 }) // Make dynamic if needed
+          });
+          const data = await response.json();
+          if (data.url) {
+            window.location.href = data.url;
+          }
+        } catch (err) {
+          // Optionally show an error message or fallback UI
+        }
+      };
+      redirectToStripeCheckout();
+    }
+  }, [activeTab]);
 
   if (!project) {
     return (
@@ -240,6 +266,7 @@ export function ProjectWorkspace() {
     // Hourly Logs tab should always be after Deliverables and before Chat
     ...(user?.role === 'client' || user?.role === 'freelancer' ? [{ id: 'hourlylogs', label: 'Hourly Logs', icon: Clock }] : []),
     { id: 'chat', label: 'Chat', icon: MessageCircle },
+    { id: 'payment', label: 'Payment', icon: CreditCard },
     ...(user?.role === 'client' ? [{ id: 'payments', label: 'Payments', icon: CreditCard }] : [])
   ];
 
@@ -500,10 +527,10 @@ export function ProjectWorkspace() {
                         </div>
                         <h4 className="text-lg font-semibold text-gray-900">{milestone.Title}</h4>
                         <Badge variant={
-                          milestone.Status === 2 ? 'success' :
-                          milestone.Status === 1 ? 'warning' : 'default'
+                          milestone.Status === 2 ? 'warning' :
+                          milestone.Status === 1 ? 'info' : 'default'
                         }>
-                          {milestone.Status === 2 ? 'Paid' : milestone.Status === 1 ? 'Approved' : 'Pending'}
+                          {milestone.Status === 2 ? 'Submitted' : milestone.Status === 1 ? 'Under Review' : 'Pending'}
                         </Badge>
                       </div>
                       <p className="text-gray-600 mb-3 ml-11">{milestone.Description}</p>
@@ -540,6 +567,19 @@ export function ProjectWorkspace() {
                     <div className="ml-6 flex flex-col gap-2">
                       {milestone.Status === 1 && user?.role === 'client' && (
                         <Button size="sm" onClick={e => e.stopPropagation()}>Release Payment</Button>
+                      )}
+                      {milestone.Status === 2 && user?.role === 'client' && (
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={e => { e.stopPropagation(); setInvoiceData({
+                          milestoneId: milestone.Id,
+                          projectId: milestone.ProjectId,
+                          clientId: milestone.ClientId,
+                          freelancerId: milestone.FreelancerId,
+                          amount: milestone.Amount,
+                          milestoneTitle: milestone.Title,
+                          projectTitle: project?.title,
+                        }); setShowInvoice(true); }}>
+                          Pay Now
+                        </Button>
                       )}
                       {milestone.Status === 2 && (
                         <a
@@ -675,6 +715,13 @@ export function ProjectWorkspace() {
           </div>
         );
 
+      case 'payment':
+        return (
+          <div className="p-6 max-w-xl mx-auto text-center">
+            <p>Redirecting to payment gateway...</p>
+          </div>
+        );
+
       case 'payments':
         return (
           <div className="space-y-6">
@@ -796,6 +843,32 @@ export function ProjectWorkspace() {
 
       {/* Tab Content */}
       {renderTabContent()}
+      {showInvoice && invoiceData && (
+        <InvoicePage
+          invoiceData={invoiceData}
+          onPayNow={async (data) => {
+            setShowInvoice(false);
+            try {
+              const { createStripeCheckoutSession } = await import('../../apiendpoint');
+              const response = await createStripeCheckoutSession({
+                clientId: data.clientId,
+                freelancerId: data.freelancerId,
+                projectId: data.projectId,
+                paymentType: 'Milestone',
+                milestoneId: data.milestoneId,
+                timesheetId: null,
+                amount: data.amount,
+              });
+              if (response.url) {
+                window.location.href = response.url;
+              }
+            } catch (err) {
+              alert('Error redirecting to Stripe Checkout.');
+            }
+          }}
+          onClose={() => setShowInvoice(false)}
+        />
+      )}
     </div>
   );
 }
