@@ -139,20 +139,6 @@ export interface ProjectRequest {
   sentAt: string;
 }
 
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: 'todo' | 'inprogress' | 'done';
-  assigneeId: string;
-  assignee: User;
-  projectId: string;
-  priority: 'low' | 'medium' | 'high';
-  estimatedHours: number;
-  actualHours: number;
-  createdAt: string;
-  dueDate: string;
-}
 
 export interface TimeEntry {
   id: string;
@@ -251,4 +237,15 @@ export interface KanbanTask {
   AssignedToUser: KanbanUser;
   CreatedAt: string;
   Subtasks: KanbanSubtask[];
+}
+
+export interface Feedback {
+  id: number;
+  projectId: number;
+  freelancerId: number;
+  review: string;
+  rating: number;
+  projectName: string;
+  clientName: string;
+  createdAt: string;
 }

@@ -1,5 +1,5 @@
 import axios from "axios";
-import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable} from "@/types";
+import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback} from "@/types";
 
 const api = axios.create({
   baseURL: "http://localhost:7071/api",
@@ -7,6 +7,19 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    console.log('API Interceptor:', config.method, config.url, 'Token:', token);
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export const loginUser = async (email: string, password: string, role: string)=>{
   const response = await api.post('/auth/login', { email, password, role });
@@ -17,6 +30,12 @@ export const signupUser = async (userData: Partial<SignupRequest>)=> {
   const response = await api.post('/auth/register', userData);
   return response.data;
 };
+
+export async function validateToken(token?: string) {
+  return api.get('/auth/validate', {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  }).then(res => res.data);
+}
 
 export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
   try{
@@ -38,7 +57,13 @@ export const getProjectRequests = async(freelancerId: number) => {
 
 export const respondToProjectRequest = async (projectId: number, status: string, freelancerId?: number) => {
   try {
-    const response = await api.patch(`/requests/${freelancerId}/${projectId}`, { status });
+    const token = localStorage.getItem('token');
+    console.log('PATCH Request Token:', token);
+    const response = await api.patch(
+      `/requests/${freelancerId}/${projectId}`,
+      { status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update request status');
@@ -240,4 +265,9 @@ export const markMessageRead = async (messageId: number) => {
 export const deleteMessage = async (messageId: number) => {
   const res = await api.delete(`/messages/${messageId}`);
   return res.data;
+}; 
+
+export const getFreelancerFeedbacks = async (freelancerId: number): Promise<Feedback[]> => {
+  const response = await api.get(`/feedbacks/freelancer/${freelancerId}`);
+  return response.data;
 }; 

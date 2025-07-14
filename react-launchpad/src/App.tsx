@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AppShell } from './components/layout/Appshell';
+import { AppShell } from './components/layout/AppShell';
 import LandingPage from './pages/LandingPage';
 import { Auth } from './pages/Auth';
 import { Settings } from './pages/Settings';
@@ -14,14 +14,27 @@ import { ClientMessages } from './pages/client/Messages';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
+import { Feedback } from './pages/freelancer/Feedback';
 import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
-import { ProjectWorkspace } from './components/workspace/projectWorkspace';
+import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600 font-medium">Loading your workspace...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -35,7 +48,19 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
 }
 
 function AppRoutes() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600 font-medium">Loading your workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -74,6 +99,7 @@ function AppRoutes() {
         <Route path="dashboard" element={<FreelancerDashboard />} />
         <Route path="requests" element={<FreelancerRequests />} />
         <Route path="projects" element={<FreelancerProjects />} />
+        <Route path="feedback" element={<Feedback />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={

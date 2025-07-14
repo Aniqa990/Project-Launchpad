@@ -15,7 +15,9 @@ import {
   ArrowRight,
   Star,
   Calendar,
-  User
+  User,
+  CheckCircle,
+  TrendingUp
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -29,7 +31,7 @@ export function FreelancerDashboard() {
   const [stats, setStats] = useState({
     activeProjects: 0,
     pendingRequests: 0,
-    hoursToday: 0,
+    rating: 0,
     monthlyEarnings: 0
   });
 
@@ -49,13 +51,13 @@ export function FreelancerDashboard() {
 
       // Transform backend data to frontend format
       const transformedProjects = projectsData.map((project: any) => ({
-        id: project.Id.toString(),
-        title: project.Title,
+        id: project.Id,
+        title: project.ProjectTitle,
         description: project.Description,
         status: project.Status,
         budget: project.Budget,
         deadline: project.Deadline,
-        clientId: project.ClientId.toString(),
+        clientId: project.ClientId,
         client: {
           id: project.Client.User.Id,
           firstName: project.Client.User.FirstName,
@@ -82,18 +84,18 @@ export function FreelancerDashboard() {
       const transformedRequests = requestsData.map((request: any) => ({
         projectId: request.ProjectId,
         freelancerId: request.FreelancerId,
-        projectTitle: request.Project.Title,
-        projectDescription: request.Project.Description,
-        projectCategory: request.Project.Category || 'General',
-        deadline: new Date(request.Project.Deadline),
-        skills: request.Project.SkillsRequired ? request.Project.SkillsRequired.split(',').map((s: string) => s.trim()) : [],
-        budget: request.Project.Budget,
-        clientId: request.Project.ClientId,
-        clientName: `${request.Project.Client.User.FirstName} ${request.Project.Client.User.LastName}`,
-        clientEmail: request.Project.Client.User.Email,
-        clientPhone: request.Project.Client.User.PhoneNo,
+        projectTitle: request.ProjectTitle,
+        projectDescription: request.ProjectDescription,
+        projectCategory: request.ProjectCategory || 'General',
+        deadline: new Date(request.Deadline),
+        skills: request.Skills ? request.Skills.split(',').map((s: string) => s.trim()) : [],
+        budget: request.Budget,
+        clientId: request.ClientId,
+        clientName: `${request.ClientName}`,
+        clientEmail: request.ClientEmail,
+        //clientPhone: request.ClientPhone,
         status: request.Status,
-        sentAt: request.CreatedAt
+        sentAt: request.RequestedAt
       }));
 
       setProjects(transformedProjects);
@@ -105,11 +107,12 @@ export function FreelancerDashboard() {
       const monthlyEarnings = transformedProjects
         .filter((p: Project) => p.status === 'completed')
         .reduce((sum: number, p: Project) => sum + (p.budget || 0), 0);
+      const rating = 4.5;
 
       setStats({
         activeProjects,
         pendingRequests,
-        hoursToday: 6.5, // This would come from time tracking API
+        rating,
         monthlyEarnings
       });
 
@@ -121,27 +124,28 @@ export function FreelancerDashboard() {
     }
   };
 
+  const activeProjects = projects.filter(project => project.status === 'active');
+  const pendingRequests = requests.filter((r: ProjectRequest) => r.status && r.status.toLowerCase().trim() === 'pending');
+
+  // Only include Active Projects and Pending Requests in dashboardStats
   const dashboardStats = [
     {
       label: 'Active Projects',
-      value: stats.activeProjects.toString(),
+      value: activeProjects.length.toString(),
       icon: FolderOpen,
       color: 'bg-blue-500',
-      change: `${stats.activeProjects > 0 ? '+' + stats.activeProjects : '0'} this week`
     },
     {
       label: 'Pending Requests',
-      value: stats.pendingRequests.toString(),
+      value: pendingRequests.length.toString(),
       icon: Inbox,
       color: 'bg-orange-500',
-      change: `${stats.pendingRequests > 0 ? stats.pendingRequests + ' new' : '0'} today`
     },
     {
-      label: 'Hours Today',
-      value: stats.hoursToday.toString(),
-      icon: Clock,
-      color: 'bg-green-500',
-      change: 'On track'
+      label: 'Rating',
+      value: stats.rating.toString(),
+      icon: Star,
+      color: 'bg-yellow-500',
     },
     {
       label: 'This Month',
@@ -151,8 +155,6 @@ export function FreelancerDashboard() {
       change: '+15% vs last month'
     }
   ];
-
-  const activeProjects = projects.filter(project => project.status === 'active');
 
   if (loading) {
     return (
@@ -165,139 +167,111 @@ export function FreelancerDashboard() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.firstName}! Here's your project overview.</p>
-        </div>
-        
-        {/* Clock In/Out */}
-        <div className="mt-4 md:mt-0">
-          <Button 
-            variant={isClocked ? 'danger' : 'primary'}
-            icon={isClocked ? Pause : Play}
-            onClick={() => setIsClocked(!isClocked)}
-            className="mr-3"
-          >
-            {isClocked ? 'Clock Out' : 'Clock In'}
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => navigate('/freelancer/requests')}
-          >
-            View Requests
-          </Button>
-        </div>
-      </div>
-
-      {/* Clock Status Bar */}
-      {isClocked && (
-        <Card className="mb-6 bg-green-50 border-green-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse mr-3"></div>
-              <div>
-                <p className="font-medium text-green-900">Currently clocked in</p>
-                <p className="text-sm text-green-700">Started at 9:00 AM â€¢ 6 hours 32 minutes</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-green-900">$520</p>
-              <p className="text-sm text-green-700">Today's earnings</p>
-            </div>
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-8 mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.firstName}!</h1>
+            <p className="text-blue-100 text-lg">Here's your project overview for today</p>
           </div>
-        </Card>
-      )}
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {dashboardStats.map((stat, index) => (
-          <Card key={index} hover>
-            <div className="flex items-center">
-              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                <stat.icon className="w-6 h-6 text-white" />
-              </div>
-              <div className="ml-4 flex-1">
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">{stat.change}</p>
-            </div>
-          </Card>
-        ))}
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Active Tasks */}
-        <div className="lg:col-span-2">
-          <Card>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Active Projects</h2>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => navigate('/freelancer/projects')}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                View All
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {dashboardStats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <div key={index} className={"bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer"}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                </div>
+                <div className={`${stat.color} p-3 rounded-xl`}>
+                  <Icon className="w-6 h-6 text-white" />
+                </div>
+              </div>
             </div>
-            
-            <div className="space-y-4">
-              {activeProjects.length > 0 ? (
-                activeProjects.map((project) => (
-                  <div key={project.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{project.title}</h3>
-                        <p className="text-gray-600 text-sm line-clamp-2">{project.description}</p>
-                      </div>
-                      <div className="ml-4 text-right">
-                        <div className="text-sm font-medium text-gray-900">${project.budget?.toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">Budget</div>
-                      </div>
+          );
+        })}
+      </div>
+
+      {/* Main Content: Active Projects and Pending Requests */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Active Projects */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Active Projects</h2>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/freelancer/projects')}
+              className="text-blue-600 hover:text-blue-700"
+            >
+              View All
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {activeProjects.length > 0 ? (
+              activeProjects.map((project) => (
+                <div key={project.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">{project.title}</h3>
+                      <p className="text-gray-600 text-sm line-clamp-2">{project.description}</p>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          Due {new Date(project.deadline).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center">
-                          <User className="w-4 h-4 mr-1" />
-                          {project.client.firstName} {project.client.lastName}
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/freelancer/projects/${project.id}`)}>
-                        View Project
-                      </Button>
+                    <div className="ml-4 text-right">
+                      <div className="text-sm font-medium text-gray-900">${project.budget?.toLocaleString()}</div>
+                      <div className="text-xs text-gray-500">Budget</div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>No active projects</p>
-                  <p className="text-sm">Check your requests for new opportunities</p>
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        Due {new Date(project.deadline).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-1" />
+                        {project.client.firstName} {project.client.lastName}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => navigate(`/freelancer/projects/${project.id}`)}>
+                      View Project
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </div>
-          </Card>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>No active projects</p>
+                <p className="text-sm">Check your requests for new opportunities</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Project Requests */}
-          <Card>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Requests</h2>
-            <div className="space-y-4">
-              {requests.slice(0, 2).map((request) => (
+        {/* Pending Requests */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Pending Requests</h2>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/freelancer/requests')}
+              className="text-blue-600 hover:text-blue-700"
+            >
+              View All
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {pendingRequests.length > 0 ? (
+              pendingRequests.map((request) => (
                 <div key={`${request.projectId}-${request.freelancerId}`} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-start space-x-3 mb-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -319,80 +293,39 @@ export function FreelancerDashboard() {
                     </Button>
                   </div>
                 </div>
-              ))}
-              {requests.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  <Inbox className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">No pending requests</p>
-                </div>
-              )}
-            </div>
-            <Button 
-              variant="outline" 
-              className="w-full mt-4"
-              onClick={() => navigate('/freelancer/requests')}
-            >
-              View All Requests
-            </Button>
-          </Card>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <Inbox className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No pending requests</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
-          {/* Profile Completion */}
-          <Card>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile Completion</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">Basic Info</span>
-                <span className="text-green-600 font-medium">✓ Complete</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">Skills & Experience</span>
-                <span className="text-green-600 font-medium">✓ Complete</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">Portfolio</span>
-                <span className="text-orange-600 font-medium">2/5 Projects</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">Certifications</span>
-                <span className="text-gray-500">Not added</span>
-              </div>
+      {/* Quick Actions */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a href="/timesheets" className="flex items-center space-x-3 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
+            <div className="bg-blue-500 p-2 rounded-lg">
+              <Calendar className="w-5 h-5 text-white" />
             </div>
-            <div className="mt-4">
-              <div className="bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '75%' }}></div>
-              </div>
-              <p className="text-sm text-gray-600 mt-2">75% complete</p>
+            <span className="font-medium text-gray-900">Log Time</span>
+          </a>
+          <a href="/deliverables" className="flex items-center space-x-3 p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
+            <div className="bg-green-500 p-2 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-white" />
             </div>
-            <Button variant="outline" className="w-full mt-4" onClick={() => navigate('/freelancer/profile-setup')}>
-              Complete Profile
-            </Button>
-          </Card>
-
-          {/* Performance */}
-          <Card>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Performance</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700">Overall Rating</span>
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                  <span className="font-semibold">4.8</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700">Projects Completed</span>
-                <span className="font-semibold">{projects.filter(p => p.status === 'completed').length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700">Success Rate</span>
-                <span className="font-semibold text-green-600">98%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700">Response Time</span>
-                <span className="font-semibold">{'< 1 hour'}</span>
-              </div>
+            <span className="font-medium text-gray-900">Submit Deliverable</span>
+          </a>
+          <a href="/payments" className="flex items-center space-x-3 p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors">
+            <div className="bg-purple-500 p-2 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
-          </Card>
+            <span className="font-medium text-gray-900">View Payments</span>
+          </a>
         </div>
       </div>
     </div>

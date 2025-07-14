@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { 
@@ -90,9 +90,9 @@ export function FreelancerRequests() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'accepted': return 'default';
-      case 'rejected': return 'destructive';
-      case 'pending': return 'secondary';
+      case 'accepted': return 'success';
+      case 'rejected': return 'danger';
+      case 'pending': return 'warning';
       default: return 'default';
     }
   };
@@ -250,8 +250,8 @@ export function FreelancerRequests() {
         </Card>
       )}
       {/* Request Detail Dialog */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-3xl">
+      <Dialog open={showDetailDialog && !!selectedRequest} onOpenChange={setShowDetailDialog}>
+        <DialogContent className="max-w-3xl bg-white p-6">
           <DialogHeader>
             <DialogTitle>Project Request Details</DialogTitle>
             <DialogDescription>
@@ -262,59 +262,50 @@ export function FreelancerRequests() {
             <div className="space-y-6">
               {/* Client Info */}
               <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <Avatar src={selectedRequest.clientProfile} size="sm" />
+                <Avatar src={selectedRequest.clientProfile} size="lg" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">
-                    {selectedRequest.clientName}
-                  </h3>
+                  <h3 className="font-semibold text-gray-900">{selectedRequest.clientName}</h3>
                   <p className="text-gray-600">Client</p>
                 </div>
               </div>
               {/* Project Details */}
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  Project: {selectedRequest.projectTitle}
-                </h4>
-                <p className="text-gray-600 mb-4">
-                  {selectedRequest.projectDescription}
-                </p>
+                <h4 className="font-semibold text-gray-900 mb-2">Project: {selectedRequest.projectTitle}</h4>
+                <p className="text-gray-600 mb-4">{selectedRequest.projectDescription}</p>
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  {selectedRequest.budget && (<div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Budget
-                    </label>
-                    <p className="text-lg font-semibold text-green-600">
-                      ${selectedRequest.budget.toLocaleString()}
-                    </p>
-                  </div>)}
+                  {selectedRequest.budget && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+                      <p className="text-lg font-semibold text-green-600">${selectedRequest.budget.toLocaleString()}</p>
+                    </div>
+                  )}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Deadline
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
                     <p className="text-lg font-semibold text-gray-900">
                       {selectedRequest.deadline ? format(selectedRequest.deadline, 'dd MMM yyyy') : ''}
                     </p>
                   </div>
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Required Skills
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Required Skills</label>
                   <div className="flex flex-wrap gap-2">
                     {selectedRequest.skills.map((skill: string) => (
-                      <Badge key={skill} variant="info" size="sm">{skill}</Badge>
+                      <Badge key={skill} variant="info">{skill}</Badge>
                     ))}
                   </div>
                 </div>
               </div>
               {/* Actions */}
-              {selectedRequest.status === "pending" && (
+              {selectedRequest.status === 'pending' && (
                 <div className="flex space-x-4 pt-4 border-t">
-                  <Button className="flex-1" onClick={() => handleAcceptRequest(selectedRequest.projectId)}>
+                  <Button 
+                    className="flex-1"
+                    onClick={() => handleAcceptRequest(selectedRequest.projectId)}
+                  >
                     Accept Project
                   </Button>
-                  <Button
-                    variant="outline"
+                  <Button 
+                    variant="outline" 
                     className="flex-1"
                     onClick={() => handleRejectRequest(selectedRequest.projectId)}
                   >
