@@ -32,6 +32,9 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task<IEnumerable<Feedback>> GetFeedbacksByFreelancerAsync(int freelancerId)
         {
             return await _db.Feedbacks
+                .Include(f => f.Project)
+                    .ThenInclude(p => p.Client)
+                        .ThenInclude(c => c.User)
                 .Where(f => f.FreelancerId == freelancerId)
                 .ToListAsync();
         }
@@ -39,13 +42,20 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task<IEnumerable<Feedback>> GetFeedbacksByProjectAsync(int projectId)
         {
             return await _db.Feedbacks
-                .Where(f => f.ProjectId == projectId)
+                .Include(f => f.Project)
+                    .ThenInclude(p => p.Client)
+                        .ThenInclude(c => c.User)
+                .Where(f => f.FreelancerId == projectId)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Feedback>> GetAllFeedbacksAsync()
         {
-            return await _db.Feedbacks.ToListAsync();
+            return await _db.Feedbacks
+                .Include(f => f.Project)
+                    .ThenInclude(p => p.Client)
+                        .ThenInclude(c => c.User)
+                .ToListAsync();
         }
 
         public async Task DeleteFeedbackAsync(int id)

@@ -85,7 +85,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> AddPayment(
      [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "payments")] HttpRequestData req)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;

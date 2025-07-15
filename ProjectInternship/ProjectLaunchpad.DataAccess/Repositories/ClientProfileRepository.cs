@@ -8,13 +8,22 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.DataAccess.Repositories
 {
-    public class ClientProfileRepository: IClientProfileRepository
+    public class ClientProfileRepository : IClientProfileRepository
     {
         private readonly ApplicationDbContext _db;
 
         public ClientProfileRepository(ApplicationDbContext db)
         {
             _db = db;
+        }
+
+        public void InsertClientProfile(int userId)
+        {
+            var clientProfile = new ProjectLaunchpad.Models.Models.ClientProfile
+            {
+                Id = userId
+            };
+            _db.clientProfiles.Add(clientProfile);
         }
 
 

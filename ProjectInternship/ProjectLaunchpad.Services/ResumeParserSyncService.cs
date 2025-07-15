@@ -66,7 +66,7 @@ namespace ProjectLaunchpad.Services
             using var connection = new MySqlConnection(_mysqlConnStr);
             await connection.OpenAsync();
 
-            // Get or create freelancer in resume_parser
+            // Get or create freelancer in resume_parser (other database that stores parsed resume)
             var freelancerId = await GetOrCreateFreelancerAsync(connection, email, profileDto);
 
             // Update summary in resume_parser
@@ -77,7 +77,7 @@ namespace ProjectLaunchpad.Services
             await UpdateProjectsAsync(connection, freelancerId, dto.Projects);
             await UpdateExperienceAsync(connection, freelancerId, dto.Experience);
 
-            // Save to your own database
+            // Save to your own database (.net)
             await SaveToOwnDatabaseAsync(profileDto, dto);
         }
 

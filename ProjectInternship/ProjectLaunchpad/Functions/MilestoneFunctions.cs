@@ -31,7 +31,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> CreateMilestoneAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "milestones")] HttpRequestData req)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -64,7 +64,7 @@ namespace ProjectLaunchpad.Functions
      [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "submitmilestone/{milestoneId:int}")] HttpRequestData req,
      int milestoneId)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -120,7 +120,7 @@ namespace ProjectLaunchpad.Functions
      [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "updatemilestone/{id:int}")] HttpRequestData req,
      int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -164,7 +164,7 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "deletemilestones/{id:int}")] HttpRequestData req, int id)
         {
 
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
