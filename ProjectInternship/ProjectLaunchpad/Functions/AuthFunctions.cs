@@ -47,6 +47,9 @@ namespace ProjectLaunchpad.Functions
                     email = user.Email,
                     firstName = user.FirstName,
                     lastName = user.LastName,
+                    phone = user.PhoneNo,
+                    avatar = user.ProfilePicture,
+                    gender = user.Gender,
                     role = user.Role
                 }
             });
@@ -70,6 +73,9 @@ namespace ProjectLaunchpad.Functions
                     email = user.Email,
                     firstName = user.FirstName,
                     lastName = user.LastName,
+                    phone = user.PhoneNo,
+                    avatar = user.ProfilePicture,
+                    gender = user.Gender,
                     role = user.Role
                 }
             });
@@ -147,6 +153,9 @@ namespace ProjectLaunchpad.Functions
                         email = user.Email,
                         firstName = user.FirstName,
                         lastName = user.LastName,
+                        phone = user.PhoneNo,
+                        avatar = user.ProfilePicture,
+                        gender = user.Gender,
                         role = user.Role
                     }
                 });

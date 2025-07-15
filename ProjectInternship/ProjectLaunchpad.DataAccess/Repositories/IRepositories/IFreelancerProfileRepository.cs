@@ -11,7 +11,8 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
     public interface IFreelancerProfileRepository
     {
         Task<FreelancerProfile?> GetProfileByUserIdAsync(int userId);
-        Task AddFreelancerProfileAsync(FreelancerProfileDTO profile);
+        Task AddFreelancerProfileAsync(FreelancerProfileDTO dto);
+        Task AddOrUpdateFreelancerProfileAsync(FreelancerProfileDTO dto);
         Task UpdateFreelancerProfileAsync(FreelancerProfile profile);
         Task DeleteFreelancerProfileAsync(int userId);
         Task<List<FreelancerProfile>> GetAllFreelancerProfilesAsync();

@@ -8,6 +8,7 @@ namespace ProjectLaunchpad.Models.Models.DTOs
 {
     public class ExperienceDTO
     {
+        public int Id { get; set; }
         public string Title { get; set; } = null!;
         public string Company { get; set; } = null!;
         public string Duration { get; set; } = null!;
