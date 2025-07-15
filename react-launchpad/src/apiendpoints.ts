@@ -21,6 +21,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+//AUTH
 export const loginUser = async (email: string, password: string, role: string)=>{
   const response = await api.post('/auth/login', { email, password, role });
   return response.data;
@@ -37,6 +38,7 @@ export async function validateToken(token?: string) {
   }).then(res => res.data);
 }
 
+
 export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
   try{
   const response = await api.post("/freelancer", profile);
@@ -46,6 +48,7 @@ export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) =
   }
 };
 
+//PROJECT REQUESTS
 export const getProjectRequests = async(freelancerId: number) => {
   try{
   const response = await api.get(`/requests/${freelancerId}`);
@@ -261,6 +264,7 @@ export const deleteMessage = async (messageId: number) => {
   return res.data;
 }; 
 
+//Feedbacks
 export const getFreelancerFeedbacks = async (freelancerId: number): Promise<Feedback[]> => {
   const response = await api.get(`/feedbacks/freelancer/${freelancerId}`);
   return response.data;

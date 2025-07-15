@@ -15,7 +15,7 @@ export function Feedback() {
       if (!user?.id) return;
       try {
         const feedbacks = await getFreelancerFeedbacks(user.id);
-        console.log('Feedback API response:', feedbacks); // Debug log
+        console.log('Feedback API response:', feedbacks);
         setFeedback(feedbacks);
       } catch (error) {
         setFeedback([]);

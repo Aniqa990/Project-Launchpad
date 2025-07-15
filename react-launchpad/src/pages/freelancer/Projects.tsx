@@ -16,7 +16,6 @@ export function FreelancerProjects() {
       if (!user?.id) return;
       try {
         const projectsData = await getFreelancerProjects(user.id);
-        // Transform backend data to Project[]
         const transformedProjects: Project[] = projectsData.map((project: any) => ({
           id: project.Id,
           title: project.ProjectTitle,

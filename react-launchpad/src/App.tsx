@@ -25,7 +25,6 @@ import TimesheetApproval from './pages/client/TimesheetApproval';
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
   const { isAuthenticated, user, loading } = useAuth();
   
-  // Show loading while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -51,7 +50,6 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
 function AppRoutes() {
   const { isAuthenticated, user, loading } = useAuth();
 
-  // Show loading while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">

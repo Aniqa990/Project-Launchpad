@@ -49,7 +49,6 @@ export function FreelancerDashboard() {
         getProjectRequests(user!.id!)
       ]);
 
-      // Transform backend data to frontend format
       const transformedProjects = projectsData.map((project: any) => ({
         id: project.Id,
         title: project.ProjectTitle,
@@ -78,7 +77,6 @@ export function FreelancerDashboard() {
           gender: af.Freelancer.User.Gender
         })),
         progress: 0, // Calculate based on milestones
-        milestones: project.milestones || []
       }));
 
       const transformedRequests = requestsData.map((request: any) => ({
@@ -127,7 +125,6 @@ export function FreelancerDashboard() {
   const activeProjects = projects.filter(project => project.status === 'active');
   const pendingRequests = requests.filter((r: ProjectRequest) => r.status && r.status.toLowerCase().trim() === 'pending');
 
-  // Only include Active Projects and Pending Requests in dashboardStats
   const dashboardStats = [
     {
       label: 'Active Projects',

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-// import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-// Use native elements for textarea, select, input
+import { Card } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
 import { CheckSquare, X, Clock, MessageSquare, User, Calendar, Filter, Search } from 'lucide-react';
 import { getTimesheets, approveTimesheet, rejectTimesheet } from '../../apiendpoints';
 
@@ -38,7 +36,7 @@ function getWeekEnding(dateStr: string): string {
   return date.toISOString().split('T')[0];
 }
 
-// Transform flat backend data to grouped timesheet structure
+
 function groupTimesheets(flat: any[]): TimesheetEntry[] {
   const grouped: { [key: string]: TimesheetEntry } = {};
   flat.forEach(entry => {
@@ -48,7 +46,7 @@ function groupTimesheets(flat: any[]): TimesheetEntry[] {
       grouped[key] = {
         id: key,
         freelancerName: entry.FreelancerName,
-        freelancerAvatar: '', // Optionally fetch avatar if available
+        freelancerAvatar: '', 
         projectName: entry.ProjectName,
         weekEnding,
         totalHours: 0,
@@ -68,7 +66,6 @@ function groupTimesheets(flat: any[]): TimesheetEntry[] {
       description: entry.WorkDescription,
       date: entry.DateOfWork,
     });
-    // Use the latest status/submittedAt if needed
     if (entry.ApprovalStatus !== 'Approved' && grouped[key].status === 'Approved') {
       grouped[key].status = entry.ApprovalStatus;
     }

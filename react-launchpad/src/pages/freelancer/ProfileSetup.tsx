@@ -71,10 +71,10 @@ export function ProfileSetup() {
         setLoading(true);
         const data = await getProfileSetupData();
         
-        console.log('API Response:', data); // Debug log
-        console.log('API Response Skills:', data.Skills); // Debug log
-        console.log('API Response Projects:', data.Projects); // Debug log
-        console.log('API Response Experience:', data.Experience); // Debug log
+        console.log('API Response:', data); 
+        console.log('API Response Skills:', data.Skills); 
+        console.log('API Response Projects:', data.Projects); 
+        console.log('API Response Experience:', data.Experience);
         
         // Check if data exists and has the expected structure
         if (!data) {
@@ -82,7 +82,7 @@ export function ProfileSetup() {
           return;
         }
         
-        // Re-index all arrays so IDs start from 1 and are sequential
+        //IDs start from 1 and are sequential
         const skills = (data.Skills || []).map((skill, idx) => ({
           Id: idx + 1,
           SkillName: skill.SkillName,
@@ -103,12 +103,11 @@ export function ProfileSetup() {
           Source: project.Source as 'parsed' | 'manual'
         }));
 
-        // Set the next ID for each type
+        //Set the next ID for each type
         skillId.current = skills.length + 1;
         experienceId.current = experience.length + 1;
         projectId.current = projects.length + 1;
 
-        // Transform the data to match our frontend structure
         const transformedData: ParsedResumeData = {
           summary: data.Summary || '',
           skills,
@@ -116,11 +115,10 @@ export function ProfileSetup() {
           projects,
         };
 
-        console.log('Transformed Data:', transformedData); // Debug log
+        console.log('Transformed Data:', transformedData); 
         
         setProfileData(transformedData);
         
-        // If we have data, show it as parsed results
         if (
           data.Summary ||
           (data.Skills && data.Skills.length > 0) ||
@@ -135,7 +133,6 @@ export function ProfileSetup() {
         }
       } catch (error) {
         console.error('Error fetching profile data:', error);
-        // This is normal for new users, no need to show error
       } finally {
         setLoading(false);
       }
@@ -150,7 +147,6 @@ export function ProfileSetup() {
     formData.append("file", file);
 
     try {
-      // Step 1: Upload and parse resume via resume_parser API
       const response = await fetch("http://localhost:8000/api/parse-resume/", {
         method: "POST",
         body: formData,
@@ -161,10 +157,9 @@ export function ProfileSetup() {
         throw new Error(error.error || "Resume parsing failed.");
       }
 
-      // Step 2: Fetch the parsed data from resume_parser database via our backend
       const parsedData = await getProfileSetupData();
       
-      // Re-index all arrays so IDs start from 1 and are sequential
+      //IDs start from 1 and are sequential
       const skills = (parsedData.Skills || []).map((skill, idx) => ({
         Id: idx + 1,
         SkillName: skill.SkillName,
@@ -190,7 +185,6 @@ export function ProfileSetup() {
       experienceId.current = experience.length + 1;
       projectId.current = projects.length + 1;
 
-      // Transform the data to match our frontend structure
       const transformedData: ParsedResumeData = {
         summary: parsedData.Summary || '',
         skills,
