@@ -63,12 +63,26 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetFeedbacksByFreelancer")]
         public async Task<HttpResponseData> GetFeedbacksByFreelancer(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "feedbacks/freelancer/{freelancerId:int}")] HttpRequestData req,
-            int freelancerId)
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "feedbacks/freelancer/{freelancerId:int}")] HttpRequestData req,
+    int freelancerId)
         {
             var feedbacks = await _unitOfWork.Feedbacks.GetFeedbacksByFreelancerAsync(freelancerId);
+
+            var feedbackDtos = feedbacks.Select(f => new FeedbackResponseDTO
+            {
+                ProjectId = f.ProjectId,
+                FreelancerId = f.FreelancerId,
+                Review = f.Review,
+                Rating = f.Rating,
+                ProjectName = f.Project?.ProjectTitle ?? "",
+                ClientName = f.Project?.Client?.User != null
+                    ? $"{f.Project.Client.User.FirstName} {f.Project.Client.User.LastName}"
+                    : "",
+                CreatedAt = f.CreatedAt
+            }).ToList();
+
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(feedbacks);
+            await response.WriteAsJsonAsync(feedbackDtos);
             return response;
         }
 

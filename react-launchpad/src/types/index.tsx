@@ -30,54 +30,68 @@ export interface SignupRequest {
 }
 
 export interface FreelancerProfile {
-  userId?: number;
+  id: number;
+  user: User; // full user object
+  summary: string;
   hourlyRate: number;
   workingHours: string;
   availability: string;
   rating?: number;
-  reviews?: number; //fetched from separate reviews table
-  location?: string;
-  summary: string;
   skills: string;
   experience: string;
   projects: string;
 }
 
-export interface Freelancer extends User, FreelancerProfile {}
+export interface Skill {
+  Id: number;
+  SkillName: string;
+  Source: 'parsed' | 'manual';
+}
 
-// export interface ParsedResumeData {
-//   summary: string;
-//   skills: string[];
-//   experience: {
-//     id: string;
-//     company: string;
-//     title: string;
-//     startDate: string;
-//     endDate: string;
-//     duration: string;
-//     description: string;
-//   }[];
+export interface ProjectItem {
+  Id: number;
+  Title: string;
+  Description: string;
+  Source: 'parsed' | 'manual';
+}
 
-// }
+export interface Experience {
+  Id: number;
+  Title: string;
+  Company: string;
+  Duration: string;
+  Description: string;
+  Source: 'parsed' | 'manual';
+}
+
+export interface ProfileSetupData {
+  Summary: string;
+  Skills: {
+    Id: number;
+    SkillName: string;
+    Source: string;
+  }[];
+  Projects: {
+    Id: number;
+    Title: string;
+    Description: string;
+    Source: string;
+  }[];
+  Experience: {
+    Id: number;
+    Title: string;
+    Company: string;
+    Duration: string;
+    Description: string;
+    Source: string;
+  }[];
+}
 
 export interface ParsedResumeData {
   summary: string;
-  skills: string[];
-  experience: {
-    id: number;
-    company: string;
-    title: string;
-    startDate: string;
-    endDate: string;
-    description: string;
-  }[];
-  projects: {
-    id: number;
-    title: string;
-    description: string;
-    tools: string[];
-  }[];
-
+  skills: Skill[];
+  experience: Experience[];
+  projects: ProjectItem[];
 }
 
 export interface Project {
@@ -118,6 +132,20 @@ export interface Task {
   actualHours: number;
   createdAt: string;
   dueDate: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  budget: number;
+  deadline: string;
+  clientId: string;
+  client: User;
+  skills: string[];
+  team: User[];
+  progress: number;
 }
 
 export interface ProjectRequest {
@@ -240,12 +268,11 @@ export interface KanbanTask {
 }
 
 export interface Feedback {
-  id: number;
-  projectId: number;
-  freelancerId: number;
-  review: string;
-  rating: number;
-  projectName: string;
-  clientName: string;
-  createdAt: string;
+  ProjectId: number;
+  FreelancerId: number;
+  Review: string;
+  Rating: number;
+  ProjectName: string;
+  ClientName: string;
+  CreatedAt: string;
 }

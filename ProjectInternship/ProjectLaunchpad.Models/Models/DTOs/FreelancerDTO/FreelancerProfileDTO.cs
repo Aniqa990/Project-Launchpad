@@ -9,6 +9,7 @@ namespace ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile
     public class FreelancerProfileDTO
     {
         public int Id { get; set; } 
+        public User User { get; set; }
         public string? Skills { get; set; }
         public string? Experience { get; set; }
         public decimal? HourlyRate { get; set; }

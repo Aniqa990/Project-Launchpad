@@ -28,7 +28,7 @@ export function Sidebar() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client/dashboard' },
     { icon: Plus, label: 'Create Project', path: '/client/create-project' },
     { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
-    { icon: Kanban, label: 'View Tasks', path: '/client/tasks' },
+    { icon: Kanban, label: 'View Tasks', path: '/client/kanban' },
     { icon: Users, label: 'Find Freelancers', path: '/client/freelancer-suggestions' },
     { icon: Clock, label: 'Time Logs', path: '/client/hourly-logs' },
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
@@ -47,6 +47,7 @@ export function Sidebar() {
     { icon: DollarSign, label: 'Earnings', path: '/freelancer/payment' },
     { icon: MessageSquare, label: 'Messages', path: '/chat' },
     { icon: Star, label: 'Feedback', path: '/freelancer/feedback' },
+    { icon: Settings, label: 'Settings', path: '/freelancer/settings' },
   ];
 
   const menuItems = user.role === 'client' ? clientMenuItems : freelancerMenuItems;

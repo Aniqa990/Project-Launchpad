@@ -16,9 +16,6 @@ namespace ProjectLaunchpad.Models
         public int Id { get; set; }
         public User User { get; set; }
 
-        [ForeignKey("Resume")]
-        public int ResumeId { get; set; }
-        public Resume Resume { get; set; } = null!;
         public string? Summary { get; set; }
 
         public decimal HourlyRate { get; set; }
