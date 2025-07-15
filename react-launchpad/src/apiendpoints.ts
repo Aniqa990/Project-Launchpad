@@ -1,5 +1,5 @@
 import axios from "axios";
-import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback} from "@/types";
+import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback, ProfileSetupData} from "@/types";
 
 const api = axios.create({
   baseURL: "http://localhost:7071/api",
@@ -21,6 +21,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+//AUTH
 export const loginUser = async (email: string, password: string, role: string)=>{
   const response = await api.post('/auth/login', { email, password, role });
   return response.data;
@@ -37,6 +38,7 @@ export async function validateToken(token?: string) {
   }).then(res => res.data);
 }
 
+
 export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
   try{
   const response = await api.post("/freelancer", profile);
@@ -46,6 +48,7 @@ export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) =
   }
 };
 
+//PROJECT REQUESTS
 export const getProjectRequests = async(freelancerId: number) => {
   try{
   const response = await api.get(`/requests/${freelancerId}`);
@@ -57,13 +60,7 @@ export const getProjectRequests = async(freelancerId: number) => {
 
 export const respondToProjectRequest = async (projectId: number, status: string, freelancerId?: number) => {
   try {
-    const token = localStorage.getItem('token');
-    console.log('PATCH Request Token:', token);
-    const response = await api.patch(
-      `/requests/${freelancerId}/${projectId}`,
-      { status },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await api.patch(`/requests/${freelancerId}/${projectId}`, { status });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update request status');
@@ -267,7 +264,26 @@ export const deleteMessage = async (messageId: number) => {
   return res.data;
 }; 
 
+//Feedbacks
 export const getFreelancerFeedbacks = async (freelancerId: number): Promise<Feedback[]> => {
   const response = await api.get(`/feedbacks/freelancer/${freelancerId}`);
   return response.data;
+}; 
+
+// Profile Setup API functions
+export const getProfileSetupData = async (): Promise<ProfileSetupData> => {
+  const response = await api.get('/freelancer/profile-setup');
+  return response.data;
+};
+
+export const saveProfileSetupData = async (data: {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  hourlyRate: number;
+  availability: string;
+  workingHours: string;
+  profileData: ProfileSetupData;
+}): Promise<void> => {
+  await api.post('/freelancer/profile-setup', data);
 }; 

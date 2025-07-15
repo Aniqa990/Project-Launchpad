@@ -15,16 +15,8 @@ export function Feedback() {
       if (!user?.id) return;
       try {
         const feedbacks = await getFreelancerFeedbacks(user.id);
-        setFeedback(feedbacks.map((item: any) => ({
-          id: item.id || item.Id,
-          projectId: item.projectId || item.ProjectId,
-          freelancerId: item.freelancerId || item.FreelancerId,
-          review: item.review || item.Review,
-          rating: typeof item.rating === 'number' ? item.rating : Number(item.Rating),
-          projectName: item.projectName || (item.Project && item.Project.ProjectTitle) || '',
-          clientName: item.clientName || (item.Project && item.Project.Client && item.Project.Client.User ? `${item.Project.Client.User.FirstName} ${item.Project.Client.User.LastName}` : ''),
-          createdAt: item.createdAt || item.CreatedAt || item.created_at || '',
-        })));
+        console.log('Feedback API response:', feedbacks);
+        setFeedback(feedbacks);
       } catch (error) {
         setFeedback([]);
       }
@@ -33,20 +25,20 @@ export function Feedback() {
   }, [user?.id]);
 
   const filteredFeedback = feedback.filter((item: FeedbackType) => {
-    const matchesSearch = (item.projectName && item.projectName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (item.clientName && item.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (item.review && item.review.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesRating = filterRating === null || item.rating === filterRating;
+    const matchesSearch = (item.ProjectName && item.ProjectName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.ClientName && item.ClientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (item.Review && item.Review.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesRating = filterRating === null || item.Rating === filterRating;
     return matchesSearch && matchesRating;
   });
 
   const averageRating = feedback.length > 0 ?
-    (feedback.reduce((sum: number, item: FeedbackType) => sum + item.rating, 0) / feedback.length).toFixed(1) : '0.0';
+    (feedback.reduce((sum: number, item: FeedbackType) => sum + item.Rating, 0) / feedback.length).toFixed(1) : '0.0';
 
   const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => ({
     rating,
-    count: feedback.filter((item: FeedbackType) => item.rating === rating).length,
-    percentage: feedback.length > 0 ? (feedback.filter((item: FeedbackType) => item.rating === rating).length / feedback.length) * 100 : 0
+    count: feedback.filter((item: FeedbackType) => item.Rating === rating).length,
+    percentage: feedback.length > 0 ? (feedback.filter((item: FeedbackType) => item.Rating === rating).length / feedback.length) * 100 : 0
   }));
 
   const renderStars = (rating: number, size: 'sm' | 'md' | 'lg' = 'md') => {
@@ -129,7 +121,7 @@ export function Feedback() {
             <div>
               <p className="text-green-100 text-sm font-medium">5-Star Reviews</p>
               <p className="text-3xl font-bold">
-                {feedback.filter((item: FeedbackType) => item.rating === 5).length}
+                {feedback.filter((item: FeedbackType) => item.Rating === 5).length}
               </p>
             </div>
             <div className="bg-green-400 p-3 rounded-xl">
@@ -163,30 +155,33 @@ export function Feedback() {
       </div>
       {/* Feedback List */}
       <div className="space-y-4">
-        {filteredFeedback.map((item: FeedbackType) => (
-          <div key={item.id} className="bg-white rounded-2xl p-6 border border-gray-100">
+        {filteredFeedback.map((item, idx) => (
+          <div
+            key={`${item.ProjectId}-${item.CreatedAt}-${idx}`}
+            className="bg-white rounded-2xl p-6 border border-gray-100"
+          >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
                 <div className="bg-blue-100 p-2 rounded-lg">
                   <User className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{item.clientName}</h3>
-                  <p className="text-gray-600 text-sm">{item.projectName}</p>
+                  <h3 className="font-semibold text-gray-900">{item.ClientName}</h3>
+                  <p className="text-gray-600 text-sm">{item.ProjectName}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {renderStars(item.rating)}
-                <span className="text-sm font-medium text-gray-700">({item.rating}.0)</span>
+                {renderStars(item.Rating)}
+                <span className="text-sm font-medium text-gray-700">({item.Rating}.0)</span>
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <p className="text-gray-700 leading-relaxed">{item.review}</p>
+              <p className="text-gray-700 leading-relaxed">{item.Review}</p>
             </div>
             <div className="flex items-center space-x-4 text-sm text-gray-500">
               <div className="flex items-center space-x-1">
                 <Calendar className="w-4 h-4" />
-                <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''}</span>
+                <span>{item.CreatedAt ? new Date(item.CreatedAt).toLocaleDateString() : ''}</span>
               </div>
               <div className="flex items-center space-x-1">
                 <MessageSquare className="w-4 h-4" />

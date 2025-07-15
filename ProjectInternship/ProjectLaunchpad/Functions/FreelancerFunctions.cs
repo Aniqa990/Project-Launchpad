@@ -1,11 +1,8 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models;
-using ProjectLaunchpad.Models.Models;
-using ProjectLaunchpad.Models.Models.DTOs.FreelancerDTO;
 using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
-using ProjectLaunchpad.Services;
 using ProjectLaunchpad.Utility;
 using System;
 using System.Collections.Generic;
@@ -21,117 +18,18 @@ namespace ProjectLaunchpad.Functions
     {
         private readonly IUnitOfWork _unit;
         private readonly TokenAuthorization _auth;
-        private readonly ResumeParserSyncService _resumeParserSyncService;
 
-        public FreelancerFunctions(IUnitOfWork unit, TokenAuthorization auth, ResumeParserSyncService resumeParserSyncService)
+        public FreelancerFunctions(IUnitOfWork unit, TokenAuthorization auth)
         {
             _unit = unit;
             _auth = auth;
-            _resumeParserSyncService = resumeParserSyncService;
-        }
-
-        [Function("GetProfileSetupData")]
-        public async Task<HttpResponseData> GetProfileSetupData(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "freelancer/profile-setup")] HttpRequestData req)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
-
-            var email = user?.FindFirst(ClaimTypes.Email)?.Value;
-            if (string.IsNullOrEmpty(email))
-            {
-                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                await errorResponse.WriteAsJsonAsync(new { error = "Email not found in token" });
-                return errorResponse;
-            }
-
-            try
-            {
-                var profileData = await _resumeParserSyncService.GetProfileSetupDataAsync(email);
-                var res = req.CreateResponse(HttpStatusCode.OK);
-                await res.WriteAsJsonAsync(profileData);
-                return res;
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await errorResponse.WriteAsJsonAsync(new { error = "Failed to fetch profile setup data", details = ex.Message });
-                return errorResponse;
-            }
-        }
-
-        [Function("SaveProfileSetupData")]
-        public async Task<HttpResponseData> SaveProfileSetupData(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "freelancer/profile-setup")] HttpRequestData req)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
-
-            var email = user?.FindFirst(ClaimTypes.Email)?.Value;
-            var userId = int.Parse(user?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-            if (string.IsNullOrEmpty(email) || userId == 0)
-            {
-                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                await errorResponse.WriteAsJsonAsync(new { error = "User information not found in token" });
-                return errorResponse;
-            }
-
-            try
-            {
-                var requestData = await req.ReadFromJsonAsync<ProfileSetupRequestDTO>();
-                if (requestData == null)
-                {
-                    var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                    await errorResponse.WriteAsJsonAsync(new { error = "Invalid request data" });
-                    return errorResponse;
-                }
-
-                // Create User object from request data
-                var userObj = new User
-                {
-                    Id = userId,
-                    FirstName = requestData.FirstName,
-                    LastName = requestData.LastName,
-                    Email = email,
-                    PhoneNo = requestData.Phone,
-                    Role = "freelancer"
-                };
-
-                // Create FreelancerProfileDTO from request data
-                var profileDto = new FreelancerProfileDTO
-                {
-                    Id = userId,
-                    User = userObj,
-                    HourlyRate = requestData.HourlyRate,
-                    Availability = requestData.Availability,
-                    WorkingHours = requestData.WorkingHours,
-                    Summary = requestData.ProfileData.Summary
-                };
-
-                await _resumeParserSyncService.SaveProfileSetupDataAsync(email, requestData.ProfileData, profileDto);
-
-                var res = req.CreateResponse(HttpStatusCode.OK);
-                await res.WriteAsJsonAsync(new { message = "Profile setup data saved successfully" });
-                return res;
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await errorResponse.WriteAsJsonAsync(new { error = "Failed to save profile setup data", details = ex.Message });
-                return errorResponse;
-            }
         }
 
         [Function("AddFreelancerProfile")]
         public async Task<HttpResponseData> AddFreelancerProfile(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "freelancer")] HttpRequestData req)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -149,7 +47,7 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "freelancer/{id:int}")] HttpRequestData req,
             int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -167,7 +65,7 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "freelancer/{id:int}")] HttpRequestData req,
             int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -184,7 +82,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> GetAllFreelancers(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "freelancers")] HttpRequestData req)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -199,7 +97,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> Update(
             [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "freelancer/{id}")] HttpRequestData req, int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -223,16 +121,4 @@ namespace ProjectLaunchpad.Functions
         }
     }
 
-    // DTO for the profile setup request
-    public class ProfileSetupRequestDTO
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-        public string Location { get; set; } = string.Empty;
-        public decimal HourlyRate { get; set; }
-        public string Availability { get; set; } = string.Empty;
-        public string WorkingHours { get; set; } = string.Empty;
-        public ProfileSetupDTO ProfileData { get; set; } = new ProfileSetupDTO();
-    }
 }

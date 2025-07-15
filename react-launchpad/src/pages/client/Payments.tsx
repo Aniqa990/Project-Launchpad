@@ -41,7 +41,7 @@ export function ClientPayments() {
   });
 
   const handleReleasePayment = (milestoneId: string) => {
-    // In a real app, this would process the payment
+    // logic
     toast.success('Payment released successfully!');
     setShowPaymentModal(false);
   };

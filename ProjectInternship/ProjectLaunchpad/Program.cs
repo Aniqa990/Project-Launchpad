@@ -31,8 +31,4 @@ builder.Services.AddSingleton(new JwtHelper(builder.Configuration["JwtSecret"]))
 builder.Services.AddSingleton<JwtValidator>();
 builder.Services.AddScoped<TokenAuthorization>();
 builder.Services.AddScoped<AuthService>();
-var mysqlConnectionString = builder.Configuration["ResumeParserMySql"];
-builder.Services.AddScoped<ResumeParserSyncService>(provider =>
-    new ResumeParserSyncService(mysqlConnectionString, provider.GetRequiredService<IUnitOfWork>()));
-
 builder.Build().Run();

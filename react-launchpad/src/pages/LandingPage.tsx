@@ -1,3 +1,5 @@
+//not connected to backend yet
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Play, Star, Users, Briefcase, TrendingUp, Rocket, Brain, Shield, Clock, BarChart3, MessageSquare, X, ChevronLeft, ChevronRight, Quote, CheckCircle, Zap, Target } from 'lucide-react';

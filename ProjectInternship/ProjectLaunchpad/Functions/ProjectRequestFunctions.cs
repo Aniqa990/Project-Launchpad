@@ -29,7 +29,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> CreateProjectRequest(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects/requests")] HttpRequestData req)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Client");
             if (!isAuthorized)
                 return unauthorizedResponse!;
 
@@ -59,7 +59,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> UpdateRequestStatus(
             [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "requests/{freelancerId}/{projectId}")] HttpRequestData req, int freelancerId, int projectId)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
             if (!isAuthorized)
                 return unauthorizedResponse!;
 

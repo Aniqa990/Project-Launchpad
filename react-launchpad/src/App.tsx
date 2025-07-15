@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import LandingPage from './pages/LandingPage';
 import { Auth } from './pages/Auth';
-import { Settings } from './pages/Settings';
+import { Settings } from './pages/freelancer/Settings';
 import { ClientDashboard } from './pages/client/Dashboard';
 import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
@@ -15,6 +15,7 @@ import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
 import { Feedback } from './pages/freelancer/Feedback';
+import { KanbanBoard } from './components/workspace/KanbanBoard';
 import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
@@ -24,7 +25,6 @@ import TimesheetApproval from './pages/client/TimesheetApproval';
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
   const { isAuthenticated, user, loading } = useAuth();
   
-  // Show loading while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -50,7 +50,6 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
 function AppRoutes() {
   const { isAuthenticated, user, loading } = useAuth();
 
-  // Show loading while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -85,6 +84,7 @@ function AppRoutes() {
         <Route path="dashboard" element={<ClientDashboard />} />
         <Route path="create-project" element={<CreateProject />} />
         <Route path="projects" element={<ClientProjects />} />
+        <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
         <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<Settings />} />
@@ -99,7 +99,9 @@ function AppRoutes() {
         <Route path="dashboard" element={<FreelancerDashboard />} />
         <Route path="requests" element={<FreelancerRequests />} />
         <Route path="projects" element={<FreelancerProjects />} />
+        <Route path="kanban" element={<KanbanBoard />} />
         <Route path="feedback" element={<Feedback />} />
+        <Route path="settings" element={<Settings />} />  
       </Route>
 
       <Route path="/workspace/:projectId" element={

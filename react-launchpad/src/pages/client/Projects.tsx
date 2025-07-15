@@ -83,7 +83,7 @@ export function ClientProjects() {
   };
 
   const handleSubmitReview = (review: { rating: number; comment: string; tags: string[] }) => {
-    // In a real app, this would submit to the backend
+    //logic
     console.log('Review submitted:', review);
     toast.success('Review submitted successfully!');
     setShowReviewModal(false);
@@ -127,8 +127,7 @@ export function ClientProjects() {
     if (!project.Milestones || project.Milestones === 'initial milestone') {
       return 0;
     }
-    // For now, return a random progress between 0-100
-    // In a real app, you'd track completed milestones
+    //logic
     return Math.floor(Math.random() * 100);
   };
 
@@ -178,7 +177,6 @@ export function ClientProjects() {
       </div>
 
       <div className="flex items-center justify-between">
-        {/* Only show avatars if project.team exists and is an array */}
         {Array.isArray(project.team) && (
           <div className="flex -space-x-2">
             {project.team.slice(0, 3).map((member: any) => (
