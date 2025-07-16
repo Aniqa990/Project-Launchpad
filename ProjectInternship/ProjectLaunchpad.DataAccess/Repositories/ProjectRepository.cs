@@ -21,13 +21,46 @@ namespace ProjectLaunchpad.DataAccess.Repositories
 
         public async Task<IEnumerable<Project>> GetAllProjectsAsync()
         {
-            return await _db.projects.ToListAsync();
+            return await _db.projects
+                .Include(p => p.Client)
+                .ThenInclude(c => c.User)
+                .Include(p => p.AssignedFreelancers)
+                .ThenInclude(af => af.Freelancer)
+                .ThenInclude(f => f.User)
+                .Include(p => p.Milestones)
+                .ToListAsync();
         }
 
         public async Task<Project?> GetProjectByIdAsync(int id)
         {
-            return await _db.projects.FirstOrDefaultAsync(p => p.Id == id);
+            return await _db.projects
+                .Include(p => p.Client)
+                .ThenInclude(c => c.User)
+                .Include(p => p.AssignedFreelancers)
+                .ThenInclude(af => af.Freelancer)
+                .ThenInclude(f => f.User)
+                .Include(p => p.Milestones)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
         }
+
+        public async Task<List<Project>> GetProjectsByFreelancerAsync(int freelancerId)
+        {
+            return await _db.projectFreelancers
+                .Where(pa => pa.FreelancerId == freelancerId)
+                .Include(pa => pa.Project)
+                    .ThenInclude(p => p.Client)
+                        .ThenInclude(c => c.User)
+                .Include(pa => pa.Project)
+                    .ThenInclude(p => p.AssignedFreelancers)
+                        .ThenInclude(af => af.Freelancer)
+                            .ThenInclude(f => f.User)
+                .Include(pa => pa.Project)
+                    .ThenInclude(p => p.Milestones)
+                .Select(pa => pa.Project)
+                .ToListAsync();
+        }
+
 
         public async Task<IEnumerable<Project>> GetProjectsByCategoryAsync(string categoryOrDomain)
         {
