@@ -6,25 +6,34 @@ using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Net;
 using System.Threading.Tasks;
 using ProjectLaunchpad.Models.Models.DTOs.ProjectDTO;
+using ProjectLaunchpad.Utility;
 
 namespace ProjectLaunchpad.Functions
 {
     public class ProjectPostingFunctions
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly TokenAuthorization _auth;
 
-        public ProjectPostingFunctions(IUnitOfWork unitOfWork)
+        public ProjectPostingFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
         {
             _unitOfWork = unitOfWork;
+            _auth = auth;
         }
 
         [Function("CreateProjectPosting")]
         public async Task<HttpResponseData> CreateProjectPosting(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var project = await req.ReadFromJsonAsync<Project>();
             await _unitOfWork.ProjectRepository.AddProjectAsync(project);
             await _unitOfWork.SaveAsync();
@@ -37,7 +46,7 @@ namespace ProjectLaunchpad.Functions
         [Function("GetAllProjectPostings")]
         public async Task<HttpResponseData> GetAllProjectPostings(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects")] HttpRequestData req)
-        {
+            { 
             //var projects = await _unitOfWork.Posting.GetAllProjectPostingsAsync();
 
             //var response = req.CreateResponse(HttpStatusCode.OK);
@@ -80,6 +89,11 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "projects/{id:int}")] HttpRequestData req,
             int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var updatedProject = await req.ReadFromJsonAsync<Project>();
             updatedProject.Id = id;
             await _unitOfWork.ProjectRepository.UpdateProjectAsync(updatedProject);
@@ -95,6 +109,11 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "projects/{id:int}")] HttpRequestData req,
             int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             await _unitOfWork.ProjectRepository.DeleteProjectAsync(id);
             await _unitOfWork.SaveAsync();
 

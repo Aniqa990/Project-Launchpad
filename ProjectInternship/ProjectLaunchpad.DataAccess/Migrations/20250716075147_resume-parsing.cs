@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class resumeparsing : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -54,14 +54,14 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
+                    Summary = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    HourlyRate = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Skills = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Experience = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    HourlyRate = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Projects = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Availability = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WorkingHours = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AvgRating = table.Column<decimal>(type: "decimal(3,1)", precision: 3, scale: 1, nullable: false),
-                    Summary = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Projects = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    AvgRating = table.Column<decimal>(type: "decimal(3,1)", precision: 3, scale: 1, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -131,6 +131,73 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         name: "FK_projects_clientProfiles_ClientId",
                         column: x => x.ClientId,
                         principalTable: "clientProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "experiences",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FreelancerId = table.Column<int>(type: "int", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Company = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Duration = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Source = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_experiences", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_experiences_freelancerProfiles_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "freelancerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "resumeProjects",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FreelancerId = table.Column<int>(type: "int", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Source = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_resumeProjects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_resumeProjects_freelancerProfiles_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "freelancerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "skills",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FreelancerId = table.Column<int>(type: "int", nullable: false),
+                    SkillName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Source = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_skills", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_skills_freelancerProfiles_FreelancerId",
+                        column: x => x.FreelancerId,
+                        principalTable: "freelancerProfiles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -215,7 +282,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     ProjectId = table.Column<int>(type: "int", nullable: false),
                     FreelancerId = table.Column<int>(type: "int", nullable: false),
                     Review = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Rating = table.Column<decimal>(type: "decimal(3,1)", precision: 3, scale: 1, nullable: false)
+                    Rating = table.Column<decimal>(type: "decimal(3,1)", precision: 3, scale: 1, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -385,6 +453,11 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 column: "projectId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_experiences_FreelancerId",
+                table: "experiences",
+                column: "FreelancerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Feedbacks_FreelancerId",
                 table: "Feedbacks",
                 column: "FreelancerId");
@@ -430,6 +503,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 column: "ClientId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_resumeProjects_FreelancerId",
+                table: "resumeProjects",
+                column: "FreelancerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_skills_FreelancerId",
+                table: "skills",
+                column: "FreelancerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_subtasks_TaskItemId",
                 table: "subtasks",
                 column: "TaskItemId");
@@ -462,6 +545,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 name: "deliverables");
 
             migrationBuilder.DropTable(
+                name: "experiences");
+
+            migrationBuilder.DropTable(
                 name: "Feedbacks");
 
             migrationBuilder.DropTable(
@@ -478,6 +564,12 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "projectRequests");
+
+            migrationBuilder.DropTable(
+                name: "resumeProjects");
+
+            migrationBuilder.DropTable(
+                name: "skills");
 
             migrationBuilder.DropTable(
                 name: "subtasks");

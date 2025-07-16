@@ -29,8 +29,6 @@ namespace ProjectLaunchpad.Models.Models.DTOs.ProjectDTO
 
         public string? Status { get; set; } = "Open"; // Open, Closed, In Progress
 
-        public string? Milestones { get; set; }
-
         public string? AttachedDocumentPath { get; set; }
     }
 }

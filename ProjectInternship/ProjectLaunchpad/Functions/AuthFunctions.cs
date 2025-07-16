@@ -47,6 +47,9 @@ namespace ProjectLaunchpad.Functions
                     email = user.Email,
                     firstName = user.FirstName,
                     lastName = user.LastName,
+                    phone = user.PhoneNo,
+                    avatar = user.ProfilePicture,
+                    gender = user.Gender,
                     role = user.Role
                 }
             });
@@ -60,6 +63,12 @@ namespace ProjectLaunchpad.Functions
             var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
             var (token, user) = await _auth.LoginAsync(dto); // Now getting both
 
+            if (user.Role == "Client")
+            {
+                _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
+                await _unitOfWork.SaveAsync();
+            }
+
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(new
             {
@@ -70,6 +79,9 @@ namespace ProjectLaunchpad.Functions
                     email = user.Email,
                     firstName = user.FirstName,
                     lastName = user.LastName,
+                    phone = user.PhoneNo,
+                    avatar = user.ProfilePicture,
+                    gender = user.Gender,
                     role = user.Role
                 }
             });
@@ -81,12 +93,10 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> ValidateToken(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auth/validate")] HttpRequestData req)
         {
-            Console.WriteLine("🔍 ValidateToken function called");
             try
             {
                 if (!req.Headers.TryGetValues("Authorization", out var values))
                 {
-                    Console.WriteLine("❌ Missing Authorization header");
                     var response = req.CreateResponse(HttpStatusCode.Unauthorized);
                     await response.WriteAsJsonAsync(new { valid = false, message = "Missing Authorization header" });
                     return response;
@@ -95,32 +105,26 @@ namespace ProjectLaunchpad.Functions
                 var bearerToken = values.FirstOrDefault();
                 if (bearerToken == null || !bearerToken.StartsWith("Bearer "))
                 {
-                    Console.WriteLine("❌ Invalid token format");
                     var response = req.CreateResponse(HttpStatusCode.Unauthorized);
                     await response.WriteAsJsonAsync(new { valid = false, message = "Invalid token format" });
                     return response;
                 }
 
                 var token = bearerToken.Substring("Bearer ".Length).Trim();
-                Console.WriteLine($"🔑 Validating token: {token.Substring(0, Math.Min(20, token.Length))}...");
                 
                 var principal = _jwtValidator.ValidateToken(token);
                 
                 if (principal == null)
                 {
-                    Console.WriteLine("❌ Token validation failed");
                     var response = req.CreateResponse(HttpStatusCode.Unauthorized);
                     await response.WriteAsJsonAsync(new { valid = false, message = "Token validation failed" });
                     return response;
                 }
-
-                Console.WriteLine("✅ Token validation successful");
                 
                 // Get user ID from token
                 var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
-                    Console.WriteLine("❌ Invalid user ID in token");
                     var response = req.CreateResponse(HttpStatusCode.Unauthorized);
                     await response.WriteAsJsonAsync(new { valid = false, message = "Invalid user ID in token" });
                     return response;
@@ -130,13 +134,10 @@ namespace ProjectLaunchpad.Functions
                 var user = await _unitOfWork.Users.GetUserByIdAsync(userId);
                 if (user == null)
                 {
-                    Console.WriteLine("❌ User not found in database");
                     var response = req.CreateResponse(HttpStatusCode.Unauthorized);
                     await response.WriteAsJsonAsync(new { valid = false, message = "User not found" });
                     return response;
                 }
-
-                // If we get here, the token is valid
                 var successResponse = req.CreateResponse(HttpStatusCode.OK);
                 await successResponse.WriteAsJsonAsync(new
                 {
@@ -147,6 +148,9 @@ namespace ProjectLaunchpad.Functions
                         email = user.Email,
                         firstName = user.FirstName,
                         lastName = user.LastName,
+                        phone = user.PhoneNo,
+                        avatar = user.ProfilePicture,
+                        gender = user.Gender,
                         role = user.Role
                     }
                 });
@@ -154,7 +158,6 @@ namespace ProjectLaunchpad.Functions
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"💥 Exception in ValidateToken: {ex.Message}");
                 var response = req.CreateResponse(HttpStatusCode.Unauthorized);
                 await response.WriteAsJsonAsync(new { valid = false, message = "Invalid token" });
                 return response;

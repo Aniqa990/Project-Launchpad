@@ -22,7 +22,47 @@ namespace ProjectLaunchpad.DataAccess.Repositories
 
         public async Task<FreelancerProfile?> GetProfileByUserIdAsync(int userId)
         {
-            return await _db.freelancerProfiles.FirstOrDefaultAsync(p => p.Id == userId);
+            return await _db.freelancerProfiles
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.Id == userId);
+        }
+
+        public async Task AddOrUpdateFreelancerProfileAsync(FreelancerProfileDTO dto)
+        {
+            var existingProfile = await _db.freelancerProfiles.FindAsync(dto.Id);
+
+            if (existingProfile != null)
+            {
+                // Update existing profile
+                existingProfile.Skills = dto.Skills ?? existingProfile.Skills;
+                existingProfile.Experience = dto.Experience ?? existingProfile.Experience;
+                existingProfile.Projects = dto.Projects ?? existingProfile.Projects;
+                existingProfile.HourlyRate = dto.HourlyRate ?? existingProfile.HourlyRate;
+                existingProfile.AvgRating = dto.AvgRating ?? existingProfile.AvgRating;
+                existingProfile.Availability = dto.Availability ?? existingProfile.Availability;
+                existingProfile.WorkingHours = dto.WorkingHours ?? existingProfile.WorkingHours;
+                existingProfile.Summary = dto.Summary ?? existingProfile.Summary;
+
+                _db.freelancerProfiles.Update(existingProfile);
+            }
+            else
+            {
+                // Create new profile
+                var entity = new FreelancerProfile
+                {
+                    Id = dto.Id,
+                    Skills = dto.Skills,
+                    Experience = dto.Experience,
+                    Projects = dto.Projects,
+                    HourlyRate = dto.HourlyRate ?? 0,
+                    AvgRating = dto.AvgRating ?? 0,
+                    Availability = dto.Availability ?? "available",
+                    WorkingHours = dto.WorkingHours ?? "9am-5pm",
+                    Summary = dto.Summary ?? ""
+                };
+
+                await _db.freelancerProfiles.AddAsync(entity);
+            }
         }
 
         public async Task AddFreelancerProfileAsync(FreelancerProfileDTO dto)
@@ -61,7 +101,9 @@ namespace ProjectLaunchpad.DataAccess.Repositories
 
         public async Task<List<FreelancerProfile>> GetAllFreelancerProfilesAsync()
         {
-            return await _db.freelancerProfiles.ToListAsync();
+            return await _db.freelancerProfiles
+                .Include(p => p.User)
+                .ToListAsync();
         }
     }
 }

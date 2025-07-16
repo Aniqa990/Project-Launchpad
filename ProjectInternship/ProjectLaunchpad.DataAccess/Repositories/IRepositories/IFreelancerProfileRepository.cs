@@ -12,6 +12,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
     {
         Task<FreelancerProfile?> GetProfileByUserIdAsync(int userId);
         Task AddFreelancerProfileAsync(FreelancerProfileDTO profile);
+        Task AddOrUpdateFreelancerProfileAsync(FreelancerProfileDTO dto);
         Task UpdateFreelancerProfileAsync(FreelancerProfile profile);
         Task DeleteFreelancerProfileAsync(int userId);
         Task<List<FreelancerProfile>> GetAllFreelancerProfilesAsync();

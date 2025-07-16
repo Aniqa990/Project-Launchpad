@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="9.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ProjectLaunchpad.DataAccess\ProjectLaunchpad.DataAccess.csproj" />
     <ProjectReference Include="..\ProjectLaunchpad.Models\ProjectLaunchpad.Models.csproj" />
     <ProjectReference Include="..\ProjectLaunchpad.Utility\ProjectLaunchpad.Utility.csproj" />
