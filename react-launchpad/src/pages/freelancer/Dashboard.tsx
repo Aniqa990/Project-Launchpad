@@ -49,34 +49,36 @@ export function FreelancerDashboard() {
         getProjectRequests(user!.id!)
       ]);
 
+      console.log(projectsData);
+
       const transformedProjects = projectsData.map((project: any) => ({
         id: project.Id,
-        title: project.ProjectTitle,
+        title: project.Title,
         description: project.Description,
         status: project.Status,
         budget: project.Budget,
         deadline: project.Deadline,
         clientId: project.ClientId,
-        client: {
-          id: project.Client.User.Id,
-          firstName: project.Client.User.FirstName,
-          lastName: project.Client.User.LastName,
-          email: project.Client.User.Email,
-          phone: project.Client.User.PhoneNo,
-          role: project.Client.User.Role,
-          gender: project.Client.User.Gender
-        },
-        skills: project.SkillsRequired ? project.SkillsRequired.split(',').map((s: string) => s.trim()) : [],
-        team: project.AssignedFreelancers.map((af: any) => ({
-          id: af.Freelancer.User.Id,
-          firstName: af.Freelancer.User.FirstName,
-          lastName: af.Freelancer.User.LastName,
-          email: af.Freelancer.User.Email,
-          phone: af.Freelancer.User.PhoneNo,
-          role: af.Freelancer.User.Role,
-          gender: af.Freelancer.User.Gender
+        client: project.Client
+          ? {
+              firstName: project.Client.FirstName,
+              lastName: project.Client.LastName,
+              email: project.Client.Email,
+              phone: project.Client.PhoneNo,
+              role: project.Client.Role,
+              gender: project.Client.Gender
+            }
+          : null,
+        skills: project.Skills || [],
+        team: (project.Team || []).map((member: any) => ({
+          firstName: member.FirstName,
+          lastName: member.LastName,
+          email: member.Email,
+          phone: member.PhoneNo,
+          role: member.Role,
+          gender: member.Gender
         })),
-        progress: 0, // Calculate based on milestones
+        progress: project.Progress ?? 0
       }));
 
       const transformedRequests = requestsData.map((request: any) => ({
