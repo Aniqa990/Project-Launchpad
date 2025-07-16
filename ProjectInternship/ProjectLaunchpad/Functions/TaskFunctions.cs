@@ -40,7 +40,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> CreateTaskAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "tasks")] HttpRequestData req)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -74,7 +74,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> UpdateTaskAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "tasks/{id:int}")] HttpRequestData req, int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
@@ -104,7 +104,7 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> DeleteTaskAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "tasks/{id:int}")] HttpRequestData req, int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "Freelancer");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;

@@ -19,6 +19,9 @@ namespace ProjectLaunchpad.Models
         public string? Summary { get; set; }
 
         public decimal HourlyRate { get; set; }
+        public string Skills { get; set; }
+        public string Experience { get; set; }
+        public string Projects { get; set; }
 
         [Required]
         public string Availability { get; set; }
@@ -34,9 +37,6 @@ namespace ProjectLaunchpad.Models
         public ICollection<Feedback> Feedbacks { get; set; } // Feedback given by clients
         public ICollection<TimeSheet> TimeSheets { get; set; } // Timesheets for work done
         public ICollection<Logs> Logs { get; set; }
-        public ICollection<Skill> Skills { get; set; } = new List<Skill>();
-        public ICollection<ResumeProject> ResumeProjects { get; set; } = new List<ResumeProject>();
-        public ICollection<Experience> Experiences { get; set; } = new List<Experience>();
     }
 
 }

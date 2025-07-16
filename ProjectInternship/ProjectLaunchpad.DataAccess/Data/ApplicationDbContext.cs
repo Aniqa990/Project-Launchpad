@@ -34,8 +34,6 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<Logs> logs { get; set; }
         public DbSet<Skill> skills { get; set; }
-        public DbSet<Resume> resumes { get; set; }
-        public DbSet<ParsedResume> parsedResumes { get; set; }
         public DbSet<ResumeProject> resumeProjects { get; set; }
         public DbSet<Experience> experiences { get; set; }
 
@@ -191,7 +189,7 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasForeignKey(ts => ts.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<ResumeProject>()
+           /* modelBuilder.Entity<ResumeProject>()
                 .HasOne(rp => rp.Freelancer)
                 .WithMany(f => f.ResumeProjects)
                 .HasForeignKey(rp => rp.FreelancerId)
@@ -213,7 +211,7 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasOne(pr => pr.Resume)
                 .WithMany()
                 .HasForeignKey(pr => pr.ResumeId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade);*/
         }
 
     }

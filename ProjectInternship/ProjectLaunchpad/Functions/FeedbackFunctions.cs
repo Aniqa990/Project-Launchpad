@@ -3,6 +3,8 @@ using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs.FeedbackDTO;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Utility;
+using System.Security.Claims;
 using System.Net;
 
 namespace ProjectLaunchpad.Functions
@@ -10,16 +12,23 @@ namespace ProjectLaunchpad.Functions
     public class FeedbackFunctions
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly TokenAuthorization _auth;
 
-        public FeedbackFunctions(IUnitOfWork unitOfWork)
+        public FeedbackFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
         {
             _unitOfWork = unitOfWork;
+            _auth = auth;
         }
 
         [Function("CreateFeedback")]
         public async Task<HttpResponseData> CreateFeedback(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "feedbacks")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<FeedbackCreateDTO>();
             if (dto == null)
                 return req.CreateResponse(HttpStatusCode.BadRequest);
@@ -91,6 +100,11 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "feedbacks/{id:int}")] HttpRequestData req,
             int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             await _unitOfWork.Feedbacks.DeleteFeedbackAsync(id);
             await _unitOfWork.SaveAsync();
 

@@ -29,6 +29,11 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> CreateProjectPosting(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var project = await req.ReadFromJsonAsync<Project>();
             await _unitOfWork.ProjectRepository.AddProjectAsync(project);
             await _unitOfWork.SaveAsync();
