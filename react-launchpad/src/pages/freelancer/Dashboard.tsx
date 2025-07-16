@@ -164,30 +164,30 @@ export function FreelancerDashboard() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-3 max-w-6xl mx-auto space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-8 mb-8">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-5 mb-6"> 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.firstName}!</h1>
-            <p className="text-blue-100 text-lg">Here's your project overview for today</p>
+            <h1 className="text-2xl font-bold mb-1">Welcome back, {user?.firstName}!</h1> 
+            <p className="text-blue-100 text-base">Here's your project overview for today</p>
           </div>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"> 
         {dashboardStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className={"bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer"}>
+            <div key={index} className={"bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"}> {/* Smaller rounded, padding, shadow */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                  <p className="text-gray-600 text-xs font-medium">{stat.label}</p> 
+                  <p className="text-xl font-bold text-gray-900 mt-0.5">{stat.value}</p> 
                 </div>
-                <div className={`${stat.color} p-3 rounded-xl`}>
-                  <Icon className="w-6 h-6 text-white" />
+                <div className={`${stat.color} p-2 rounded-lg`}>
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
               </div>
             </div>
@@ -196,11 +196,11 @@ export function FreelancerDashboard() {
       </div>
 
       {/* Main Content: Active Projects and Pending Requests */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Projects */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Active Projects</h2>
+        <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Active Projects</h2> 
             <Button 
               variant="ghost" 
               size="sm"
@@ -211,28 +211,28 @@ export function FreelancerDashboard() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {activeProjects.length > 0 ? (
               activeProjects.map((project) => (
-                <div key={project.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={project.id} className="border border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors"> 
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">{project.title}</h3>
-                      <p className="text-gray-600 text-sm line-clamp-2">{project.description}</p>
+                      <h3 className="font-extrabold text-blue-700 text-base mb-0.5">{project.title}</h3> 
+                      <p className="text-gray-600 text-xs line-clamp-2">{project.description}</p> 
                     </div>
-                    <div className="ml-4 text-right">
-                      <div className="text-sm font-medium text-gray-900">${project.budget?.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">Budget</div>
+                    <div className="ml-3 text-right">
+                      <div className="text-xs font-semibold text-gray-900">${project.budget?.toLocaleString()}</div>
+                      <div className="text-[10px] text-gray-500">Budget</div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center space-x-4">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center space-x-3">
                       <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
+                        <Calendar className="w-3 h-3 mr-1" />
                         Due {new Date(project.deadline).toLocaleDateString()}
                       </div>
                       <div className="flex items-center">
-                        <User className="w-4 h-4 mr-1" />
+                        <User className="w-3 h-3 mr-1" />
                         {project.client.firstName} {project.client.lastName}
                       </div>
                     </div>
@@ -243,19 +243,19 @@ export function FreelancerDashboard() {
                 </div>
               ))
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>No active projects</p>
-                <p className="text-sm">Check your requests for new opportunities</p>
+              <div className="text-center py-6 text-gray-500">
+                <FolderOpen className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No active projects</p>
+                <p className="text-xs">Check your requests for new opportunities</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Pending Requests */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Pending Requests</h2>
+        <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Pending Requests</h2>
             <Button 
               variant="ghost" 
               size="sm"
@@ -266,21 +266,21 @@ export function FreelancerDashboard() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {pendingRequests.length > 0 ? (
               pendingRequests.map((request) => (
-                <div key={`${request.projectId}-${request.freelancerId}`} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3 mb-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-600" />
+                <div key={`${request.projectId}-${request.freelancerId}`} className="border border-gray-200 rounded-md p-3">
+                  <div className="flex items-start space-x-2 mb-2">
+                    <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="w-3 h-3 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-sm">{request.projectTitle}</h3>
-                      <p className="text-xs text-gray-600">by {request.clientName}</p>
+                      <h3 className="font-extrabold text-blue-700 text-sm">{request.projectTitle}</h3> 
+                      <p className="text-[11px] text-gray-600">by {request.clientName}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{request.projectDescription}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{request.projectDescription}</p>
+                  <div className="flex items-center justify-between text-[11px] text-gray-500 mb-2">
                     <span>${request.budget?.toLocaleString()}</span>
                     <span>{new Date(request.deadline).toLocaleDateString()}</span>
                   </div>
@@ -292,9 +292,9 @@ export function FreelancerDashboard() {
                 </div>
               ))
             ) : (
-              <div className="text-center py-4 text-gray-500">
-                <Inbox className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No pending requests</p>
+              <div className="text-center py-3 text-gray-500">
+                <Inbox className="w-7 h-7 mx-auto mb-1 text-gray-300" />
+                <p className="text-xs">No pending requests</p>
               </div>
             )}
           </div>
@@ -302,26 +302,26 @@ export function FreelancerDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/timesheets" className="flex items-center space-x-3 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
-            <div className="bg-blue-500 p-2 rounded-lg">
-              <Calendar className="w-5 h-5 text-white" />
+      <div className="bg-white rounded-xl p-4 border border-gray-100">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <a href="/freelancer/submit-timesheet" className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+            <div className="bg-blue-500 p-1.5 rounded-md">
+              <Calendar className="w-4 h-4 text-white" />
             </div>
-            <span className="font-medium text-gray-900">Log Time</span>
+            <span className="font-medium text-gray-900 text-sm">Log Time</span>
           </a>
-          <a href="/deliverables" className="flex items-center space-x-3 p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
-            <div className="bg-green-500 p-2 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-white" />
+          <a href="/freelancer/submit-deliverables" className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+            <div className="bg-green-500 p-1.5 rounded-md">
+              <CheckCircle className="w-4 h-4 text-white" />
             </div>
-            <span className="font-medium text-gray-900">Submit Deliverable</span>
+            <span className="font-medium text-gray-900 text-sm">Submit Deliverable</span>
           </a>
-          <a href="/payments" className="flex items-center space-x-3 p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors">
-            <div className="bg-purple-500 p-2 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-white" />
+          <a href="/freelancer/payments" className="flex items-center space-x-2 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+            <div className="bg-purple-500 p-1.5 rounded-md">
+              <TrendingUp className="w-4 h-4 text-white" />
             </div>
-            <span className="font-medium text-gray-900">View Payments</span>
+            <span className="font-medium text-gray-900 text-sm">View Payments</span>
           </a>
         </div>
       </div>

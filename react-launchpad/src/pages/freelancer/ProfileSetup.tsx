@@ -58,7 +58,7 @@ export function ProfileSetup() {
   const [fullName, setName] = useState(`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim());
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
-  const [location, setLocation] = useState('');
+  //const [location, setLocation] = useState('');
 
   // Debug log to see user object
   console.log('User object:', user);
@@ -507,7 +507,7 @@ export function ProfileSetup() {
           />
         </div>
 
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
@@ -520,7 +520,7 @@ export function ProfileSetup() {
               placeholder="City, State/Country"
             />
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="space-y-2">
