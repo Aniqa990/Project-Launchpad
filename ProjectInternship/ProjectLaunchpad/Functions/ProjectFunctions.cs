@@ -3,14 +3,15 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO;
+using ProjectLaunchpad.Models.Models.DTOs.ProjectDTO;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Utility;
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using ProjectLaunchpad.Models.Models.DTOs.ProjectDTO;
-using ProjectLaunchpad.Utility;
 
 namespace ProjectLaunchpad.Functions
 {
@@ -46,26 +47,45 @@ namespace ProjectLaunchpad.Functions
         [Function("GetAllProjectPostings")]
         public async Task<HttpResponseData> GetAllProjectPostings(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects")] HttpRequestData req)
-            { 
-            //var projects = await _unitOfWork.Posting.GetAllProjectPostingsAsync();
-
-            //var response = req.CreateResponse(HttpStatusCode.OK);
-            //await response.WriteAsJsonAsync(projects);
+        {
             var projects = await _unitOfWork.ProjectRepository.GetAllProjectsAsync();
 
-            var projectDTOs = projects.Select(p => new ProjectPostingDTO
+            var projectDTOs = projects.Select(p => new ProjectResponseDTO
             {
                 Id = p.Id,
-                ProjectTitle = p.ProjectTitle,
+                Title = p.ProjectTitle,
                 Description = p.Description,
-                PaymentType = p.PaymentType,
-                CategoryOrDomain = p.CategoryOrDomain,
-                Deadline = p.Deadline,
-                RequiredSkills = p.RequiredSkills,
+                Status = p.Status ?? "active",
                 Budget = p.Budget,
+                Deadline = p.Deadline,
+                ClientId = p.ClientId,
+                Category = p.CategoryOrDomain,
+                PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
-                AttachedDocumentPath = p.AttachedDocumentPath
+                AttachedDocumentPath = p.AttachedDocumentPath,
+                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                {
+                    FirstName = p.Client.User.FirstName,
+                    LastName = p.Client.User.LastName,
+                    Email = p.Client.User.Email,
+                    PhoneNo = p.Client.User.PhoneNo,
+                    Role = p.Client.User.Role,
+                    Gender = p.Client.User.Gender
+                } : null,
+                Skills = p.RequiredSkills?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                {
+                    FirstName = af.Freelancer.User.FirstName,
+                    LastName = af.Freelancer.User.LastName,
+                    Email = af.Freelancer.User.Email,
+                    PhoneNo = af.Freelancer.User.PhoneNo,
+                    Role = af.Freelancer.User.Role,
+                    Gender = af.Freelancer.User.Gender
+                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                Progress = 0 // TODO: Calculate based on milestones if needed
             }).ToList();
+
+
 
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -81,6 +101,54 @@ namespace ProjectLaunchpad.Functions
             var project = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
             var response = req.CreateResponse(project != null ? HttpStatusCode.OK : HttpStatusCode.NotFound);
             await response.WriteAsJsonAsync(project);
+            return response;
+        }
+
+        [Function("GetProjectsByFreelancer")]
+        public async Task<HttpResponseData> GetProjectsByFreelancer(
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancers/{freelancerId}/projects")] HttpRequestData req,
+    int freelancerId)
+        {
+            var projects = await _unitOfWork.ProjectRepository.GetProjectsByFreelancerAsync(freelancerId);
+
+            var projectDTOs = projects.Select(p => new ProjectResponseDTO
+            {
+                Id = p.Id,
+                Title = p.ProjectTitle,
+                Description = p.Description,
+                Status = p.Status ?? "active",
+                Budget = p.Budget,
+                Deadline = p.Deadline,
+                ClientId = p.ClientId,
+                // Add these fields if your DTO and frontend expect them:
+                Category = p.CategoryOrDomain,
+                PaymentType = p.PaymentType,
+                NumberOfFreelancers = p.NumberOfFreelancers,
+                AttachedDocumentPath = p.AttachedDocumentPath,
+                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                {
+                    FirstName = p.Client.User.FirstName,
+                    LastName = p.Client.User.LastName,
+                    Email = p.Client.User.Email,
+                    PhoneNo = p.Client.User.PhoneNo,
+                    Role = p.Client.User.Role,
+                    Gender = p.Client.User.Gender
+                } : null,
+                Skills = p.RequiredSkills?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                {
+                    FirstName = af.Freelancer.User.FirstName,
+                    LastName = af.Freelancer.User.LastName,
+                    Email = af.Freelancer.User.Email,
+                    PhoneNo = af.Freelancer.User.PhoneNo,
+                    Role = af.Freelancer.User.Role,
+                    Gender = af.Freelancer.User.Gender
+                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                Progress = 0 // TODO: Calculate based on milestones if needed
+            }).ToList();
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(projectDTOs);
             return response;
         }
 
