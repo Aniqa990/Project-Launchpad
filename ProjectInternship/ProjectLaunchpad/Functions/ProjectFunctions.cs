@@ -1,11 +1,14 @@
 ﻿using Azure;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using MySqlX.XDevAPI;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO;
 using ProjectLaunchpad.Models.Models.DTOs.ProjectDTO;
+using ProjectLaunchpad.Models.Models.Enums;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Services;
 using ProjectLaunchpad.Utility;
 using System;
 using System.Collections.Generic;
@@ -26,21 +29,90 @@ namespace ProjectLaunchpad.Functions
             _auth = auth;
         }
 
+        //[Function("CreateProjectPosting")]
+        //public async Task<HttpResponseData> CreateProjectPosting(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
+        //{
+        //    (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+        //    if (!isAuthorized)
+        //        return unauthorizedResponse!;
+
+        //    var project = await req.ReadFromJsonAsync<Project>();
+
+        //    await _unitOfWork.ProjectRepository.AddProjectAsync(project);
+        //    await _unitOfWork.SaveAsync();
+
+        //    var response = req.CreateResponse(HttpStatusCode.Created);
+        //    await response.WriteAsJsonAsync(project);
+        //    return response;
+        //}
+
         [Function("CreateProjectPosting")]
         public async Task<HttpResponseData> CreateProjectPosting(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
+    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
         {
             (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
 
-            var project = await req.ReadFromJsonAsync<Project>();
+            var projectDto = await req.ReadFromJsonAsync<ProjectPostingDTO>();
+
+            var userIdClaim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                var unauthorized = req.CreateResponse(HttpStatusCode.Unauthorized);
+                await unauthorized.WriteStringAsync("Unauthorized");
+                return unauthorized;
+            }
+
+            int clientId = int.Parse(userIdClaim);
+
+            // Map DTO to Project entity
+            var project = new Project
+            {
+                ProjectTitle = projectDto.ProjectTitle,
+                Description = projectDto.Description,
+                CategoryOrDomain = projectDto.CategoryOrDomain,
+                PaymentType = projectDto.PaymentType,
+                Deadline = projectDto.Deadline,
+                RequiredSkills = projectDto.RequiredSkills,
+                Budget = projectDto.Budget,
+                NumberOfFreelancers = projectDto.NumberOfFreelancers,
+                Status = "Open",
+                AttachedDocumentPath = projectDto.AttachedDocumentPath,
+                ClientId = clientId
+            };
+
+            // Save Project
             await _unitOfWork.ProjectRepository.AddProjectAsync(project);
             await _unitOfWork.SaveAsync();
 
+            // Save Milestones if 'milestone' payment type
+            if (projectDto.PaymentType.ToLower() == "milestone" && projectDto.Milestones != null)
+            {
+                foreach (var m in projectDto.Milestones)
+                {
+                    var milestone = new Milestone
+                    {
+                        Title = m.Title,
+                        Description = m.Description,
+                        DueDate = m.DueDate,
+                        Amount = m.Amount,
+                        Status = MilestoneStatus.Pending,
+                        ProjectId = project.Id
+                    };
+
+                    await _unitOfWork.MilestoneRepository.AddMilestoneAsync(milestone);
+                }
+
+                await _unitOfWork.SaveAsync();
+            }
+
             var response = req.CreateResponse(HttpStatusCode.Created);
-            await response.WriteAsJsonAsync(project);
+            await response.WriteAsJsonAsync(new { message = "Project created successfully", projectId = project.Id });
             return response;
         }
 

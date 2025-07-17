@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,5 +31,8 @@ namespace ProjectLaunchpad.Models.Models.DTOs.ProjectDTO
         public string? Status { get; set; } = "Open"; // Open, Closed, In Progress
 
         public string? AttachedDocumentPath { get; set; }
+
+        // Add this line 👇
+        public List<CreateMilestoneDto>? Milestones { get; set; }
     }
 }
