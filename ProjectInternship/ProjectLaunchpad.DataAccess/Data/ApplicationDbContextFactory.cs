@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.DataAccess.Data
 {
-    public class ApplicationDbContextFactory:IDesignTimeDbContextFactory<ApplicationDbContext>
+    public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
     {
         public ApplicationDbContext CreateDbContext(string[] args)
         {

@@ -16,11 +16,8 @@ namespace ProjectLaunchpad.Services
             _jwt = jwt;
         }
 
-        public async Task<string> RegisterAsync(UserRegisterDTO dto)
+        public async Task<(string token, User user)> RegisterAsync(UserRegisterDTO dto)
         {
-            // Validation: Password and ConfirmPassword should match
-            if (dto.Password != dto.ConfirmPassword)
-                throw new Exception("Password and Confirm Password do not match.");
 
             if (await _unitOfWork.Users.UserExistsAsync(dto.Email))
                 throw new Exception("Email already in use");
@@ -39,7 +36,8 @@ namespace ProjectLaunchpad.Services
             await _unitOfWork.Users.AddUserAsync(user);
             await _unitOfWork.SaveAsync();
 
-            return _jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+            var token = _jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+            return (token, user);
         }
 
         public async Task<(string token, User user)> LoginAsync(UserLoginDTO dto)

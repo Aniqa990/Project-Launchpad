@@ -1,204 +1,191 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Avatar } from '../../components/ui/Avatar';
-import { 
-  Search, 
-  Filter,
-  Calendar,
-  DollarSign,
-  Clock,
-  Eye,
-  Play,
-  Pause
-} from 'lucide-react';
-import { mockProjects, mockFreelancers } from '../../utils/mockData';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { getFreelancerProjects } from '../../apiendpoints';
+import { Calendar, User, ExternalLink, Filter, Search } from 'lucide-react';
+import { Project } from '@/types';
 
 export function FreelancerProjects() {
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'draft' | 'active' | 'completed' | 'cancelled'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
-  
-  // Filter projects where current freelancer is a team member
-  const currentFreelancer = mockFreelancers[0]; // Alex Chen
-  const myProjects = mockProjects.filter(project => 
-    project.team.some(member => member.id === currentFreelancer.id)
-  );
 
-  const filteredProjects = myProjects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user?.id) return;
+      try {
+        const projectsData = await getFreelancerProjects(user.id);
+        const transformedProjects: Project[] = projectsData.map((project: any) => ({
+          id: project.Id,
+          title: project.Title,
+          description: project.Description,
+          status: project.Status,
+          budget: project.Budget,
+          deadline: project.Deadline,
+          clientId: project.ClientId,
+          category: project.Category,
+          paymentType: project.PaymentType,
+          numberOfFreelancers: project.NumberOfFreelancers,
+          attachedDocumentPath: project.AttachedDocumentPath,
+          client: project.Client ? {
+            firstName: project.Client.FirstName,
+            lastName: project.Client.LastName,
+            email: project.Client.Email,
+            password: '',
+            phone: project.Client.PhoneNo,
+            avatar: '',
+            role: project.Client.Role,
+            gender: project.Client.Gender,
+            location: '',
+            joinedDate: '',
+          } : undefined,
+          skills: project.Skills || [],
+          team: project.Team || [],
+          progress: project.Progress ?? 0,
+          milestones: project.Milestones || [],
+        }));
+        setProjects(transformedProjects);
+      } catch (error) {
+        setProjects([]);
+      }
+    };
+    fetchProjects();
+  }, [user?.id]);
+
+  const filteredProjects = projects.filter((project: Project) => {
+    const matchesTab = activeTab === 'all' || project.status === activeTab;
+    const clientName = project.client ? `${project.client.firstName ?? ''} ${project.client.lastName ?? ''}` : '';
+    const matchesSearch = (project.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (clientName.toLowerCase()).includes(searchTerm.toLowerCase());
+    return matchesTab && matchesSearch;
   });
+
+  const tabs = [
+    { id: 'all', label: 'All Projects', count: projects.length },
+    { id: 'draft', label: 'Draft', count: projects.filter((p: Project) => p.status === 'draft').length },
+    { id: 'active', label: 'Active', count: projects.filter((p: Project) => p.status === 'active').length },
+    { id: 'completed', label: 'Completed', count: projects.filter((p: Project) => p.status === 'completed').length },
+    { id: 'cancelled', label: 'Cancelled', count: projects.filter((p: Project) => p.status === 'cancelled').length }
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'completed': return 'info';
-      default: return 'default';
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const ProjectCard = ({ project }: { project: any }) => (
-    <Card hover>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.title}</h3>
-          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{project.description}</p>
-        </div>
-        <Badge variant={getStatusColor(project.status) as any}>
-          {project.status}
-        </Badge>
-      </div>
-
-      <div className="flex items-center space-x-3 mb-4">
-        <Avatar src={project.client.avatar} alt={project.client.name} size="sm" />
-        <div>
-          <p className="text-sm font-medium text-gray-900">{project.client.name}</p>
-          <p className="text-xs text-gray-500">Client</p>
-        </div>
-      </div>
-
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center">
-            <Calendar className="w-4 h-4 mr-1" />
-            Due {new Date(project.deadline).toLocaleDateString()}
-          </div>
-          <div className="flex items-center">
-            <DollarSign className="w-4 h-4 mr-1" />
-            ${project.budget.toLocaleString()}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="text-blue-600 font-medium">{project.progress}% Complete</div>
-          <div className="flex items-center">
-            <Clock className="w-4 h-4 mr-1" />
-            {project.team.length} team members
-          </div>
-        </div>
-
-        <div className="bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${project.progress}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-2">
-          {project.status === 'active' && (
-            <>
-              <Button size="sm" variant="outline" icon={Play}>
-                Clock In
-              </Button>
-              <Button size="sm" variant="outline" icon={Pause}>
-                Break
-              </Button>
-            </>
-          )}
-        </div>
-        
-        <Button 
-          size="sm" 
-          icon={Eye}
-          onClick={() => navigate(`/workspace/${project.id}`)}
-        >
-          Open Workspace
-        </Button>
-      </div>
-    </Card>
-  );
-
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Projects</h1>
-          <p className="text-gray-600">Track your active projects and deliverables</p>
+          <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+          <p className="text-gray-600 mt-1">Manage all your projects in one place</p>
         </div>
-      </div>
-
-      {/* Filters and Search */}
-      <Card className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search projects..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Projects</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-          </select>
+          <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+            <Filter className="w-4 h-4" />
+            <span>Filter</span>
+          </button>
         </div>
-      </Card>
-
-      {/* Projects Grid */}
-      {filteredProjects.length === 0 ? (
-        <Card className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Clock className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
-          <p className="text-gray-600">
-            {searchTerm || statusFilter !== 'all' 
-              ? 'Try adjusting your search or filters' 
-              : 'You haven\'t been assigned to any projects yet'
-            }
-          </p>
-        </Card>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+      </div>
+      {/* Tabs */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100">
+        <div className="flex space-x-1 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs">
+                {tab.count}
+              </span>
+            </button>
           ))}
         </div>
-      )}
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-blue-600">
-            {myProjects.filter(p => p.status === 'active').length}
-          </div>
-          <div className="text-sm text-gray-600">Active Projects</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-green-600">
-            {myProjects.filter(p => p.status === 'completed').length}
-          </div>
-          <div className="text-sm text-gray-600">Completed</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-purple-600">
-            ${myProjects.reduce((sum, p) => sum + (p.budget / p.team.length), 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-600">Total Earnings</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-2xl font-bold text-orange-600">
-            {myProjects.length > 0 ? Math.round(myProjects.reduce((sum, p) => sum + p.progress, 0) / myProjects.length) : 0}%
-          </div>
-          <div className="text-sm text-gray-600">Avg Progress</div>
-        </Card>
       </div>
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredProjects.map((project: Project) => {
+          const clientName = project.client ? `${project.client.firstName} ${project.client.lastName}` : '';
+          return (
+            <div key={project.id} className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{project.title}</h3>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{project.description}</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                  {project.status}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {project.skills.slice(0, 3).map((skill: string, index: number) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"
+                  >
+                    {skill}
+                  </span>
+                ))}
+                {project.skills.length > 3 && (
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                    +{project.skills.length - 3} more
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">{clientName}</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm">Due: {new Date(project.deadline).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <Link
+                  to={`/tasks/${project.id}`}
+                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  <span>View Tasks</span>
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {filteredProjects.length === 0 && (
+        <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Filter className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Projects Found</h3>
+          <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
+        </div>
+      )}
     </div>
   );
 }

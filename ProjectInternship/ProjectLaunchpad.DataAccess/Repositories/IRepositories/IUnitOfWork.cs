@@ -1,4 +1,5 @@
-﻿using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
+﻿using ProjectLaunchpad.DataAccess.Repositories;
+using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +11,11 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
     public interface IUnitOfWork
     {
         IUserRepository Users { get; }
-
+        IFreelancerProfileRepository FreelancerProfiles { get; }
+        IClientProfileRepository ClientProfiles { get; }
+        IProjectAssignmentRepository ProjectFreelancers { get; }
         ITaskRepository TaskRepository { get; }
-
+        IProjectRepository ProjectRepository { get; }
         ISubTaskRepository SubTaskRepository { get; }
 
         IMilestoneRepository MilestoneRepository { get; }
@@ -23,7 +26,9 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
 
         IPaymentRepository PaymentRepository { get; }
 
-
+        ITimeSheetRepository TimeSheet { get; }
+        IProjectRequestRepository ProjectRequests { get; }
+        IFeedbackRepository Feedbacks { get; }
 
         Task<int> SaveAsync();
 

@@ -22,6 +22,57 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.FreelancerProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Availability")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("AvgRating")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("decimal(3,1)");
+
+                    b.Property<string>("Experience")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("HourlyRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Projects")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Skills")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WorkingHours")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("freelancerProfiles");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("clientProfiles");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Deliverables", b =>
                 {
                     b.Property<int>("Id")
@@ -47,7 +98,76 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("projectId");
+
                     b.ToTable("deliverables");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Experience", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Company")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EndDate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StartDate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.ToTable("experiences");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Feedback", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Rating")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("decimal(3,1)");
+
+                    b.Property<string>("Review")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ProjectId", "FreelancerId");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Logs", b =>
@@ -88,6 +208,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Description")
@@ -121,6 +242,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProjectId");
+
                     b.ToTable("milestones");
                 });
 
@@ -133,6 +256,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ClientId")
@@ -164,7 +288,159 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FreelancerId");
+
+                    b.HasIndex("ProjectId");
+
                     b.ToTable("payments");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Project", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttachedDocumentPath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Budget")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CategoryOrDomain")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Deadline")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NumberOfFreelancers")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PaymentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProjectTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequiredSkills")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("projects");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ProjectAssignment", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ProjectId", "FreelancerId");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.ToTable("projectFreelancers");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ProjectRequest", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ProjectId", "FreelancerId");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.ToTable("projectRequests");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ResumeProject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.ToTable("resumeProjects");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Skill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SkillName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.ToTable("skills");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Subtask", b =>
@@ -240,6 +516,53 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.ToTable("taskItems");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.TimeSheet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateOfWork")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("HourlyRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReviewerComments")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("WorkDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("TimeSheets");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -274,6 +597,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ProfilePicture")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -283,10 +609,73 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.ToTable("users");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.FreelancerProfile", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithOne("FreelancerProfile")
+                        .HasForeignKey("ProjectLaunchpad.Models.FreelancerProfile", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithOne("ClientProfile")
+                        .HasForeignKey("ProjectLaunchpad.Models.Models.ClientProfile", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Deliverables", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "project")
+                        .WithMany("Deliverables")
+                        .HasForeignKey("projectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Experience", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany()
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Feedback", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Logs", b =>
                 {
-                    b.HasOne("ProjectLaunchpad.Models.Models.User", "Freelancer")
-                        .WithMany()
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany("Logs")
                         .HasForeignKey("FreelancerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -300,6 +689,107 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("Freelancer");
 
                     b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Milestone", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "project")
+                        .WithMany("Milestones")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany()
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Project", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.ClientProfile", "Client")
+                        .WithMany("Projects")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ProjectAssignment", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany("ProjectAssignments")
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
+                        .WithMany("AssignedFreelancers")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ProjectRequest", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany("ProjectRequests")
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
+                        .WithMany("ProjectRequests")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ResumeProject", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany()
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Skill", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany()
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Subtask", b =>
@@ -332,9 +822,68 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("CreatedByUser");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.TimeSheet", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany("TimeSheets")
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
+                        .WithMany("TimeSheets")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.FreelancerProfile", b =>
+                {
+                    b.Navigation("Feedbacks");
+
+                    b.Navigation("Logs");
+
+                    b.Navigation("ProjectAssignments");
+
+                    b.Navigation("ProjectRequests");
+
+                    b.Navigation("TimeSheets");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
+                {
+                    b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Project", b =>
+                {
+                    b.Navigation("AssignedFreelancers");
+
+                    b.Navigation("Deliverables");
+
+                    b.Navigation("Feedbacks");
+
+                    b.Navigation("Milestones");
+
+                    b.Navigation("ProjectRequests");
+
+                    b.Navigation("TimeSheets");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.TaskItem", b =>
                 {
                     b.Navigation("Subtasks");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.User", b =>
+                {
+                    b.Navigation("ClientProfile");
+
+                    b.Navigation("FreelancerProfile");
                 });
 #pragma warning restore 612, 618
         }

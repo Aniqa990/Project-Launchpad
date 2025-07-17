@@ -3,10 +3,13 @@ using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs.DeliverableDTO;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Utility;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,16 +18,23 @@ namespace ProjectLaunchpad.Functions
     public class DeliverableFunctions
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly TokenAuthorization _auth;
 
-        public DeliverableFunctions(IUnitOfWork unitOfWork)
+        public DeliverableFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
         {
             _unitOfWork = unitOfWork;
+            _auth = auth;
         }
 
         [Function("CreateDeliverable")]
         public async Task<HttpResponseData> CreateDeliverable(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "deliverables")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var dto = await req.ReadFromJsonAsync<CreateDeliverableDto>();
             if (dto == null)
                 return req.CreateResponse(HttpStatusCode.BadRequest);
@@ -72,6 +82,11 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> UpdateDeliverable(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "deliverables/{id:int}")] HttpRequestData req, int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var existing = await _unitOfWork.deliverableRepository.GetByIdAsync(id);
             if (existing == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
@@ -105,6 +120,11 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> DeleteDeliverable(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "deliverables/{id:int}")] HttpRequestData req, int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var deliverable = await _unitOfWork.deliverableRepository.GetByIdAsync(id);
             if (deliverable == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);

@@ -1,9 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { getProfileSetupData, saveProfileSetupData } from '../../apiendpoints';
+import { ParsedResumeData, Skill, ProjectItem, Experience } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Modal } from '../../components/ui/Modal';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+import { ProjectModal } from '@/components/ui/ProjectModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Upload, 
   FileText, 
@@ -14,119 +19,196 @@ import {
   User,
   Mail,
   MapPin,
-  Briefcase,
-  GraduationCap,
-  Code,
   DollarSign,
-  Calendar,
   Save,
   ArrowRight,
-  Loader
+  Loader,
+  Briefcase,
+  Clock,
+  Calendar as CalendarIcon,
+  Pencil,
+  Trash2
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { Card } from '@/components/ui/card';
+import { ExperienceModal } from '@/components/ui/ExperienceModal';
 
-interface ParsedResumeData {
-  name: string;
-  email: string;
-  phone: string;
-  location: string;
-  summary: string;
-  skills: string[];
-  experience: {
-    id: string;
-    company: string;
-    position: string;
-    startDate: string;
-    endDate: string;
-    description: string;
-    current: boolean;
-  }[];
-  education: {
-    id: string;
-    institution: string;
-    degree: string;
-    field: string;
-    startDate: string;
-    endDate: string;
-    current: boolean;
-  }[];
-}
 
 export function ProfileSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const skillId = useRef(1);
+  const experienceId = useRef(1);
+  const projectId = useRef(1);
+
   const [step, setStep] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [showParseResults, setShowParseResults] = useState(false);
-  
+  const [loading, setLoading] = useState(false);
+
   const [profileData, setProfileData] = useState<ParsedResumeData>({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: '',
-    location: '',
     summary: '',
     skills: [],
     experience: [],
-    education: []
+    projects: [],
   });
 
   const [hourlyRate, setHourlyRate] = useState(75);
-  const [availability, setAvailability] = useState('full-time');
-  const [portfolio, setPortfolio] = useState([
-    { id: '1', title: '', description: '', url: '', technologies: [] }
-  ]);
+  const [availability, setAvailability] = useState('');
+  const [workingHours, setWorkingHours] = useState('10am - 7pm');
+  const [fullName, setName] = useState(`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim());
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  //const [location, setLocation] = useState('');
 
-  // Mock resume parsing function
-  const parseResume = async (file: File): Promise<ParsedResumeData> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock parsed data based on file name or random generation
-    return {
-      name: profileData.name || 'Alex Chen',
-      email: profileData.email || 'alex@freelancer.com',
-      phone: '+1 (555) 123-4567',
-      location: 'San Francisco, CA',
-      summary: 'Experienced full-stack developer with 5+ years of expertise in React, Node.js, and cloud technologies. Passionate about building scalable web applications and delivering exceptional user experiences.',
-      skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'GraphQL', 'MongoDB', 'Docker'],
-      experience: [
-        {
-          id: '1',
-          company: 'TechCorp Inc.',
-          position: 'Senior Full Stack Developer',
-          startDate: '2021-03',
-          endDate: '',
-          current: true,
-          description: 'Led development of microservices architecture serving 1M+ users. Built React applications with TypeScript and integrated with GraphQL APIs.'
-        },
-        {
-          id: '2',
-          company: 'StartupXYZ',
-          position: 'Frontend Developer',
-          startDate: '2019-06',
-          endDate: '2021-02',
-          current: false,
-          description: 'Developed responsive web applications using React and Redux. Collaborated with design team to implement pixel-perfect UI components.'
+  // Debug log to see user object
+  console.log('User object:', user);
+  console.log('User phone:', user?.phone);
+
+  // Fetch pre-parsed data from resume_parser on component mount
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        setLoading(true);
+        const data = await getProfileSetupData();
+        
+        console.log('API Response:', data); 
+        console.log('API Response Skills:', data.Skills); 
+        console.log('API Response Projects:', data.Projects); 
+        console.log('API Response Experience:', data.Experience);
+        
+        // Check if data exists and has the expected structure
+        if (!data) {
+          console.log('No data returned from API');
+          return;
         }
-      ],
-      education: [
-        {
-          id: '1',
-          institution: 'University of California, Berkeley',
-          degree: 'Bachelor of Science',
-          field: 'Computer Science',
-          startDate: '2015-09',
-          endDate: '2019-05',
-          current: false
+        
+        //IDs start from 1 and are sequential
+        const skills = (data.Skills || []).map((skill, idx) => ({
+          Id: idx + 1,
+          SkillName: skill.SkillName,
+          Source: skill.Source as 'parsed' | 'manual'
+        }));
+        const experience = (data.Experience || []).map((exp, idx) => ({
+          Id: idx + 1,
+          Title: exp.Title,
+          Company: exp.Company,
+          StartDate: exp.StartDate,
+          EndDate: exp.EndDate,
+          Description: exp.Description,
+          Source: exp.Source as 'parsed' | 'manual'
+        }));
+        const projects = (data.Projects || []).map((project, idx) => ({
+          Id: idx + 1,
+          Title: project.Title,
+          Description: project.Description,
+          Source: project.Source as 'parsed' | 'manual'
+        }));
+
+        //Set the next ID for each type
+        skillId.current = skills.length + 1;
+        experienceId.current = experience.length + 1;
+        projectId.current = projects.length + 1;
+
+        const transformedData: ParsedResumeData = {
+          summary: data.Summary || '',
+          skills,
+          experience,
+          projects,
+        };
+
+        console.log('Transformed Data:', transformedData); 
+        
+        setProfileData(transformedData);
+        
+        if (
+          data.Summary ||
+          (data.Skills && data.Skills.length > 0) ||
+          (data.Experience && data.Experience.length > 0) ||
+          (data.Projects && data.Projects.length > 0)
+        ) {
+          setResumeUploaded(true);
+          setShowParseResults(true);
+          toast.success('Found existing profile data!');
+        } else {
+          console.log('No existing profile data found - this is normal for new users');
         }
-      ]
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-  };
+
+    fetchProfileData();
+  }, []);
+
+  // Function to upload resume to resume_parser and then fetch the parsed data
+  const uploadResumeAndFetchData = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+    try {
+  const response = await fetch("http://localhost:8000/api/parse-resume/", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail);
+      }
+
+      const parsedData = await getProfileSetupData();
+      
+      //IDs start from 1 and are sequential
+      const skills = (parsedData.Skills || []).map((skill, idx) => ({
+        Id: idx + 1,
+        SkillName: skill.SkillName,
+        Source: skill.Source as 'parsed' | 'manual'
+      }));
+      const experience = (parsedData.Experience || []).map((exp, idx) => ({
+        Id: idx + 1,
+        Title: exp.Title,
+        Company: exp.Company,
+        StartDate: exp.StartDate,
+        EndDate: exp.EndDate,
+        Description: exp.Description,
+        Source: exp.Source as 'parsed' | 'manual'
+      }));
+      const projects = (parsedData.Projects || []).map((project, idx) => ({
+        Id: idx + 1,
+        Title: project.Title,
+        Description: project.Description,
+        Source: project.Source as 'parsed' | 'manual'
+      }));
+
+      // Set the next ID for each type
+      skillId.current = skills.length + 1;
+      experienceId.current = experience.length + 1;
+      projectId.current = projects.length + 1;
+
+      const transformedData: ParsedResumeData = {
+        summary: parsedData.Summary || '',
+        skills,
+        experience,
+        projects,
+      };
+
+      setProfileData(transformedData);
+      setShowParseResults(true);
+      toast.success('Resume parsed and data loaded successfully!');
+      
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to parse resume. Please fill manually.');
+    }
+};
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,7 +221,6 @@ export function ProfileSetup() {
 
     setUploading(true);
     
-    // Simulate upload progress
     await new Promise(resolve => setTimeout(resolve, 1500));
     setUploading(false);
     setResumeUploaded(true);
@@ -147,14 +228,9 @@ export function ProfileSetup() {
     // Start parsing
     setParsing(true);
     try {
-      const parsedData = await parseResume(file);
-      setProfileData(parsedData);
+      await uploadResumeAndFetchData(file);
+    } finally {
       setParsing(false);
-      setShowParseResults(true);
-      toast.success('Resume parsed successfully!');
-    } catch (error) {
-      setParsing(false);
-      toast.error('Failed to parse resume. Please fill manually.');
     }
   };
 
@@ -176,96 +252,84 @@ export function ProfileSetup() {
   };
 
   const addSkill = (skill: string) => {
-    if (skill && !profileData.skills.includes(skill)) {
-      updateProfileField('skills', [...profileData.skills, skill]);
+    if (skill && !profileData.skills.some(s => s.SkillName === skill)) {
+      const newSkill: Skill = {
+        Id: skillId.current++,
+        SkillName: skill,
+        Source: 'manual'
+      };
+      setProfileData(prev => ({
+        ...prev,
+        skills: [...prev.skills, newSkill]
+      }));
     }
   };
 
-  const removeSkill = (skill: string) => {
-    updateProfileField('skills', profileData.skills.filter(s => s !== skill));
+  const removeSkill = (skillId: number) => {
+    updateProfileField('skills', profileData.skills.filter(s => s.Id !== skillId));
   };
 
-  const addExperience = () => {
-    const newExp = {
-      id: Date.now().toString(),
-      company: '',
-      position: '',
-      startDate: '',
-      endDate: '',
-      current: false,
-      description: ''
+  const addExperience = (exp: Experience) => {
+    const newExp: Experience = {
+      Id: experienceId.current++,
+      Company: exp.Company || '',
+      Title: exp.Title || '',
+      StartDate: exp.StartDate || '', 
+      EndDate: exp.EndDate || '',   
+      Description: exp.Description || '',
+      Source: 'manual'
     };
-    updateProfileField('experience', [...profileData.experience, newExp]);
+    setProfileData(prev => ({
+      ...prev,
+      experience: [...prev.experience, newExp]
+    }));
   };
 
-  const updateExperience = (id: string, field: string, value: any) => {
+  const updateExperience = (id: number, newExp: Experience) => {
     const updated = profileData.experience.map(exp => 
-      exp.id === id ? { ...exp, [field]: value } : exp
+      exp.Id === id ? { ...newExp } : exp
     );
     updateProfileField('experience', updated);
   };
 
-  const removeExperience = (id: string) => {
-    updateProfileField('experience', profileData.experience.filter(exp => exp.id !== id));
+  const removeExperience = (id: number) => {
+    updateProfileField('experience', profileData.experience.filter(exp => exp.Id !== id));
   };
 
-  const addEducation = () => {
-    const newEdu = {
-      id: Date.now().toString(),
-      institution: '',
-      degree: '',
-      field: '',
-      startDate: '',
-      endDate: '',
-      current: false
+  const addProject = (proj: ProjectItem) => {
+    const newP: ProjectItem = {
+      Id: projectId.current++,
+      Title: proj.Title || '',
+      Description: proj.Description || '',
+      Source: 'manual'
     };
-    updateProfileField('education', [...profileData.education, newEdu]);
+    setProfileData(prev => ({
+      ...prev,
+      projects: [...prev.projects, newP]
+    }));
   };
 
-  const updateEducation = (id: string, field: string, value: any) => {
-    const updated = profileData.education.map(edu => 
-      edu.id === id ? { ...edu, [field]: value } : edu
+  const updateProject = (id: number, newProj: ProjectItem) => {
+    const updated = profileData.projects.map(p => 
+      p.Id === id ? { ...newProj } : p
     );
-    updateProfileField('education', updated);
+    updateProfileField('projects', updated);
   };
 
-  const removeEducation = (id: string) => {
-    updateProfileField('education', profileData.education.filter(edu => edu.id !== id));
-  };
-
-  const addPortfolioItem = () => {
-    const newItem = {
-      id: Date.now().toString(),
-      title: '',
-      description: '',
-      url: '',
-      technologies: []
-    };
-    setPortfolio([...portfolio, newItem]);
-  };
-
-  const updatePortfolioItem = (id: string, field: string, value: any) => {
-    setPortfolio(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
-  const removePortfolioItem = (id: string) => {
-    setPortfolio(prev => prev.filter(item => item.id !== id));
+  const removeProject = (id: number) => {
+    updateProfileField('projects', profileData.projects.filter(p => p.Id !== id));
   };
 
   const getCompletionPercentage = () => {
     let completed = 0;
-    let total = 8;
+    let total = 6;
 
-    if (profileData.name) completed++;
-    if (profileData.email) completed++;
-    if (profileData.phone) completed++;
-    if (profileData.location) completed++;
+    if (fullName) completed++;
+    if (email) completed++;
+    if (phone) completed++;
     if (profileData.summary) completed++;
     if (profileData.skills.length > 0) completed++;
     if (profileData.experience.length > 0) completed++;
-    if (profileData.education.length > 0) completed++;
 
     return Math.round((completed / total) * 100);
   };
@@ -278,51 +342,105 @@ export function ProfileSetup() {
   const canProceedToNext = () => {
     switch (step) {
       case 1: return resumeUploaded || showParseResults;
-      case 2: return profileData.name && profileData.email && profileData.skills.length > 0;
+      case 2: return fullName && email && profileData.skills.length > 0;
       case 3: return profileData.experience.length > 0;
-      case 4: return true; // Optional step
+      case 4: return profileData.projects.length > 0;
       default: return true;
     }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
+    try {
+      const [firstName, ...lastNameParts] = fullName.split(' ');
+      const lastName = lastNameParts.join(' ') || '';
+      console.log('Profile Data:', profileData);
+
+      await saveProfileSetupData({
+        firstName,
+        lastName,
+        phone,
+    hourlyRate,
+        availability,
+    workingHours,
+        profileData: {
+          Summary: profileData.summary,
+          Skills: profileData.skills,
+          Experience: profileData.experience,
+          Projects: profileData.projects
+        }
+      });
+
     toast.success('Profile saved successfully!');
     navigate('/freelancer/dashboard');
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to save profile');
+  }
+};
+
+  // Experience modal state
+  const [showExpModal, setShowExpModal] = useState(false);
+  const [editExp, setEditExp] = useState<Experience | null>(null);
+  // Project modal state
+  const [showProjModal, setShowProjModal] = useState(false);
+  const [editProj, setEditProj] = useState<ProjectItem | null>(null);
+
+  const openEditExperienceModal = (exp: Experience) => {
+    setEditExp(exp);
+    setShowExpModal(true);
   };
+  const openAddExperienceModal = () => {
+    setEditExp(null);
+    setShowExpModal(true);
+  };
+
+  // Project modal logic
+  const openEditProjectModal = (proj: ProjectItem) => {
+    setEditProj(proj);
+    setShowProjModal(true);
+  };
+  const openAddProjectModal = () => {
+    setEditProj(null);
+    setShowProjModal(true);
+  };
+
 
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Your Resume</h2>
-        <p className="text-gray-600">We'll automatically extract your information to speed up the process</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Upload Your Resume</h2>
+        <p className="text-muted-foreground">We'll automatically extract your information to speed up the process</p>
       </div>
 
+      {loading ? (
+        <div className="text-center space-y-4">
+          <Loader className="w-12 h-12 text-primary mx-auto animate-spin" />
+          <p className="text-primary font-medium">Loading existing profile data...</p>
+        </div>
+      ) : (
       <div 
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
-          uploading || parsing ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+          uploading || parsing ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
         }`}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
         {uploading ? (
           <div className="space-y-4">
-            <Loader className="w-12 h-12 text-blue-600 mx-auto animate-spin" />
-            <p className="text-blue-600 font-medium">Uploading resume...</p>
+            <Loader className="w-12 h-12 text-primary mx-auto animate-spin" />
+            <p className="text-primary font-medium">Uploading resume...</p>
           </div>
         ) : parsing ? (
           <div className="space-y-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-              <FileText className="w-6 h-6 text-blue-600 animate-pulse" />
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+              <FileText className="w-6 h-6 text-primary animate-pulse" />
             </div>
-            <p className="text-blue-600 font-medium">Parsing resume with AI...</p>
-            <div className="w-48 bg-gray-200 rounded-full h-2 mx-auto">
-              <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-            </div>
+            <p className="text-primary font-medium">Parsing resume with AI...</p>
+            <Progress value={60} className="w-48 mx-auto" />
           </div>
         ) : resumeUploaded ? (
           <div className="space-y-4">
             <CheckCircle className="w-12 h-12 text-green-600 mx-auto" />
-            <p className="text-green-600 font-medium">Resume uploaded successfully!</p>
+              <p className="text-green-600 font-medium">Resume processed successfully!</p>
             {showParseResults && (
               <div className="bg-green-50 p-4 rounded-lg">
                 <p className="text-green-800 font-medium">✨ Information extracted and auto-filled!</p>
@@ -332,9 +450,9 @@ export function ProfileSetup() {
           </div>
         ) : (
           <div className="space-y-4">
-            <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+            <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
             <div>
-              <p className="text-gray-600 mb-2">Drag and drop your resume here, or</p>
+              <p className="text-muted-foreground mb-2">Drag and drop your resume here, or</p>
               <Button 
                 variant="outline" 
                 onClick={() => fileInputRef.current?.click()}
@@ -342,7 +460,7 @@ export function ProfileSetup() {
                 Choose File
               </Button>
             </div>
-            <p className="text-sm text-gray-500">Supports PDF and Word documents</p>
+            <p className="text-sm text-muted-foreground">Supports PDF and Word documents</p>
           </div>
         )}
         
@@ -354,8 +472,9 @@ export function ProfileSetup() {
           className="hidden"
         />
       </div>
+      )}
 
-      {!resumeUploaded && (
+      {!resumeUploaded && !loading && (
         <div className="text-center">
           <Button variant="ghost" onClick={() => setStep(2)}>
             Skip and fill manually
@@ -368,116 +487,114 @@ export function ProfileSetup() {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Basic Information</h2>
-        <p className="text-gray-600">Complete your profile details</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Basic Information</h2>
+        <p className="text-muted-foreground">Complete your profile details</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="space-y-2">
+          <Label htmlFor="name" className="flex items-center">
             Full Name *
-            {isFieldIncomplete(profileData.name) && (
-              <AlertCircle className="w-4 h-4 text-red-500 inline ml-1 animate-pulse" />
+            {isFieldIncomplete(fullName) && (
+              <AlertCircle className="w-4 h-4 text-destructive ml-1 animate-pulse" />
             )}
-          </label>
+          </Label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <Input
+              id="fullName"
               type="text"
-              value={profileData.name}
-              onChange={(e) => updateProfileField('name', e.target.value)}
-              className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                isFieldIncomplete(profileData.name) ? 'border-red-300 bg-red-50' : 'border-gray-300'
-              }`}
+              value={fullName}
+              onChange={(e) => setName(e.target.value)}
+              className={`pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm ${isFieldIncomplete(fullName) ? 'border-destructive bg-destructive/5' : ''}`}
               placeholder="Enter your full name"
             />
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="flex items-center">
             Email Address *
-            {isFieldIncomplete(profileData.email) && (
-              <AlertCircle className="w-4 h-4 text-red-500 inline ml-1 animate-pulse" />
+            {isFieldIncomplete(email) && (
+              <AlertCircle className="w-4 h-4 text-destructive ml-1 animate-pulse" />
             )}
-          </label>
+          </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <Input
+              id="email"
               type="email"
-              value={profileData.email}
-              onChange={(e) => updateProfileField('email', e.target.value)}
-              className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                isFieldIncomplete(profileData.email) ? 'border-red-300 bg-red-50' : 'border-gray-300'
-              }`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm ${isFieldIncomplete(email) ? 'border-destructive bg-destructive/5' : ''}`}
               placeholder="Enter your email"
             />
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input
+            id="phone"
             type="tel"
-            value={profileData.phone}
-            onChange={(e) => updateProfileField('phone', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             placeholder="Enter your phone number"
+            className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+        {/* <div className="space-y-2">
+          <Label htmlFor="location">Location</Label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <Input
+              id="location"
               type="text"
-              value={profileData.location}
-              onChange={(e) => updateProfileField('location', e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
               placeholder="City, State/Country"
             />
           </div>
-        </div>
+        </div> */}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Professional Summary</label>
-        <textarea
+      <div className="space-y-2">
+        <Label htmlFor="summary">Professional Summary</Label>
+        <Textarea
+          id="summary"
           value={profileData.summary}
           onChange={(e) => updateProfileField('summary', e.target.value)}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Brief description of your experience and expertise..."
+          className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="space-y-2">
+        <Label className="flex items-center">
           Skills *
           {isFieldIncomplete(profileData.skills) && (
-            <AlertCircle className="w-4 h-4 text-red-500 inline ml-1 animate-pulse" />
+            <AlertCircle className="w-4 h-4 text-destructive ml-1 animate-pulse" />
           )}
-        </label>
+        </Label>
         <div className="flex flex-wrap gap-2 mb-3">
           {profileData.skills.map(skill => (
-            <div key={skill} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-              {skill}
+            <span key={skill.Id} className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium shadow-sm border border-blue-200">
+              {skill.SkillName}
               <button
-                onClick={() => removeSkill(skill)}
-                className="ml-2 text-blue-600 hover:text-blue-800"
+                onClick={() => removeSkill(skill.Id)}
+                className="ml-1 text-blue-400 hover:text-red-500"
               >
                 <X className="w-3 h-3" />
               </button>
-            </div>
+            </span>
           ))}
         </div>
-        <input
-          type="text"
+        <Input
           placeholder="Type a skill and press Enter"
-          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-            isFieldIncomplete(profileData.skills) ? 'border-red-300 bg-red-50' : 'border-gray-300'
-          }`}
+          className={`rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm ${isFieldIncomplete(profileData.skills) ? 'border-destructive bg-destructive/5' : ''}`}
           onKeyPress={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -489,32 +606,47 @@ export function ProfileSetup() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate (USD)</label>
+        <div className="space-y-2">
+          <Label htmlFor="hourlyRate">Hourly Rate (USD)</Label>
           <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
+            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <Input
+              id="hourlyRate"
               type="number"
               value={hourlyRate}
               onChange={(e) => setHourlyRate(parseInt(e.target.value))}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
               placeholder="75"
             />
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
-          <select
-            value={availability}
-            onChange={(e) => setAvailability(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="full-time">Full-time (40+ hrs/week)</option>
-            <option value="part-time">Part-time (20-40 hrs/week)</option>
-            <option value="project-based">Project-based</option>
-            <option value="weekends">Weekends only</option>
-          </select>
+        <div className="space-y-2">
+          <Label htmlFor="availability">Availability</Label>
+          <Select value={availability} onValueChange={setAvailability}>
+            <SelectTrigger className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm">
+              <SelectValue placeholder="Select availability" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="not-available">Not Available</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="workingHours">Working Hours</Label>
+          <div className="relative">
+            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <Input
+              id="workingHours"
+              type="text"
+              value={workingHours}
+              onChange={(e) => setWorkingHours(e.target.value)}
+              className="pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
+              placeholder="9am-5pm"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -523,92 +655,48 @@ export function ProfileSetup() {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Work Experience</h2>
-        <p className="text-gray-600">Add your professional experience</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Work Experience</h2>
+        <p className="text-muted-foreground">Add your professional experience</p>
       </div>
-
       <div className="space-y-6">
         {profileData.experience.map((exp, index) => (
-          <Card key={exp.id} className="relative">
+          <Card key={exp.Id} className="relative mb-4">
             <button
-              onClick={() => removeExperience(exp.id)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
+              className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
+              onClick={() => removeExperience(exp.Id)}
+              title="Remove Experience"
             >
-              <X className="w-4 h-4" />
+              <Trash2 className="w-5 h-5" />
             </button>
-            
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
-                <input
-                  type="text"
-                  value={exp.company}
-                  onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Company name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                <input
-                  type="text"
-                  value={exp.position}
-                  onChange={(e) => updateExperience(exp.id, 'position', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Job title"
-                />
-              </div>
+              <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
+              onClick={() => openEditExperienceModal(exp)}
+              title="Edit Experience"
+              >
+              <Pencil className="w-5 h-5" />
+              </button>
+            <div className="mb-2 text-xl font-bold text-gray-900">{exp.Title}</div>
+            <div className="mb-2 text-lg font-semibold text-gray-700">
+              {exp.Company} | {exp.StartDate} - {exp.EndDate}
             </div>
-
-            <div className="grid md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                <input
-                  type="month"
-                  value={exp.startDate}
-                  onChange={(e) => updateExperience(exp.id, 'startDate', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                <input
-                  type="month"
-                  value={exp.endDate}
-                  onChange={(e) => updateExperience(exp.id, 'endDate', e.target.value)}
-                  disabled={exp.current}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                />
-              </div>
-              <div className="flex items-end">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={exp.current}
-                    onChange={(e) => updateExperience(exp.id, 'current', e.target.checked)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm text-gray-700">Current position</span>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <textarea
-                value={exp.description}
-                onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Describe your responsibilities and achievements..."
-              />
-            </div>
+            <div className="text-gray-700 whitespace-pre-line">{exp.Description}</div>
           </Card>
         ))}
-
-        <Button variant="outline" onClick={addExperience} icon={Plus} className="w-full">
+        <Button variant="outline" onClick={openAddExperienceModal} className="w-full rounded-lg border-dashed border-2 border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-blue-700 shadow-sm">
+          <Plus className="w-4 h-4 mr-2 text-blue-500" />
           Add Experience
         </Button>
+        <ExperienceModal
+          open={showExpModal}
+          onClose={() => setShowExpModal(false)}
+          onSave={exp => {
+            if (exp.Id) updateExperience(exp.Id, exp);
+            else addExperience(exp);
+            setShowExpModal(false);
+          }}
+          onDelete={id => { removeExperience(id); setShowExpModal(false); }}
+          initialData={editExp}
+        />
       </div>
     </div>
   );
@@ -616,139 +704,47 @@ export function ProfileSetup() {
   const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Education & Portfolio</h2>
-        <p className="text-gray-600">Add your educational background and showcase your work</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Projects</h2>
+        <p className="text-muted-foreground">Add your projects</p>
       </div>
 
-      {/* Education Section */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Education</h3>
-        <div className="space-y-4">
-          {profileData.education.map((edu) => (
-            <Card key={edu.id} className="relative">
+      <div className="space-y-6">
+        {profileData.projects.map((p, index) => (
+          <Card key={p.Id} className="relative mb-4">
               <button
-                onClick={() => removeEducation(edu.id)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
+              className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
+              onClick={() => removeProject(p.Id)}
+              title="Remove Project"
               >
-                <X className="w-4 h-4" />
+              <Trash2 className="w-5 h-5" />
               </button>
-              
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Institution</label>
-                  <input
-                    type="text"
-                    value={edu.institution}
-                    onChange={(e) => updateEducation(edu.id, 'institution', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="University/School name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Degree</label>
-                  <input
-                    type="text"
-                    value={edu.degree}
-                    onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Bachelor's, Master's, etc."
-                  />
-                </div>
-              </div>
+                      <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
+              onClick={() => openEditProjectModal(p)}
+              title="Edit Project"
+                      >
+              <Pencil className="w-5 h-5" />
+                      </button>
+            <div className="mb-2 text-xl font-bold text-gray-900">{p.Title}</div>
+            <div className="text-gray-700 whitespace-pre-line">{p.Description}</div>
+          </Card>
+        ))}
 
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Field of Study</label>
-                  <input
-                    type="text"
-                    value={edu.field}
-                    onChange={(e) => updateEducation(edu.id, 'field', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Computer Science, etc."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                  <input
-                    type="month"
-                    value={edu.startDate}
-                    onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                  <input
-                    type="month"
-                    value={edu.endDate}
-                    onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-                    disabled={edu.current}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                  />
-                </div>
-              </div>
-            </Card>
-          ))}
-
-          <Button variant="outline" onClick={addEducation} icon={Plus} className="w-full">
-            Add Education
-          </Button>
-        </div>
-      </div>
-
-      {/* Portfolio Section */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Portfolio Projects</h3>
-        <div className="space-y-4">
-          {portfolio.map((item) => (
-            <Card key={item.id} className="relative">
-              <button
-                onClick={() => removePortfolioItem(item.id)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
-                  <input
-                    type="text"
-                    value={item.title}
-                    onChange={(e) => updatePortfolioItem(item.id, 'title', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Project name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Project URL</label>
-                  <input
-                    type="url"
-                    value={item.url}
-                    onChange={(e) => updatePortfolioItem(item.id, 'url', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="https://..."
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={item.description}
-                  onChange={(e) => updatePortfolioItem(item.id, 'description', e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Describe the project and your role..."
-                />
-              </div>
-            </Card>
-          ))}
-
-          <Button variant="outline" onClick={addPortfolioItem} icon={Plus} className="w-full">
-            Add Portfolio Project
-          </Button>
-        </div>
+        <Button variant="outline" onClick={openAddProjectModal} className="w-full rounded-lg border-dashed border-2 border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-blue-700 shadow-sm">
+          <Plus className="w-4 h-4 mr-2 text-blue-500" />
+          Add Project
+        </Button>
+        <ProjectModal
+          open={showProjModal}
+          onClose={() => setShowProjModal(false)}
+          onSave={proj => {
+            if (proj.Id) updateProject(proj.Id, proj);
+            else addProject(proj);
+            setShowProjModal(false);
+          }}
+          onDelete={id => { removeProject(id); setShowProjModal(false); }}
+          initialData={editProj}
+        />
       </div>
     </div>
   );
@@ -758,20 +754,19 @@ export function ProfileSetup() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h1>
-          <p className="text-gray-600">Let's set up your freelancer profile to attract great projects</p>
-          
+        {/* Outer Blue Card Header */}
+        <div className="rounded-xl bg-blue-600 shadow-sm border border-blue-700 mb-8 p-8 text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Complete Your Profile</h1>
+          <p className="text-blue-100">Let's set up your freelancer profile to attract great projects</p>
           {/* Progress Bar */}
           <div className="mt-6 max-w-md mx-auto">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <div className="flex justify-between text-sm text-blue-100 mb-2">
               <span>Profile Completion</span>
               <span>{completionPercentage}%</span>
             </div>
-            <div className="bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+            <div className="w-full h-2 bg-blue-400/40 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-white rounded-full transition-all duration-300"
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>
@@ -784,15 +779,16 @@ export function ProfileSetup() {
             <div key={stepNum} className="flex items-center">
               <div className={`
                 w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
-                ${stepNum <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}
+                ${stepNum <= step ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-200 text-gray-500'}
                 ${stepNum === step ? 'ring-4 ring-blue-200' : ''}
               `}>
-                {stepNum < step ? <CheckCircle className="w-5 h-5" /> : stepNum}
+                {stepNum < step ? <CheckCircle className="w-5 h-5 text-white" /> : stepNum}
               </div>
               {stepNum < 4 && (
                 <div className={`
                   w-16 h-1 mx-2 transition-all duration-300
-                  ${stepNum < step ? 'bg-blue-600' : 'bg-gray-200'}
+                  ${stepNum < step ? 'bg-blue-500' : 'bg-gray-200'}
+                  rounded-full
                 `} />
               )}
             </div>
@@ -801,27 +797,21 @@ export function ProfileSetup() {
 
         {/* Step Titles */}
         <div className="grid grid-cols-4 gap-4 mb-8 text-center">
-          <div className={`text-sm ${step === 1 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
-            Resume Upload
-          </div>
-          <div className={`text-sm ${step === 2 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
-            Basic Info
-          </div>
-          <div className={`text-sm ${step === 3 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
-            Experience
-          </div>
-          <div className={`text-sm ${step === 4 ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
-            Education & Portfolio
-          </div>
+          <div className={`text-sm ${step === 1 ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>Resume Upload</div>
+          <div className={`text-sm ${step === 2 ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>Basic Info</div>
+          <div className={`text-sm ${step === 3 ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>Experience</div>
+          <div className={`text-sm ${step === 4 ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>Projects</div>
         </div>
 
         {/* Step Content */}
-        <Card className="mb-8">
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
-          {step === 4 && renderStep4()}
-        </Card>
+        <div className="mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
+            {step === 4 && renderStep4()}
+          </div>
+        </div>
 
         {/* Navigation */}
         <div className="flex justify-between">
@@ -829,26 +819,27 @@ export function ProfileSetup() {
             variant="outline" 
             onClick={() => setStep(Math.max(1, step - 1))}
             disabled={step === 1}
+            className="rounded-lg border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-gray-700"
           >
             Previous
           </Button>
-          
           <div className="flex space-x-4">
             {step < 4 ? (
               <Button 
                 onClick={() => setStep(step + 1)}
                 disabled={!canProceedToNext()}
-                icon={ArrowRight}
-                iconPosition="right"
+                className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
               >
                 Next Step
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
               <Button 
                 onClick={handleSaveProfile}
-                icon={Save}
                 disabled={completionPercentage < 50}
+                className="rounded-lg bg-green-600 hover:bg-green-700 text-white shadow-sm"
               >
+                <Save className="w-4 h-4 mr-2" />
                 Complete Profile
               </Button>
             )}

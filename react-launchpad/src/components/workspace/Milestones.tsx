@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { AppShell } from '../layout/AppShell';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
-import { Avatar } from '../ui/Avatar';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Avatar } from '../ui/avatar';
 import { Modal } from '../ui/Modal';
 import { Calendar, DollarSign, Download, CheckSquare, Clock, FileText, User, Eye, MessageSquare, Filter, AlertCircle } from 'lucide-react';
 import { createStripeCheckoutSession } from '../../apiendpoint';
@@ -130,8 +129,7 @@ export default function Milestones({
 
   // UI rendering
   return (
-    <AppShell>
-      <div className="space-y-6 p-4 md:p-8">
+    <div className="space-y-6 p-4 md:p-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -446,6 +444,5 @@ export default function Milestones({
           ))}
         </div>
       </div>
-    </AppShell>
   );
 } 

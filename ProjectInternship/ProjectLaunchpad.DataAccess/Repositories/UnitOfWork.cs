@@ -14,10 +14,14 @@ namespace ProjectLaunchpad.Repositories.Repositories
     {
         private readonly ApplicationDbContext _db;
         public IUserRepository Users { get; }
+        public IFreelancerProfileRepository FreelancerProfiles { get; }
+        public IClientProfileRepository ClientProfiles { get; }
+        public IProjectRepository ProjectRepository { get; }
         public ITaskRepository TaskRepository { get; }
-
+        public IProjectAssignmentRepository ProjectFreelancers { get; }
         public ISubTaskRepository SubTaskRepository { get; }
 
+        public IProjectRequestRepository ProjectRequests { get; }
         public IMilestoneRepository MilestoneRepository { get; }
 
         public IlogRepository logRepository { get; }
@@ -25,20 +29,28 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IDeliverableRepository deliverableRepository { get;}
 
         public IPaymentRepository PaymentRepository { get; }
-
-
+        public ITimeSheetRepository TimeSheet { get; }
+        public IFeedbackRepository Feedbacks { get; }
         // 
 
         public UnitOfWork(ApplicationDbContext db)
         {
             _db = db;
             Users = new UserRepository(_db);
+            FreelancerProfiles = new FreelancerProfileRepository(_db);
+            ProjectFreelancers = new ProjectAssignmentRepository(_db);
+            ProjectRepository = new ProjectRepository(_db);
+            ProjectRequests = new ProjectRequestRepository(_db);
             TaskRepository = new TaskRepository(_db);
             SubTaskRepository = new SubTaskRepository(_db);
             MilestoneRepository = new MilestoneRepository(_db);
             logRepository = new LogRepository(_db);
             deliverableRepository = new DeliverableRepository(_db);
             PaymentRepository = new PaymentRepository(_db);
+            ClientProfiles = new ClientProfileRepository(_db);
+            TimeSheet = new TimeSheetRepository(_db);
+            Feedbacks = new FeedbackRepository(_db);
+
             ///
         }
 

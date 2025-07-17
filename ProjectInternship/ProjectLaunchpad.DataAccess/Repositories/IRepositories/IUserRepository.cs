@@ -1,4 +1,6 @@
-﻿using ProjectLaunchpad.Models.Models;
+﻿using ProjectLaunchpad.Models;
+using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +13,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
     {
         // for login and Signup
         Task<User> GetUserByEmailAsync(string email);
+        Task<User> GetUserByIdAsync(int id);
         Task<bool> UserExistsAsync(string email);
         Task AddUserAsync(User user);
         

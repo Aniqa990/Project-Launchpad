@@ -4,10 +4,12 @@ using ProjectLaunchpad.Models.Models.DTOs.TaskDTO;
 using ProjectLaunchpad.Models.Models.Enums;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
@@ -17,17 +19,22 @@ namespace ProjectLaunchpad.Functions
     public class MilestoneFunctions
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly TokenAuthorization _auth;
 
-        public MilestoneFunctions(IUnitOfWork unitOfWork)
+        public MilestoneFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
         {
             _unitOfWork = unitOfWork;
+            _auth = auth;
         }
 
         [Function("CreateMilestone")]
         public async Task<HttpResponseData> CreateMilestoneAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "milestones")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "milestones")] HttpRequestData req)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
 
+            if (!isAuthorized)
+                return unauthorizedResponse!;
 
             var dto = await req.ReadFromJsonAsync<CreateMilestoneDto>();
 
@@ -54,9 +61,14 @@ namespace ProjectLaunchpad.Functions
 
         [Function("SubmitMilestone")]
         public async Task<HttpResponseData> SubmitMilestoneAsync(
-     [HttpTrigger(AuthorizationLevel.Function, "post", Route = "submitmilestone/{milestoneId:int}")] HttpRequestData req,
+     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "submitmilestone/{milestoneId:int}")] HttpRequestData req,
      int milestoneId)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(milestoneId);
             if (milestone == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
@@ -105,9 +117,14 @@ namespace ProjectLaunchpad.Functions
 
         [Function("UpdateMilestone")]
         public async Task<HttpResponseData> UpdateMilestoneAsync(
-     [HttpTrigger(AuthorizationLevel.Function, "put", Route = "updatemilestone/{id:int}")] HttpRequestData req,
+     [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "updatemilestone/{id:int}")] HttpRequestData req,
      int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(id);
             if (milestone == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
@@ -144,8 +161,14 @@ namespace ProjectLaunchpad.Functions
 
         [Function("DeleteMilestone")]
         public async Task<HttpResponseData> DeleteMilestoneAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "deletemilestones/{id:int}")] HttpRequestData req, int id)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "deletemilestones/{id:int}")] HttpRequestData req, int id)
         {
+
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
             var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(id);
             if (milestone == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
