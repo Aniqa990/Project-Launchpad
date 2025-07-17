@@ -62,6 +62,15 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Project>> GetProjectsByFreelancerIdAsync(int freelancerId)
+        {
+            return await _db.projectFreelancers
+                .Where(pa => pa.FreelancerId == freelancerId)
+                .Include(pa => pa.Project)
+                .Select(pa => pa.Project)
+                .ToListAsync();
+        }
+
 
         public async Task RemoveFreelancerFromProjectAsync(int projectId, int freelancerId)
         {

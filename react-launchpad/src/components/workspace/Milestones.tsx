@@ -5,7 +5,7 @@ import { Badge } from '../ui/badge';
 import { Avatar } from '../ui/avatar';
 import { Modal } from '../ui/Modal';
 import { Calendar, DollarSign, Download, CheckSquare, Clock, FileText, User, Eye, MessageSquare, Filter, AlertCircle } from 'lucide-react';
-import { createStripeCheckoutSession } from '../../apiendpoint';
+import { createStripeCheckoutSession } from '../../apiendpoints';
 
 export default function Milestones({
   milestones,

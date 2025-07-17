@@ -2,7 +2,7 @@ import axios from "axios";
 import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback, ProfileSetupData} from "@/types";
 
 const api = axios.create({
-  baseURL: "http://localhost:7071/api",
+  baseURL: "http://localhost:7053/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -89,6 +89,7 @@ export const createTask = async (task: {
   priority: KanbanTaskPriorityLevel;
   createdByUserId: number;
   assignedToUserId: number;
+  ProjectId: number; // <-- Add this
 }): Promise<KanbanTask> => {
   const response = await api.post('/tasks', task);
   return response.data;
@@ -310,4 +311,41 @@ export const getCurrentUserFreelancerProfile = async (userId: number): Promise<F
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer profile');
   }
+};
+
+// Stripe Payment API
+export const createStripePaymentIntent = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ clientSecret: string }> => {
+  // Note: This uses the backend port 7053
+  const response = await axios.post(
+    'http://localhost:7053/api/payments/create-intent',
+    params,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return response.data;
+};
+
+// New: Stripe Checkout Session API
+export const createStripeCheckoutSession = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ url: string }> => {
+  const response = await axios.post(
+    'http://localhost:7053/api/payments/create-checkout-session',
+    params,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return response.data;
 };

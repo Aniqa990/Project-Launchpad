@@ -978,7 +978,7 @@ export function ProjectWorkspace() {
           onPayNow={async (data) => {
             setShowInvoice(false);
             try {
-              const { createStripeCheckoutSession } = await import('../../apiendpoint');
+              const { createStripeCheckoutSession } = await import('../../apiendpoints');
               const response = await createStripeCheckoutSession({
                 clientId: data.clientId,
                 freelancerId: data.freelancerId,

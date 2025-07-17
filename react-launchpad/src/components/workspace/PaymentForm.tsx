@@ -3,7 +3,7 @@ import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import axios from "axios";
 
 // Add import for the new API function
-import { createStripePaymentIntent, createStripeCheckoutSession } from "../../apiendpoint";
+import { createStripePaymentIntent, createStripeCheckoutSession } from "../../apiendpoints";
 // Add fetch for Stripe Checkout session
 
 const PaymentForm = () => {

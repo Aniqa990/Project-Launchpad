@@ -12,6 +12,7 @@ using ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO;
 using ProjectLaunchpad.Utility;
 using System.Security.Claims;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 
 namespace ProjectLaunchpad.Functions
 {
@@ -30,31 +31,57 @@ namespace ProjectLaunchpad.Functions
             _unitOfWork = unitOfWork;
         }
 
-        [Function("Register")]
-        public async Task<HttpResponseData> Register(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/register")] HttpRequestData req)
-        {
-            var dto = await req.ReadFromJsonAsync<UserRegisterDTO>();
-            var (token, user) = await _auth.RegisterAsync(dto);
+      [Function("Register")]
+public async Task<HttpResponseData> Register(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/register")] HttpRequestData req)
+{
+    var dto = await req.ReadFromJsonAsync<UserRegisterDTO>();
+    var (token, user) = await _auth.RegisterAsync(dto);
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new
-            {
-                token = token,
-                user = new
-                {
-                    id = user.Id,
-                    email = user.Email,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    phone = user.PhoneNo,
-                    avatar = user.ProfilePicture,
-                    gender = user.Gender,
-                    role = user.Role
-                }
-            });
-            return response;
+    // Add to respective profile tables based on role
+    if (user.Role.Equals("Client", StringComparison.OrdinalIgnoreCase))
+    {
+        _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
+    }
+    else if (user.Role.Equals("Freelancer", StringComparison.OrdinalIgnoreCase))
+    {
+        var freelancerProfileDto = new FreelancerProfileDTO
+        {
+            Id = user.Id,
+            Skills = "",
+            Experience = "",
+            Projects = "",
+            HourlyRate = 0,
+            AvgRating = 0,
+            Availability = "Available",
+            WorkingHours = "9am-5pm",
+            Summary = ""
+        };
+
+        await _unitOfWork.FreelancerProfiles.AddFreelancerProfileAsync(freelancerProfileDto);
+    }
+
+    await _unitOfWork.SaveAsync();
+
+    var response = req.CreateResponse(HttpStatusCode.OK);
+    await response.WriteAsJsonAsync(new
+    {
+        token = token,
+        user = new
+        {
+            id = user.Id,
+            email = user.Email,
+            firstName = user.FirstName,
+            lastName = user.LastName,
+            phone = user.PhoneNo,
+            avatar = user.ProfilePicture,
+            gender = user.Gender,
+            role = user.Role
         }
+    });
+
+    return response;
+}
 
         [Function("Login")]
         public async Task<HttpResponseData> Login(
@@ -63,11 +90,11 @@ namespace ProjectLaunchpad.Functions
             var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
             var (token, user) = await _auth.LoginAsync(dto); // Now getting both
 
-            if (user.Role == "Client")
-            {
-                _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
-                await _unitOfWork.SaveAsync();
-            }
+            //if (user.Role == "Client")
+            //{
+            //    _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
+            //    await _unitOfWork.SaveAsync();
+            //}
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(new

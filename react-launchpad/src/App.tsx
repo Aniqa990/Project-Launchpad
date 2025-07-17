@@ -22,6 +22,32 @@ import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 
+class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    // You can log error info here if needed
+    // console.error('Global error boundary caught:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, color: 'red', background: '#fffbe6', fontSize: 20 }}>
+          <h1>⚠️ Something went wrong!</h1>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{String(this.state.error)}</pre>
+          <p>Please take a screenshot and share it with your developer.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
   const { isAuthenticated, user, loading } = useAuth();
   
@@ -40,8 +66,8 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
     return <Navigate to="/login" replace />;
   }
   
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to={`/${user?.role}/dashboard`} replace />;
+  if (requiredRole && user?.role?.toLowerCase() !== requiredRole) {
+    return <Navigate to={`/${user?.role?.toLowerCase()}/dashboard`} replace />;
   }
   
   return <>{children}</>;
@@ -115,7 +141,7 @@ function AppRoutes() {
       {/* Redirect authenticated users */}
       <Route path="*" element={
         isAuthenticated ? (
-          <Navigate to={`/${user?.role}/dashboard`} replace />
+          <Navigate to={`/${user?.role?.toLowerCase()}/dashboard`} replace />
         ) : (
           <Navigate to="/" replace />
         )
@@ -126,23 +152,25 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <AppRoutes />
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-            }}
-          />
-        </div>
-      </Router>
-    </AuthProvider>
+    <GlobalErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <AppRoutes />
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+              }}
+            />
+          </div>
+        </Router>
+      </AuthProvider>
+    </GlobalErrorBoundary>
   );
 }
 

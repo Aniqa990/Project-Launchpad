@@ -3,11 +3,6 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Avatar } from '../ui/avatar';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/button';
 import { 
   Plus, 
   Clock, 
@@ -23,6 +18,11 @@ import {
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask } from '../../types';
 import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
+import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Badge } from '../ui/badge';
 // Remove import { mockSubtasks } from '../../utils/mockData';
 
 interface KanbanColumnProps {
@@ -120,158 +120,10 @@ function SortableTask({ task, onClick }: SortableTaskProps) {
       {...listeners}
       className="mb-3 cursor-pointer"
     >
-      <Card className="hover:shadow-md transition-shadow cursor-pointer">
-        <div
-          className="p-4 space-y-3"
-          onPointerDown={clickGuard.onPointerDown}
-          onPointerUp={clickGuard.onPointerUp}
-          role="button"
-          tabIndex={0}
-        >
-          {/* Task Header */}
-          <div className="flex items-start justify-between">
-            <h4 className="font-semibold text-gray-900 text-sm">{task.Title}</h4>
-            <span className={`rounded px-2 py-1 text-xs font-medium ${getPriorityColor(priorityLabel)}`}>{priorityLabel}</span>
-          </div>
-          {/* Task Description */}
-          <p className="text-xs text-gray-600 line-clamp-2">{task.Description}</p>
-          {/* Project Name */}
-          <div className="text-xs text-blue-600 font-medium">{task.ProjectName}</div>
-          {/* Task Details */}
-          <div className="mt-2 space-y-1">
-            <div className="flex items-center text-xs">
-              <span className="text-gray-500 mr-1">Assigned to:</span>
-              {assignedAvatar && <Avatar src={assignedAvatar} alt={assignedTo} size="sm" />}
-              <span className="ml-1 font-medium text-blue-600">{assignedTo}</span>
-            </div>
-            <div className="text-xs">
-              <span className="text-gray-500 mr-1">Created by:</span>
-              <span className="font-medium text-gray-900">{createdBy}</span>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center text-xs text-gray-500">
-              <Calendar className="w-3 h-3 mr-1" />
-              Due: {task.EstimatedDeadline ? new Date(task.EstimatedDeadline).toLocaleDateString() : 'No deadline'}
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {assignedAvatar && <Avatar src={assignedAvatar} alt={assignedTo} size="sm" />}
-                <span className="text-xs text-gray-600">{assignedTo}</span>
-              </div>
-              <div className="text-xs text-gray-500">ID: {task.CreatedByUserId}</div>
-            </div>
-          </div>
-          {/* Created Date */}
-          <div className="text-xs text-gray-400 border-t pt-2">
-            Created: {task.CreatedAt ? new Date(task.CreatedAt).toLocaleDateString() : ''}
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function SubtaskCard({ subtask, onClick }: { subtask: KanbanSubtask; onClick: (subtask: KanbanSubtask) => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: `subtask-${subtask.Id}` });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-  const clickGuard = usePointerClickGuard(() => onClick(subtask));
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="mb-3 cursor-pointer"
-    >
-      <Card hover padding="sm" className="border-2 border-blue-400 bg-blue-50 shadow-sm">
-        <div
-          className="space-y-2"
-          onPointerDown={clickGuard.onPointerDown}
-          onPointerUp={clickGuard.onPointerUp}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-blue-900 text-sm">{subtask.Title}</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-blue-200 text-blue-800 font-semibold">Subtask</span>
-          </div>
-          <div className="text-xs text-blue-700">{subtask.Description}</div>
-          <div className="flex items-center text-xs text-blue-500">
-            <Calendar className="w-3 h-3 mr-1" />
-            {subtask.DueDate ? new Date(subtask.DueDate).toLocaleDateString() : 'No due date'}
-          </div>
-          <div className="text-xs text-blue-500">Status: {subtask.Status}</div>
-          <div className="text-xs text-blue-600 font-semibold">Parent Task ID: {subtask.TaskItemId}</div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, subtasks, setEditSubtask }: KanbanColumnProps) {
-  const statusColors = {
-    todo: 'bg-gray-100',
-    inprogress: 'bg-blue-100',
-    done: 'bg-green-100'
-  };
-  const { setNodeRef } = useDroppable({ id: `column-${status}` });
-
-  // Show all subtasks whose status matches the column, regardless of parent task
-  const columnSubtasks = subtasks.filter(st => st.Status === columnToStatus[status]);
-  // Combine task and subtask IDs for SortableContext
-  const sortableIds = [
-    ...columnSubtasks.map(st => `subtask-${st.Id}`),
-    ...tasks.map(t => t.Id)
-  ];
-
-  // Status icon for header
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'done': return <CheckCircle className="w-4 h-4" />;
-      case 'inprogress': return <PlayCircle className="w-4 h-4" />;
-      case 'todo': return <Clock className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          {getStatusIcon(status)}
-          {title}
-        </h3>
-        <Badge variant="secondary" className="text-xs">{tasks.length + columnSubtasks.length}</Badge>
-      </div>
-      <div ref={setNodeRef} className="rounded-xl p-4 border border-gray-200 shadow-sm"> {/* droppable area */}
-        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3 min-h-96">
-            {/* Render subtask cards for this column */}
-            {columnSubtasks.map(subtask => (
-              <SubtaskCard key={`subtask-${subtask.Id}`} subtask={subtask} onClick={setEditSubtask} />
-            ))}
-            {/* Render main task cards */}
-            {tasks.map((task) => (
-              <SortableTask
-                key={task.Id}
-                task={task}
-                onClick={() => onTaskClick(task)}
-              />
-            ))}
-            {(tasks.length + columnSubtasks.length === 0) && (
-              <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm">No {title.toLowerCase()} tasks</p>
-              </div>
-            )}
-          </div>
-        </SortableContext>
-      </div>
+      <KanbanTaskCard
+        task={task}
+        onClick={onClick}
+      />
     </div>
   );
 }
@@ -313,70 +165,146 @@ const getBadgeVariant = (priority: KanbanTaskPriorityLevel) => {
   }
 };
 
-// Add Task Modal Component
-function AddTaskModal({ isOpen, onClose, onSubmit, loading }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (form: any) => void;
-  loading: boolean;
-}) {
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    estimatedDeadline: '',
-    priority: KanbanTaskPriorityLevel.Low,
-    createdByUserId: 1,
-    assignedToUserId: 1,
-  });
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+// KanbanTaskCard component
+function KanbanTaskCard({ task, onClick }: { task: KanbanTask; onClick: () => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.Id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
   };
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      ...form,
-      priority: Number(form.priority),
-      createdByUserId: Number(form.createdByUserId),
-      assignedToUserId: Number(form.assignedToUserId),
-    });
+  const priorityLabel = task.Priority === KanbanTaskPriorityLevel.Urgent
+    ? 'Critical'
+    : task.Priority === KanbanTaskPriorityLevel.High
+    ? 'High'
+    : task.Priority === KanbanTaskPriorityLevel.Medium
+    ? 'Medium'
+    : 'Low';
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'Critical': return 'bg-red-100 text-red-800';
+      case 'High': return 'bg-orange-100 text-orange-800';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800';
+      case 'Low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
+  const createdBy = task.CreatedByUser?.FirstName + (task.CreatedByUser?.LastName ? ' ' + task.CreatedByUser.LastName : '');
+  const assignedTo = task.AssignedToUser?.FirstName + (task.AssignedToUser?.LastName ? ' ' + task.AssignedToUser.LastName : '');
+  const assignedAvatar = task.AssignedToUser?.AvatarUrl;
+  const clickGuard = usePointerClickGuard(onClick);
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Task" size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-title">Title</label>
-        <input id="add-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-description">Description</label>
-        <textarea id="add-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-estimatedDeadline">Estimated Deadline</label>
-        <input id="add-estimatedDeadline" name="estimatedDeadline" type="date" value={form.estimatedDeadline} onChange={handleChange} className="w-full border p-2 rounded" />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-priority">Priority</label>
-        <select id="add-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
-          <option value={KanbanTaskPriorityLevel.Low}>Low</option>
-          <option value={KanbanTaskPriorityLevel.Medium}>Medium</option>
-          <option value={KanbanTaskPriorityLevel.High}>High</option>
-          <option value={KanbanTaskPriorityLevel.Urgent}>Urgent</option>
-        </select>
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-createdByUserId">Created By User ID</label>
-        <input id="add-createdByUserId" name="createdByUserId" type="number" value={form.createdByUserId} onChange={handleChange} placeholder="Created By User ID" className="w-full border p-2 rounded" required />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-assignedToUserId">Assigned To User ID</label>
-        <input id="add-assignedToUserId" name="assignedToUserId" type="number" value={form.assignedToUserId} onChange={handleChange} placeholder="Assigned To User ID" className="w-full border p-2 rounded" required />
-        <div className="flex justify-end">
-          <Button type="submit" disabled={loading}>{loading ? 'Adding...' : 'Add Task'}</Button>
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="mb-3 cursor-pointer"
+    >
+      <div className="hover:shadow-md transition-shadow cursor-pointer bg-white rounded-lg border p-4 space-y-3"
+        onPointerDown={clickGuard.onPointerDown}
+        onPointerUp={clickGuard.onPointerUp}
+        role="button"
+        tabIndex={0}
+      >
+        <div className="flex items-start justify-between">
+          <h4 className="font-semibold text-gray-900 text-sm">{task.Title}</h4>
+          <span className={`rounded px-2 py-1 text-xs font-medium ${getPriorityColor(priorityLabel)}`}>{priorityLabel}</span>
         </div>
-      </form>
-    </Modal>
+        <p className="text-xs text-gray-600 line-clamp-2">{task.Description}</p>
+        <div className="mt-2 space-y-1">
+          <div className="flex items-center text-xs">
+            <span className="text-gray-500 mr-1">Assigned to:</span>
+            {assignedAvatar && <img src={assignedAvatar} alt={assignedTo} className="inline-block w-5 h-5 rounded-full" />}
+            <span className="ml-1 font-medium text-blue-600">{assignedTo}</span>
+          </div>
+          <div className="text-xs">
+            <span className="text-gray-500 mr-1">Created by:</span>
+            <span className="font-medium text-gray-900">{createdBy}</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center text-xs text-gray-500">
+            <Calendar className="w-3 h-3 mr-1" />
+            Due: {task.EstimatedDeadline ? new Date(task.EstimatedDeadline).toLocaleDateString() : 'No deadline'}
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {assignedAvatar && <img src={assignedAvatar} alt={assignedTo} className="inline-block w-5 h-5 rounded-full" />}
+              <span className="text-xs text-gray-600">{assignedTo}</span>
+            </div>
+            <div className="text-xs text-gray-500">ID: {task.CreatedByUserId}</div>
+          </div>
+        </div>
+        <div className="text-xs text-gray-400 border-t pt-2">
+          Created: {task.CreatedAt ? new Date(task.CreatedAt).toLocaleDateString() : ''}
+        </div>
+      </div>
+    </div>
   );
 }
 
-// Edit Task Modal Component
-function EditTaskModal({ isOpen, onClose, onSubmit, loading, task }: {
+// KanbanColumn component
+function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, subtasks, setEditSubtask }: KanbanColumnProps) {
+  const { setNodeRef } = useDroppable({ id: `column-${status}` });
+  const sortableIds = tasks.map(t => t.Id);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'done': return <CheckCircle className="w-4 h-4" />;
+      case 'inprogress': return <PlayCircle className="w-4 h-4" />;
+      case 'todo': return <Clock className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          {getStatusIcon(status)}
+          {title}
+        </h3>
+        <span className="rounded px-2 py-1 text-xs font-medium bg-gray-200">{tasks.length}</span>
+      </div>
+      <div ref={setNodeRef} className="rounded-xl p-4 border border-gray-200 shadow-sm">
+        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3 min-h-96">
+            {tasks.map((task) => (
+              <KanbanTaskCard
+                key={task.Id}
+                task={task}
+                onClick={() => onTaskClick(task)}
+              />
+            ))}
+            {tasks.length === 0 && (
+              <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm">No {title.toLowerCase()} tasks</p>
+              </div>
+            )}
+          </div>
+        </SortableContext>
+      </div>
+    </div>
+  );
+}
+
+// EditTaskModal component for updating and deleting a task
+function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (id: number, form: any) => void;
-  loading: boolean;
   task: KanbanTask | null;
+  onUpdate: (id: number, form: any) => void;
+  onDelete: (id: number) => void;
+  loading: boolean;
 }) {
-  const [form, setForm] = useState<any>(task ? {
+  const [form, setForm] = React.useState<any>(task ? {
     title: task.Title,
     description: task.Description || '',
     estimatedDeadline: task.EstimatedDeadline ? task.EstimatedDeadline.split('T')[0] : '',
@@ -385,7 +313,7 @@ function EditTaskModal({ isOpen, onClose, onSubmit, loading, task }: {
     assignedToUserId: task.AssignedToUserId,
     status: task.Status,
   } : {});
-  useEffect(() => {
+  React.useEffect(() => {
     if (task) {
       setForm({
         title: task.Title,
@@ -398,13 +326,13 @@ function EditTaskModal({ isOpen, onClose, onSubmit, loading, task }: {
       });
     }
   }, [task]);
-  if (!task) return null;
+  if (!isOpen || !task) return null;
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(task.Id, {
+    onUpdate(task.Id, {
       ...form,
       priority: Number(form.priority),
       createdByUserId: Number(form.createdByUserId),
@@ -413,36 +341,42 @@ function EditTaskModal({ isOpen, onClose, onSubmit, loading, task }: {
     });
   };
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Task" size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-title">Title</label>
-        <input id="edit-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-description">Description</label>
-        <textarea id="edit-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-estimatedDeadline">Estimated Deadline</label>
-        <input id="edit-estimatedDeadline" name="estimatedDeadline" type="date" value={form.estimatedDeadline} onChange={handleChange} className="w-full border p-2 rounded" />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-priority">Priority</label>
-        <select id="edit-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
-          <option value={KanbanTaskPriorityLevel.Low}>Low</option>
-          <option value={KanbanTaskPriorityLevel.Medium}>Medium</option>
-          <option value={KanbanTaskPriorityLevel.High}>High</option>
-          <option value={KanbanTaskPriorityLevel.Urgent}>Urgent</option>
-        </select>
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-createdByUserId">Created By User ID</label>
-        <input id="edit-createdByUserId" name="createdByUserId" type="number" value={form.createdByUserId} onChange={handleChange} placeholder="Created By User ID" className="w-full border p-2 rounded" required />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-assignedToUserId">Assigned To User ID</label>
-        <input id="edit-assignedToUserId" name="assignedToUserId" type="number" value={form.assignedToUserId} onChange={handleChange} placeholder="Assigned To User ID" className="w-full border p-2 rounded" required />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-status">Status</label>
-        <select id="edit-status" name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
-          <option value={KanbanTaskStatus.ToDo}>To Do</option>
-          <option value={KanbanTaskStatus.InProgress}>In Progress</option>
-          <option value={KanbanTaskStatus.Done}>Done</option>
-        </select>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
-        </div>
-      </form>
-    </Modal>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+      <div className="bg-white p-8 rounded shadow-lg w-full max-w-lg">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-title">Title</label>
+          <input id="edit-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-description">Description</label>
+          <textarea id="edit-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-estimatedDeadline">Estimated Deadline</label>
+          <input id="edit-estimatedDeadline" name="estimatedDeadline" type="date" value={form.estimatedDeadline} onChange={handleChange} className="w-full border p-2 rounded" />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-priority">Priority</label>
+          <select id="edit-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
+            <option value={0}>Low</option>
+            <option value={1}>Medium</option>
+            <option value={2}>High</option>
+            <option value={3}>Urgent</option>
+          </select>
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-createdByUserId">Created By User ID</label>
+          <input id="edit-createdByUserId" name="createdByUserId" type="number" value={form.createdByUserId} onChange={handleChange} placeholder="Created By User ID" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-assignedToUserId">Assigned To User ID</label>
+          <input id="edit-assignedToUserId" name="assignedToUserId" type="number" value={form.assignedToUserId} onChange={handleChange} placeholder="Assigned To User ID" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-status">Status</label>
+          <select id="edit-status" name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
+            <option value={0}>To Do</option>
+            <option value={1}>In Progress</option>
+            <option value={2}>Done</option>
+          </select>
+          <div className="flex justify-between mt-6">
+            <button type="button" onClick={() => onDelete(task.Id)} className="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
+            <div className="flex gap-2">
+              <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 text-gray-800 rounded">Cancel</button>
+              <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Saving...' : 'Save Changes'}</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -482,30 +416,79 @@ function EditSubtaskModal({ isOpen, onClose, onSubmit, loading, subtask }: {
     });
   };
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Subtask" size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-title">Title</label>
-        <input id="edit-subtask-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-description">Description</label>
-        <textarea id="edit-subtask-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-dueDate">Due Date</label>
-        <input id="edit-subtask-dueDate" name="dueDate" type="date" value={form.dueDate} onChange={handleChange} className="w-full border p-2 rounded" />
-        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-status">Status</label>
-        <select id="edit-subtask-status" name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
-          <option value={KanbanTaskStatus.ToDo}>To Do</option>
-          <option value={KanbanTaskStatus.InProgress}>In Progress</option>
-          <option value={KanbanTaskStatus.Done}>Done</option>
-        </select>
-        <div className="flex justify-end">
-          <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
-        </div>
-      </form>
-    </Modal>
+    <EditSubtaskModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      loading={loading}
+      subtask={subtask}
+    />
+  );
+}
+
+// AddTaskModal component
+function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId }: { isOpen: boolean; onClose: () => void; onSubmit: (form: any) => void; loading: boolean; selectedProjectId: number | null }) {
+  const [form, setForm] = React.useState({
+    title: '',
+    description: '',
+    estimatedDeadline: '',
+    priority: 0,
+    createdByUserId: 1,
+    assignedToUserId: 1,
+  });
+  if (!isOpen) return null;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...form,
+      priority: Number(form.priority),
+      createdByUserId: Number(form.createdByUserId),
+      assignedToUserId: Number(form.assignedToUserId),
+      ProjectId: selectedProjectId,
+    });
+  };
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+      <div className="bg-white p-8 rounded shadow-lg w-full max-w-md">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-title">Title</label>
+          <input id="add-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-description">Description</label>
+          <textarea id="add-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-estimatedDeadline">Estimated Deadline</label>
+          <input id="add-estimatedDeadline" name="estimatedDeadline" type="date" value={form.estimatedDeadline} onChange={handleChange} className="w-full border p-2 rounded" />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-priority">Priority</label>
+          <select id="add-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
+            <option value={0}>Low</option>
+            <option value={1}>Medium</option>
+            <option value={2}>High</option>
+            <option value={3}>Urgent</option>
+          </select>
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-createdByUserId">Created By User ID</label>
+          <input id="add-createdByUserId" name="createdByUserId" type="number" value={form.createdByUserId} onChange={handleChange} placeholder="Created By User ID" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-assignedToUserId">Assigned To User ID</label>
+          <input id="add-assignedToUserId" name="assignedToUserId" type="number" value={form.assignedToUserId} onChange={handleChange} placeholder="Assigned To User ID" className="w-full border p-2 rounded" required />
+          <input type="hidden" name="ProjectId" value={selectedProjectId ?? ''} />
+          <div className="flex justify-end">
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Adding...' : 'Add Task'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
 export function KanbanBoard() {
+  const { user } = useAuth();
+  const [projects, setProjects] = useState<{ Id: number; Title: string }[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [message, setMessage] = useState('');
   const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -532,6 +515,70 @@ export function KanbanBoard() {
     }
     fetchTasks();
   }, []);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      setLoadingProjects(true);
+      setMessage('');
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get('http://localhost:7053/api/freelancer/projects', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setProjects(res.data);
+        if (res.data.length === 0) {
+          setMessage('No projects assigned to you yet.');
+        }
+      } catch (e) {
+        setMessage('Could not fetch your projects.');
+      } finally {
+        setLoadingProjects(false);
+      }
+    }
+    if (user?.role === 'freelancer') fetchProjects();
+  }, [user]);
+
+  // 1. Only show tasks if a project is selected
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setTasks([]);
+      return;
+    }
+    async function fetchTasks() {
+      setLoadingTasks(true);
+      setMessage('');
+      try {
+        const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
+        setTasks(res.data);
+        if (res.data.length === 0) {
+          setMessage('No tasks for this project yet.');
+        }
+      } catch (e) {
+        setMessage('Could not fetch tasks for this project.');
+      } finally {
+        setLoadingTasks(false);
+      }
+    }
+    fetchTasks();
+  }, [selectedProjectId]);
+
+  // 2. After drag, add, or update, re-fetch only the selected project's tasks
+  const fetchProjectTasks = async () => {
+    if (!selectedProjectId) return;
+    setLoadingTasks(true);
+    setMessage('');
+    try {
+      const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
+      setTasks(res.data);
+      if (res.data.length === 0) {
+        setMessage('No tasks for this project yet.');
+      }
+    } catch (e) {
+      setMessage('Could not fetch tasks for this project.');
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -600,8 +647,7 @@ export function KanbanBoard() {
       try {
         setFormLoading(true);
         await updateTask(activeTask.Id, { status: newStatus });
-        const data = await getTasks();
-        setTasks(data);
+        await fetchProjectTasks(); // Only fetch tasks for the selected project
       } catch (e) {
         // Optionally show error toast
       } finally {
@@ -610,23 +656,31 @@ export function KanbanBoard() {
     }
   };
 
+  // Fix: Only one modal open at a time
   const handleTaskClick = (task: KanbanTask) => {
     setSelectedTask(task);
     setShowTaskModal(true);
+    setEditTask(null);
+    setShowAddTaskModal(false);
   };
 
-  const handleAddTask = async (form: {
-    title: string;
-    description: string;
-    estimatedDeadline: string;
-    priority: KanbanTaskPriorityLevel;
-    createdByUserId: number;
-    assignedToUserId: number;
-  }) => {
+  const handleEditButton = () => {
+    setEditTask(selectedTask);
+    setShowTaskModal(false);
+    setShowAddTaskModal(false);
+  };
+
+  const handleCreateTaskButton = () => {
+    setShowAddTaskModal(true);
+    setShowTaskModal(false);
+    setEditTask(null);
+  };
+
+  const handleAddTask = async (form: any) => {
     setFormLoading(true);
     try {
-      const newTask = await createTask(form);
-      setTasks(tasks => [...tasks, newTask]);
+      await createTask({ ...form, ProjectId: selectedProjectId }); // Capital P
+      await fetchProjectTasks();
       setShowAddTaskModal(false);
     } catch (e) {
       // handle error
@@ -647,8 +701,7 @@ export function KanbanBoard() {
     setFormLoading(true);
     try {
       await updateTask(id, update);
-      const data = await getTasks();
-      setTasks(data);
+      await fetchProjectTasks(); // Only fetch tasks for the selected project
       setEditTask(null);
       setShowTaskModal(false);
     } catch (e) {
@@ -698,10 +751,6 @@ export function KanbanBoard() {
     .sort((a, b) => b.Priority - a.Priority);
 
   // Get unique projects and freelancers from tasks
-  const projects = useMemo(() => {
-    const set = new Set(tasks.map(t => t.ProjectName || ''));
-    return Array.from(set).filter(Boolean);
-  }, [tasks]);
   const freelancers = useMemo(() => {
     const set = new Set(tasks.map(t => t.AssignedToUser?.FirstName + (t.AssignedToUser?.LastName ? ' ' + t.AssignedToUser.LastName : '')));
     return Array.from(set).filter(Boolean);
@@ -713,10 +762,6 @@ export function KanbanBoard() {
   const [selectedFreelancer, setSelectedFreelancer] = useState('all');
 
   // Unique projects and freelancers from Kanban data
-  const uniqueProjects = useMemo(() => {
-    const set = new Set(tasks.map(t => t.ProjectName || ''));
-    return Array.from(set).filter(Boolean);
-  }, [tasks]);
   const uniqueFreelancers = useMemo(() => {
     const set = new Set(tasks.map(t => t.AssignedToUser?.FirstName + (t.AssignedToUser?.LastName ? ' ' + t.AssignedToUser.LastName : '')));
     return Array.from(set).filter(Boolean);
@@ -725,7 +770,7 @@ export function KanbanBoard() {
   // FILTERED TASKS
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      const matchesProject = selectedProject === 'all' || task.ProjectName === selectedProject;
+      const matchesProject = selectedProject === 'all'; // ProjectName does not exist on KanbanTask
       const matchesStatus = selectedStatus === 'all' ||
         (selectedStatus === 'To Do' && task.Status === KanbanTaskStatus.ToDo) ||
         (selectedStatus === 'In Progress' && task.Status === KanbanTaskStatus.InProgress) ||
@@ -766,74 +811,77 @@ export function KanbanBoard() {
           <h1 className="text-3xl font-bold text-gray-900">Project Tasks</h1>
           <p className="text-gray-600 mt-1">View and track project tasks (Read-only)</p>
         </div>
-        <Button icon={Plus} onClick={() => setShowAddTaskModal(true)} className="ml-4" variant="primary">
+        <Button icon={Plus} onClick={handleCreateTaskButton} className="ml-4" variant="primary">
           Create Task
         </Button>
       </div>
-      {/* Filters */}
-      <Card>
-        <div className="border-b p-4">
-          <div className="font-semibold text-lg">Filter Tasks</div>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="border rounded px-3 py-2">
-              <option value="all">All Projects</option>
-              {uniqueProjects.map(project => (
-                <option key={project} value={project}>{project}</option>
+      {user?.role === 'freelancer' && (
+        <div className="mb-4">
+          <label className="block mb-2 font-medium">Select Project:</label>
+          {loadingProjects ? (
+            <div>Loading projects...</div>
+          ) : projects.length === 0 ? (
+            <div>{message}</div>
+          ) : (
+            <select
+              className="border rounded p-2"
+              value={selectedProjectId ?? ''}
+              onChange={e => setSelectedProjectId(Number(e.target.value) || null)}
+            >
+              <option value="">-- Select a project --</option>
+              {projects.map(p => (
+                <option key={p.Id} value={p.Id}>{p.Title}</option>
               ))}
             </select>
-            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="border rounded px-3 py-2">
-              <option value="all">All Status</option>
-              <option value="To Do">To Do</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Done">Done</option>
-            </select>
-            <select value={selectedFreelancer} onChange={e => setSelectedFreelancer(e.target.value)} className="border rounded px-3 py-2">
-              <option value="all">All Freelancers</option>
-              {uniqueFreelancers.map(freelancer => (
-                <option key={freelancer} value={freelancer}>{freelancer}</option>
-              ))}
-            </select>
-          </div>
+          )}
         </div>
-      </Card>
-      {/* Kanban Board */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <KanbanColumn
-            title="To Do"
-            status="todo"
-            tasks={tasksByStatus['To Do']}
-            onTaskClick={handleTaskClick}
-            setShowAddTaskModal={setShowAddTaskModal}
-            subtasks={subtasks}
-            setEditSubtask={setSelectedSubtask}
-          />
-          <KanbanColumn
-            title="In Progress"
-            status="inprogress"
-            tasks={tasksByStatus['In Progress']}
-            onTaskClick={handleTaskClick}
-            setShowAddTaskModal={setShowAddTaskModal}
-            subtasks={subtasks}
-            setEditSubtask={setSelectedSubtask}
-          />
-          <KanbanColumn
-            title="Done"
-            status="done"
-            tasks={tasksByStatus['Done']}
-            onTaskClick={handleTaskClick}
-            setShowAddTaskModal={setShowAddTaskModal}
-            subtasks={subtasks}
-            setEditSubtask={setSelectedSubtask}
-          />
-        </div>
-      </DndContext>
+      )}
+      {/* Only show Kanban board if a project is selected */}
+      {selectedProjectId ? (
+        loadingTasks ? (
+          <div>Loading tasks...</div>
+        ) : message ? (
+          <div>{message}</div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <KanbanColumn
+                title="To Do"
+                status="todo"
+                tasks={tasksByStatus['To Do']}
+                onTaskClick={handleTaskClick}
+                setShowAddTaskModal={setShowAddTaskModal}
+                subtasks={subtasks}
+                setEditSubtask={setSelectedSubtask}
+              />
+              <KanbanColumn
+                title="In Progress"
+                status="inprogress"
+                tasks={tasksByStatus['In Progress']}
+                onTaskClick={handleTaskClick}
+                setShowAddTaskModal={setShowAddTaskModal}
+                subtasks={subtasks}
+                setEditSubtask={setSelectedSubtask}
+              />
+              <KanbanColumn
+                title="Done"
+                status="done"
+                tasks={tasksByStatus['Done']}
+                onTaskClick={handleTaskClick}
+                setShowAddTaskModal={setShowAddTaskModal}
+                subtasks={subtasks}
+                setEditSubtask={setSelectedSubtask}
+              />
+            </div>
+          </DndContext>
+        )
+      ) : (
+        <div className="text-center text-gray-500 py-12">Please select a project to view its tasks.</div>
+      )}
       {/* Summary Stats */}
       <Card>
         <div className="border-b p-4">
@@ -870,103 +918,23 @@ export function KanbanBoard() {
         </div>
       )}
       {/* Task Detail Modal */}
-      <Modal
-        isOpen={showTaskModal}
-        onClose={() => setShowTaskModal(false)}
-        title="Task Details"
-        size="lg"
-      >
-        {selectedTask && (
-          <div className="space-y-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {selectedTask.Title}
-                </h2>
-                <p className="text-gray-600">{selectedTask.Description}</p>
-              </div>
-              <div className="flex space-x-2 ml-4">
-                <Button variant="outline" size="sm" icon={Edit3} onClick={() => {
-                  setEditTask(selectedTask);
-                  setShowTaskModal(false);
-                }}>
-                  Edit
-                </Button>
-                <Button variant="outline" size="sm" icon={Trash2} onClick={() => handleDeleteTask(selectedTask.Id)} disabled={deleteLoading}>
-                  {deleteLoading ? 'Deleting...' : 'Delete'}
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Created by</label>
-                <span className="text-sm text-gray-900">{selectedTask.CreatedByUser?.FirstName}{selectedTask.CreatedByUser?.LastName ? ' ' + selectedTask.CreatedByUser.LastName : ''}</span>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Assigned to</label>
-                <span className="text-sm text-gray-900">{selectedTask.AssignedToUser?.FirstName}{selectedTask.AssignedToUser?.LastName ? ' ' + selectedTask.AssignedToUser.LastName : ''}</span>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority
-                </label>
-                <Badge 
-                  variant={getBadgeVariant(selectedTask.Priority)}
-                >
-                  {getPriorityLabel(selectedTask.Priority)}
-                </Badge>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Due Date
-                </label>
-                <div className="flex items-center text-sm text-gray-900">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {selectedTask.EstimatedDeadline ? new Date(selectedTask.EstimatedDeadline).toLocaleDateString() : 'No deadline'}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comments & Activity
-              </label>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center text-sm text-gray-500">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  No comments yet. Be the first to add one!
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Attachments
-              </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                <Paperclip className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">No attachments</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
-
+      {showTaskModal && selectedTask ? (
+        <EditTaskModal
+          isOpen={showTaskModal}
+          onClose={() => setShowTaskModal(false)}
+          task={selectedTask}
+          onUpdate={handleEditTask}
+          onDelete={handleDeleteTask}
+          loading={formLoading}
+        />
+      ) : null}
       {/* Add Task Modal */}
       <AddTaskModal
         isOpen={showAddTaskModal}
         onClose={() => setShowAddTaskModal(false)}
         onSubmit={handleAddTask}
         loading={formLoading}
-      />
-      {/* Edit Task Modal */}
-      <EditTaskModal
-        isOpen={!!editTask}
-        onClose={() => setEditTask(null)}
-        onSubmit={handleEditTask}
-        loading={formLoading}
-        task={editTask}
+        selectedProjectId={selectedProjectId}
       />
       {/* Edit Subtask Modal */}
       <EditSubtaskModal
