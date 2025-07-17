@@ -41,8 +41,23 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .Where(pa => pa.ProjectId == projectId)
                 .Select(pa => new FreelancerWithUserDTO
                 {
-                    Profile = pa.Freelancer,
-                    User = pa.Freelancer.User
+                    Id = pa.Freelancer.Id,
+                    FirstName = pa.Freelancer.User.FirstName,
+                    LastName = pa.Freelancer.User.LastName,
+                    Email = pa.Freelancer.User.Email,
+                    PhoneNo = pa.Freelancer.User.PhoneNo,
+                    Gender = pa.Freelancer.User.Gender,
+                    ProfilePicture = pa.Freelancer.User.ProfilePicture,
+                    Role = pa.Freelancer.User.Role,
+                    CreatedAt = pa.Freelancer.User.CreatedAt,
+                    Skills = pa.Freelancer.Skills,
+                    Experience = pa.Freelancer.Experience,
+                    HourlyRate = pa.Freelancer.HourlyRate,
+                    AvgRating = pa.Freelancer.AvgRating,
+                    Availability = pa.Freelancer.Availability,
+                    WorkingHours = pa.Freelancer.WorkingHours,
+                    Summary = pa.Freelancer.Summary,
+                    Projects = pa.Freelancer.Projects
                 })
                 .ToListAsync();
         }

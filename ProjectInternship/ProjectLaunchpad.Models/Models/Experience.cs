@@ -12,7 +12,8 @@ namespace ProjectLaunchpad.Models.Models
         public int FreelancerId { get; set; }
         public string Title { get; set; } = null!;
         public string Company { get; set; } = null!;
-        public string Duration { get; set; } = null!;
+        public string StartDate { get; set; } = null!;
+        public string EndDate { get; set; } = null!;
         public string? Description { get; set; }
         public string Source { get; set; } = "parsed";
 

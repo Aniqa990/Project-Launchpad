@@ -1,5 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using ProjectLaunchpad.Models;
+using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.FreelancerDTO;
 using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
@@ -61,13 +62,13 @@ namespace ProjectLaunchpad.Services
             };
         }
 
-        public async Task SaveProfileSetupDataAsync(string email, ProfileSetupDTO dto, FreelancerProfileDTO profileDto)
+        public async Task SaveProfileSetupDataAsync(string email, ProfileSetupDTO dto, FreelancerWithUserDTO profileDto)
         {
             using var connection = new MySqlConnection(_mysqlConnStr);
             await connection.OpenAsync();
 
             // Get or create freelancer in resume_parser (other database that stores parsed resume)
-            var freelancerId = await GetOrCreateFreelancerAsync(connection, email, profileDto);
+            var freelancerId = await GetFreelancerAsync(connection, email, profileDto);
 
             // Update summary in resume_parser
             await UpdateFreelancerSummaryAsync(connection, freelancerId, dto.Summary);
@@ -152,7 +153,7 @@ namespace ProjectLaunchpad.Services
         {
             var experience = new List<ExperienceDTO>();
             using var command = new MySqlCommand(
-                @"SELECT id, title, company, duration, description, source 
+                @"SELECT id, title, company, startDate, endDate, description, source 
                   FROM experience WHERE freelancer_id = @freelancerId", connection);
             command.Parameters.AddWithValue("@freelancerId", freelancerId);
 
@@ -164,7 +165,8 @@ namespace ProjectLaunchpad.Services
                     Id = reader.GetInt32("id"),
                     Title = reader.GetString("title"),
                     Company = reader.GetString("company"),
-                    Duration = reader.IsDBNull("duration") ? string.Empty : reader.GetString("duration"),
+                    StartDate = reader.IsDBNull("startDate") ? string.Empty : reader.GetString("startDate"),
+                    EndDate = reader.IsDBNull("endDate") ? string.Empty : reader.GetString("endDate"),
                     Description = reader.IsDBNull("description") ? string.Empty : reader.GetString("description"),
                     Source = reader.GetString("source")
                 });
@@ -172,7 +174,7 @@ namespace ProjectLaunchpad.Services
             return experience;
         }
 
-        private async Task<int> GetOrCreateFreelancerAsync(MySqlConnection connection, string email, FreelancerProfileDTO profileDto)
+        private async Task<int> GetFreelancerAsync(MySqlConnection connection, string email, FreelancerWithUserDTO profileDto)
         {
             // Check if freelancer exists
             using var checkCommand = new MySqlCommand(
@@ -184,19 +186,20 @@ namespace ProjectLaunchpad.Services
             {
                 return Convert.ToInt32(result);
             }
+            return 0;
 
-            // Create new freelancer using User object properties
-            var fullName = $"{profileDto.User?.FirstName ?? ""} {profileDto.User?.LastName ?? ""}".Trim();
-            using var insertCommand = new MySqlCommand(
-                @"INSERT INTO freelancers (name, email, phone, summary) 
-                  VALUES (@name, @email, @phone, @summary)", connection);
-            insertCommand.Parameters.AddWithValue("@name", fullName);
-            insertCommand.Parameters.AddWithValue("@email", email);
-            insertCommand.Parameters.AddWithValue("@phone", profileDto.User?.PhoneNo ?? "");
-            insertCommand.Parameters.AddWithValue("@summary", profileDto.Summary ?? "");
+            //// Create new freelancer using User object properties
+            //var fullName = $"{profileDto.User?.FirstName ?? ""} {profileDto.User?.LastName ?? ""}".Trim();
+            //using var insertCommand = new MySqlCommand(
+            //    @"INSERT INTO freelancers (name, email, phone, summary) 
+            //      VALUES (@name, @email, @phone, @summary)", connection);
+            //insertCommand.Parameters.AddWithValue("@name", fullName);
+            //insertCommand.Parameters.AddWithValue("@email", email);
+            //insertCommand.Parameters.AddWithValue("@phone", profileDto.User?.PhoneNo ?? "");
+            //insertCommand.Parameters.AddWithValue("@summary", profileDto.Summary ?? "");
 
-            await insertCommand.ExecuteNonQueryAsync();
-            return (int)insertCommand.LastInsertedId;
+            //await insertCommand.ExecuteNonQueryAsync();
+            //return (int)insertCommand.LastInsertedId;
         }
 
         private async Task UpdateFreelancerSummaryAsync(MySqlConnection connection, int freelancerId, string summary)
@@ -271,7 +274,7 @@ namespace ProjectLaunchpad.Services
             if (experience.Any())
             {
                 using var insertCommand = new MySqlCommand(
-                    "INSERT INTO experience (freelancer_id, title, company, duration, description, source) VALUES (@freelancerId, @title, @company, @duration, @description, @source)", connection);
+                    "INSERT INTO experience (freelancer_id, title, company, startDate, endDate, description, source) VALUES (@freelancerId, @title, @company, @startDate, @endDate, @description, @source)", connection);
 
                 foreach (var exp in experience)
                 {
@@ -279,7 +282,8 @@ namespace ProjectLaunchpad.Services
                     insertCommand.Parameters.AddWithValue("@freelancerId", freelancerId);
                     insertCommand.Parameters.AddWithValue("@title", exp.Title);
                     insertCommand.Parameters.AddWithValue("@company", exp.Company);
-                    insertCommand.Parameters.AddWithValue("@duration", exp.Duration);
+                    insertCommand.Parameters.AddWithValue("@startDate", exp.StartDate);
+                    insertCommand.Parameters.AddWithValue("@endDate", exp.EndDate);
                     insertCommand.Parameters.AddWithValue("@description", exp.Description);
                     insertCommand.Parameters.AddWithValue("@source", exp.Source);
                     await insertCommand.ExecuteNonQueryAsync();
@@ -287,7 +291,7 @@ namespace ProjectLaunchpad.Services
             }
         }
 
-        private async Task SaveToOwnDatabaseAsync(FreelancerProfileDTO profileDto, ProfileSetupDTO setupDto)
+        private async Task SaveToOwnDatabaseAsync(FreelancerWithUserDTO profileDto, ProfileSetupDTO setupDto)
         {
             // Convert arrays to JSON strings for your database
             var skillsJson = System.Text.Json.JsonSerializer.Serialize(setupDto.Skills);

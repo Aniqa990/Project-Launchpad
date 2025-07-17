@@ -2,6 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models;
+using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 using System;
 using System.Collections.Generic;
@@ -27,11 +28,12 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .FirstOrDefaultAsync(p => p.Id == userId);
         }
 
-        public async Task AddOrUpdateFreelancerProfileAsync(FreelancerProfileDTO dto)
+        public async Task AddOrUpdateFreelancerProfileAsync(FreelancerWithUserDTO dto)
         {
             var existingProfile = await _db.freelancerProfiles.FindAsync(dto.Id);
+            var existingUser = await _db.users.FindAsync(dto.Id);
 
-            if (existingProfile != null)
+            if (existingProfile != null && existingUser!=null )
             {
                 // Update existing profile
                 existingProfile.Skills = dto.Skills ?? existingProfile.Skills;
@@ -44,6 +46,13 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 existingProfile.Summary = dto.Summary ?? existingProfile.Summary;
 
                 _db.freelancerProfiles.Update(existingProfile);
+
+                existingUser.FirstName = dto.FirstName ?? existingUser.FirstName;
+                existingUser.LastName = dto.LastName ?? existingUser.LastName;
+                existingUser.PhoneNo = dto.PhoneNo ?? existingUser.PhoneNo;
+                existingUser.ProfilePicture = dto.ProfilePicture ?? existingUser.ProfilePicture;
+
+                _db.users.Update(existingUser);
             }
             else
             {

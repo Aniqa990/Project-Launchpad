@@ -2,6 +2,7 @@
 using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models;
 using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.FreelancerDTO;
 using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
@@ -62,7 +63,7 @@ namespace ProjectLaunchpad.Functions
             }
         }
 
-        [Function("SaveProfileSetupData")]
+        [Function("AddFreelancerProfile")]
         public async Task<HttpResponseData> SaveProfileSetupData(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "freelancer/profile-setup")] HttpRequestData req)
         {
@@ -91,22 +92,15 @@ namespace ProjectLaunchpad.Functions
                     return errorResponse;
                 }
 
-                // Create User object from request data
-                var userObj = new User
+
+                var profileDto = new FreelancerWithUserDTO
                 {
                     Id = userId,
                     FirstName = requestData.FirstName,
                     LastName = requestData.LastName,
                     Email = email,
                     PhoneNo = requestData.Phone,
-                    Role = "freelancer"
-                };
-
-                // Create FreelancerProfileDTO from request data
-                var profileDto = new FreelancerProfileDTO
-                {
-                    Id = userId,
-                    User = userObj,
+                    Role = "freelancer",
                     HourlyRate = requestData.HourlyRate,
                     Availability = requestData.Availability,
                     WorkingHours = requestData.WorkingHours,
@@ -127,21 +121,63 @@ namespace ProjectLaunchpad.Functions
             }
         }
 
-        [Function("AddFreelancerProfile")]
-        public async Task<HttpResponseData> AddFreelancerProfile(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "freelancer")] HttpRequestData req)
+        [Function("UpdateFreelancerProfile")]
+        public async Task<HttpResponseData> UpdateProfileSetupData(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "freelancer/profile-setup")] HttpRequestData req)
         {
             (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;
 
-            var dto = await req.ReadFromJsonAsync<FreelancerProfileDTO>();
-            await _unit.FreelancerProfiles.AddFreelancerProfileAsync(dto);
-            await _unit.SaveAsync();
-            var res = req.CreateResponse(HttpStatusCode.Created);
-            await res.WriteAsJsonAsync(new { message = "Freelancer added" });
-            return res;
+            var email = user?.FindFirst(ClaimTypes.Email)?.Value;
+            var userId = int.Parse(user?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            if (string.IsNullOrEmpty(email) || userId == 0)
+            {
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                await errorResponse.WriteAsJsonAsync(new { error = "User information not found in token" });
+                return errorResponse;
+            }
+
+            try
+            {
+                var requestData = await req.ReadFromJsonAsync<ProfileSetupRequestDTO>();
+                if (requestData == null)
+                {
+                    var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await errorResponse.WriteAsJsonAsync(new { error = "Invalid request data" });
+                    return errorResponse;
+                }
+
+
+                // Create FreelancerProfileDTO from request data
+                var profileDto = new FreelancerWithUserDTO
+                {
+                    Id = userId,
+                    FirstName = requestData.FirstName,
+                    LastName = requestData.LastName,
+                    Email = email,
+                    PhoneNo = requestData.Phone,
+                    Role = "freelancer",
+                    HourlyRate = requestData.HourlyRate,
+                    Availability = requestData.Availability,
+                    WorkingHours = requestData.WorkingHours,
+                    Summary = requestData.ProfileData.Summary
+                };
+
+                await _resumeParserSyncService.SaveProfileSetupDataAsync(email, requestData.ProfileData, profileDto);
+
+                var res = req.CreateResponse(HttpStatusCode.OK);
+                await res.WriteAsJsonAsync(new { message = "Profile setup data updated successfully" });
+                return res;
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await errorResponse.WriteAsJsonAsync(new { error = "Failed to update profile setup data", details = ex.Message });
+                return errorResponse;
+            }
         }
 
         [Function("DeleteFreelancerProfile")]
@@ -175,8 +211,30 @@ namespace ProjectLaunchpad.Functions
             var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
             if (profile is null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
+
+            var responseDto = new FreelancerWithUserDTO
+            {
+                Id = profile.Id,
+                FirstName = profile.User?.FirstName,
+                LastName = profile.User?.LastName,
+                Email = profile.User?.Email,
+                PhoneNo = profile.User?.PhoneNo,
+                Gender = profile.User?.Gender,
+                ProfilePicture = profile.User?.ProfilePicture,
+                Role = profile.User?.Role,
+                Skills = profile.Skills,
+                Experience = profile.Experience,
+                HourlyRate = profile.HourlyRate,
+                AvgRating = profile.AvgRating,
+                Availability = profile.Availability,
+                WorkingHours = profile.WorkingHours,
+                Summary = profile.Summary,
+                Projects = profile.Projects
+            };
+
+
             var res = req.CreateResponse(HttpStatusCode.OK);
-            await res.WriteAsJsonAsync(profile);
+            await res.WriteAsJsonAsync(responseDto);
             return res;
         }
 
@@ -194,45 +252,6 @@ namespace ProjectLaunchpad.Functions
             await res.WriteAsJsonAsync(profiles);
             return res;
         }
-
-        [Function("UpdateFreelancerProfile")]
-        public async Task<HttpResponseData> Update(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "freelancer/{id}")] HttpRequestData req, int id)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
-
-            var dto = await req.ReadFromJsonAsync<FreelancerProfileDTO>();
-            var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
-
-            if (profile == null) return req.CreateResponse(HttpStatusCode.NotFound);
-
-            profile.Skills = dto.Skills ?? profile.Skills;
-            profile.HourlyRate = dto.HourlyRate ?? profile.HourlyRate;
-            profile.AvgRating = dto.AvgRating ?? profile.AvgRating;
-            profile.Availability = dto.Availability ?? profile.Availability;
-            profile.WorkingHours = dto.WorkingHours ?? profile.WorkingHours;
-
-            await _unit.SaveAsync();
-
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new { message = "Freelancer profile updated successfully." });
-            return response;
-        }
-    }
-
-    public class ProfileSetupRequestDTO
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-        public string Location { get; set; } = string.Empty;
-        public decimal HourlyRate { get; set; }
-        public string Availability { get; set; } = string.Empty;
-        public string WorkingHours { get; set; } = string.Empty;
-        public ProfileSetupDTO ProfileData { get; set; } = new ProfileSetupDTO();
     }
 
 }
