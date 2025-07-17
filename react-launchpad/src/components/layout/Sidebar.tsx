@@ -15,7 +15,8 @@ import {
   Upload,
   DollarSign,
   Star,
-  Settings
+  Settings,
+  Folder
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -27,6 +28,7 @@ export function Sidebar() {
   const clientMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client/dashboard' },
     { icon: Plus, label: 'Create Project', path: '/client/create-project' },
+    { icon: Folder, label: 'My Projects', path: '/client/projects' },
     { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
     { icon: Kanban, label: 'View Tasks', path: '/client/kanban' },
     { icon: Users, label: 'Find Freelancers', path: '/client/freelancer-suggestions' },
@@ -42,6 +44,7 @@ export function Sidebar() {
     { icon: User, label: 'Projects', path: '/freelancer/projects' },
     { icon: Clock, label: 'Requests', path: '/freelancer/requests' },
     { icon: Kanban, label: 'Task Board', path: '/freelancer/kanban' },
+    { icon: Clock, label: 'Time Logs', path: '/freelancer/hourly-logs' },
     { icon: Clock, label: 'Submit Timesheet', path: '/freelancer/submit-timesheet' },
     { icon: Upload, label: 'Submit Work', path: '/freelancer/submit-deliverables' },
     { icon: DollarSign, label: 'Earnings', path: '/freelancer/payment' },

@@ -133,25 +133,28 @@ export function FreelancerDashboard() {
       value: activeProjects.length.toString(),
       icon: FolderOpen,
       color: 'bg-blue-500',
+      backgroundColor: 'bg-blue-50',
     },
     {
       label: 'Pending Requests',
       value: pendingRequests.length.toString(),
       icon: Inbox,
       color: 'bg-orange-500',
+      backgroundColor: 'bg-orange-50',
     },
     {
       label: 'Rating',
       value: stats.rating.toString(),
       icon: Star,
       color: 'bg-yellow-500',
+      backgroundColor: 'bg-yellow-50',
     },
     {
       label: 'This Month',
       value: `$${stats.monthlyEarnings.toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-purple-500',
-      change: '+15% vs last month'
+      backgroundColor: 'bg-purple-50',
     }
   ];
 
@@ -182,7 +185,7 @@ export function FreelancerDashboard() {
         {dashboardStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className={"bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"}> {/* Smaller rounded, padding, shadow */}
+            <div key={index} className={`${stat.backgroundColor} rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow cursor-pointer`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-600 text-xs font-medium">{stat.label}</p> 
@@ -219,7 +222,7 @@ export function FreelancerDashboard() {
                 <div key={project.id} className="border border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors"> 
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="font-extrabold text-blue-700 text-base mb-0.5">{project.title}</h3> 
+                      <h3 className="font-bold text-gray-900 text-base mb-0.5">{project.title}</h3> 
                       <p className="text-gray-600 text-xs line-clamp-2">{project.description}</p> 
                     </div>
                     <div className="ml-3 text-right">
@@ -238,9 +241,9 @@ export function FreelancerDashboard() {
                         {project.client.firstName} {project.client.lastName}
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => navigate(`/freelancer/projects/${project.id}`)}>
+                    {/* <Button size="sm" variant="outline" onClick={() => navigate(`/freelancer/projects/${project.id}`)}>
                       View Project
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               ))
@@ -277,7 +280,7 @@ export function FreelancerDashboard() {
                       <User className="w-3 h-3 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-extrabold text-blue-700 text-sm">{request.projectTitle}</h3> 
+                      <h3 className="font-bold text-gray-700 text-sm">{request.projectTitle}</h3> 
                       <p className="text-[11px] text-gray-600">by {request.clientName}</p>
                     </div>
                   </div>

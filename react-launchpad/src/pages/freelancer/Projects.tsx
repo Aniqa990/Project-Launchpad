@@ -18,29 +18,32 @@ export function FreelancerProjects() {
         const projectsData = await getFreelancerProjects(user.id);
         const transformedProjects: Project[] = projectsData.map((project: any) => ({
           id: project.Id,
-          title: project.ProjectTitle,
+          title: project.Title,
           description: project.Description,
           status: project.Status,
           budget: project.Budget,
           deadline: project.Deadline,
           clientId: project.ClientId,
-          client: project.Client?.User ? {
-            id: project.Client.User.Id,
-            firstName: project.Client.User.FirstName,
-            lastName: project.Client.User.LastName,
-            email: project.Client.User.Email,
+          category: project.Category,
+          paymentType: project.PaymentType,
+          numberOfFreelancers: project.NumberOfFreelancers,
+          attachedDocumentPath: project.AttachedDocumentPath,
+          client: project.Client ? {
+            firstName: project.Client.FirstName,
+            lastName: project.Client.LastName,
+            email: project.Client.Email,
             password: '',
-            phone: project.Client.User.PhoneNo,
-            avatar: project.Client.User.AvatarUrl,
-            role: project.Client.User.Role,
-            gender: project.Client.User.Gender,
+            phone: project.Client.PhoneNo,
+            avatar: '',
+            role: project.Client.Role,
+            gender: project.Client.Gender,
             location: '',
             joinedDate: '',
           } : undefined,
-          skills: project.SkillsRequired ? project.SkillsRequired.split(',').map((s: string) => s.trim()) : [],
-          team: [],
-          progress: 0,
-          milestones: [],
+          skills: project.Skills || [],
+          team: project.Team || [],
+          progress: project.Progress ?? 0,
+          milestones: project.Milestones || [],
         }));
         setProjects(transformedProjects);
       } catch (error) {
@@ -52,9 +55,9 @@ export function FreelancerProjects() {
 
   const filteredProjects = projects.filter((project: Project) => {
     const matchesTab = activeTab === 'all' || project.status === activeTab;
-    const clientName = project.client ? `${project.client.firstName} ${project.client.lastName}` : '';
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      clientName.toLowerCase().includes(searchTerm.toLowerCase());
+    const clientName = project.client ? `${project.client.firstName ?? ''} ${project.client.lastName ?? ''}` : '';
+    const matchesSearch = (project.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (clientName.toLowerCase()).includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
@@ -162,9 +165,6 @@ export function FreelancerProjects() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  ID: {project.id}
-                </div>
                 <Link
                   to={`/tasks/${project.id}`}
                   className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"

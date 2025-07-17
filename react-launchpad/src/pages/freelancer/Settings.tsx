@@ -4,10 +4,12 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { User, Phone, Camera, Save, Briefcase, DollarSign, Clock, Edit2 } from 'lucide-react';
-import { getProfileSetupData, saveProfileSetupData } from '../../apiendpoints';
+import { getProfileSetupData, updateProfileSetupData, getCurrentUserFreelancerProfile } from '../../apiendpoints';
 import { ProfileSetupData } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function Settings() {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<ProfileSetupData | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -19,26 +21,49 @@ export function Settings() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+
+  const formatDateRange = (startDate: string, endDate: string) => {
+    if (!startDate && !endDate) return '';
+    const start = startDate ? new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : '';
+    const end = endDate == 'Present' ?  'Present' : new Date(endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    return `${start} - ${end}`;
+  };
 
   useEffect(() => {
     async function fetchProfile() {
+      if (!user?.id) {
+        setError('User not authenticated');
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
-        const data = await getProfileSetupData();
+        const [profileData, freelancerProfile] = await Promise.all([
+          getProfileSetupData(),
+          getCurrentUserFreelancerProfile(user.id)
+        ]);
+
         setProfile({
-          ...data,
-          Skills: data.Skills ?? [],
-          Projects: data.Projects ?? [],
-          Experience: data.Experience ?? [],
+          ...profileData,
+          Skills: profileData.Skills ?? [],
+          Projects: profileData.Projects ?? [],
+          Experience: profileData.Experience ?? [],
         });
-        setFirstName(localStorage.getItem('firstName') || '');
-        setLastName(localStorage.getItem('lastName') || '');
-        setPhone(localStorage.getItem('phone') || '');
-        setHourlyRate(Number(localStorage.getItem('hourlyRate')) || 0);
-        setAvailability(localStorage.getItem('availability') || '');
-        setWorkingHours(localStorage.getItem('workingHours') || '');
-        setAvatar(localStorage.getItem('avatar') || '');
+
+        // Use actual user data from the database (now directly in the response DTO)
+        if (freelancerProfile) {
+          setFirstName(freelancerProfile.FirstName || '');
+          setLastName(freelancerProfile.LastName || '');
+          setPhone(freelancerProfile.PhoneNo || '');
+          setAvatar(freelancerProfile.ProfilePicture || '');
+          setHourlyRate(freelancerProfile.HourlyRate || 0);
+          setAvailability(freelancerProfile.Availability || '');
+          setWorkingHours(freelancerProfile.WorkingHours || '');
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
       } finally {
@@ -46,14 +71,14 @@ export function Settings() {
       }
     }
     fetchProfile();
-  }, []);
+  }, [user?.id]);
 
   const handleSave = async () => {
     if (!profile) return;
     setLoading(true);
     setError(null);
     try {
-      await saveProfileSetupData({
+      await updateProfileSetupData({
         firstName,
         lastName,
         phone,
@@ -62,7 +87,10 @@ export function Settings() {
         workingHours,
         profileData: profile,
       });
+      
       setIsEditing(false);
+      setSuccessMessage('Profile updated successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       setError(err.message || 'Failed to update profile');
     } finally {
@@ -79,6 +107,35 @@ export function Settings() {
     alert('Image upload functionality would be implemented here');
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="text-red-600 text-lg mb-2">Error</div>
+          <p className="text-gray-600">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-4"
+            variant="outline"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile) return null;
 
   return (
@@ -87,6 +144,21 @@ export function Settings() {
         <h1 className="text-3xl font-bold text-gray-900">Freelancer Settings</h1>
         <p className="text-gray-600 mt-1">Manage your freelancer profile and preferences</p>
       </div>
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-800">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile Picture Section */}
       <Card>
@@ -122,7 +194,11 @@ export function Settings() {
                 <Button variant="outline" onClick={handleCancel}>Cancel</Button>
               </>
             ) : (
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
+              <Button variant="outline" onClick={() => {
+                setIsEditing(true);
+                setError(null);
+                setSuccessMessage(null);
+              }}>
                 <Edit2 className="w-4 h-4 mr-2" />Edit Profile
               </Button>
             )}
@@ -307,18 +383,38 @@ export function Settings() {
                   className="bg-transparent border-none p-0 focus:ring-0"
                   placeholder="Company Name"
                 />
-                <Input
-                  type="text"
-                  value={exp.Duration}
-                  onChange={e => {
-                    const newExp = [...(profile.Experience ?? [])];
-                    newExp[idx].Duration = e.target.value;
-                    setProfile({ ...profile, Experience: newExp });
-                  }}
-                  disabled={!isEditing}
-                  className="bg-transparent border-none p-0 focus:ring-0"
-                  placeholder="Duration (e.g. 2020-2023)"
-                />
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      value={exp.StartDate}
+                      onChange={e => {
+                        const newExp = [...(profile.Experience ?? [])];
+                        newExp[idx].StartDate = e.target.value;
+                        setProfile({ ...profile, Experience: newExp });
+                      }}
+                      disabled={!isEditing}
+                      className="bg-transparent border-none p-0 focus:ring-0"
+                      placeholder="Start Date"
+                    />
+                    <Input
+                      type="date"
+                      value={exp.EndDate}
+                      onChange={e => {
+                        const newExp = [...(profile.Experience ?? [])];
+                        newExp[idx].EndDate = e.target.value;
+                        setProfile({ ...profile, Experience: newExp });
+                      }}
+                      disabled={!isEditing}
+                      className="bg-transparent border-none p-0 focus:ring-0"
+                      placeholder="End Date"
+                    />
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-600">
+                    {formatDateRange(exp.StartDate, exp.EndDate)}
+                  </div>
+                )}
               </div>
               <Textarea
                 value={exp.Description}

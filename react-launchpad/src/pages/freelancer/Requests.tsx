@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {getProjectRequests, respondToProjectRequest} from '../../apiendpoints';
+import {getProjectRequests, respondToProjectRequest} from '@/apiendpoints';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +40,11 @@ export function FreelancerRequests() {
             projectDescription: req.ProjectDescription,
             projectCategory: req.ProjectCategory,
             deadline: req.Deadline ? new Date(req.Deadline) : undefined,
-            skills: typeof req.Skills === 'string' ? JSON.parse(req.Skills) : req.Skills || [],
+            skills: typeof req.Skills === 'string'
+              ? req.Skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+              : Array.isArray(req.Skills)
+                ? req.Skills
+                : [],
             budget: req.Budget,
             clientId: req.ClientId,
             clientName: req.ClientName,
