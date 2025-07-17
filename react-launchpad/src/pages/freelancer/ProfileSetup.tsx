@@ -1,14 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { getProfileSetupData, saveProfileSetupData } from '../../apiendpoints';
 import { ParsedResumeData, Skill, ProjectItem, Experience } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ProjectModal } from '@/components/ui/ProjectModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Upload, 
@@ -25,10 +24,18 @@ import {
   ArrowRight,
   Loader,
   Briefcase,
-  Clock
+  Clock,
+  Calendar as CalendarIcon,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { Card } from '@/components/ui/card';
+import { ExperienceModal } from '@/components/ui/ExperienceModal';
+
 
 export function ProfileSetup() {
   const navigate = useNavigate();
@@ -92,7 +99,8 @@ export function ProfileSetup() {
           Id: idx + 1,
           Title: exp.Title,
           Company: exp.Company,
-          Duration: exp.Duration,
+          StartDate: exp.StartDate,
+          EndDate: exp.EndDate,
           Description: exp.Description,
           Source: exp.Source as 'parsed' | 'manual'
         }));
@@ -143,18 +151,18 @@ export function ProfileSetup() {
 
   // Function to upload resume to resume_parser and then fetch the parsed data
   const uploadResumeAndFetchData = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+  const formData = new FormData();
+  formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8000/api/parse-resume/", {
-        method: "POST",
-        body: formData,
-      });
+  const response = await fetch("http://localhost:8000/api/parse-resume/", {
+    method: "POST",
+    body: formData,
+  });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Resume parsing failed.");
+  if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail);
       }
 
       const parsedData = await getProfileSetupData();
@@ -169,7 +177,8 @@ export function ProfileSetup() {
         Id: idx + 1,
         Title: exp.Title,
         Company: exp.Company,
-        Duration: exp.Duration,
+        StartDate: exp.StartDate,
+        EndDate: exp.EndDate,
         Description: exp.Description,
         Source: exp.Source as 'parsed' | 'manual'
       }));
@@ -199,7 +208,7 @@ export function ProfileSetup() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to parse resume. Please fill manually.');
     }
-  };
+};
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -260,13 +269,14 @@ export function ProfileSetup() {
     updateProfileField('skills', profileData.skills.filter(s => s.Id !== skillId));
   };
 
-  const addExperience = () => {
+  const addExperience = (exp: Experience) => {
     const newExp: Experience = {
       Id: experienceId.current++,
-      Company: '',
-      Title: '',
-      Duration: '',
-      Description: '',
+      Company: exp.Company || '',
+      Title: exp.Title || '',
+      StartDate: exp.StartDate || '', 
+      EndDate: exp.EndDate || '',   
+      Description: exp.Description || '',
       Source: 'manual'
     };
     setProfileData(prev => ({
@@ -275,9 +285,9 @@ export function ProfileSetup() {
     }));
   };
 
-  const updateExperience = (id: number, field: string, value: any) => {
+  const updateExperience = (id: number, newExp: Experience) => {
     const updated = profileData.experience.map(exp => 
-      exp.Id === id ? { ...exp, [field]: value } : exp
+      exp.Id === id ? { ...newExp } : exp
     );
     updateProfileField('experience', updated);
   };
@@ -286,11 +296,11 @@ export function ProfileSetup() {
     updateProfileField('experience', profileData.experience.filter(exp => exp.Id !== id));
   };
 
-  const addProject = () => {
+  const addProject = (proj: ProjectItem) => {
     const newP: ProjectItem = {
       Id: projectId.current++,
-      Title: '',
-      Description: '',
+      Title: proj.Title || '',
+      Description: proj.Description || '',
       Source: 'manual'
     };
     setProfileData(prev => ({
@@ -299,9 +309,9 @@ export function ProfileSetup() {
     }));
   };
 
-  const updateProject = (id: number, field: string, value: any) => {
-    const updated = profileData.projects.map(exp => 
-      exp.Id === id ? { ...exp, [field]: value } : exp
+  const updateProject = (id: number, newProj: ProjectItem) => {
+    const updated = profileData.projects.map(p => 
+      p.Id === id ? { ...newProj } : p
     );
     updateProfileField('projects', updated);
   };
@@ -349,9 +359,9 @@ export function ProfileSetup() {
         firstName,
         lastName,
         phone,
-        hourlyRate,
+    hourlyRate,
         availability,
-        workingHours,
+    workingHours,
         profileData: {
           Summary: profileData.summary,
           Skills: profileData.skills,
@@ -360,12 +370,39 @@ export function ProfileSetup() {
         }
       });
 
-      toast.success('Profile saved successfully!');
-      navigate('/freelancer/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save profile');
-    }
+    toast.success('Profile saved successfully!');
+    navigate('/freelancer/dashboard');
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to save profile');
+  }
+};
+
+  // Experience modal state
+  const [showExpModal, setShowExpModal] = useState(false);
+  const [editExp, setEditExp] = useState<Experience | null>(null);
+  // Project modal state
+  const [showProjModal, setShowProjModal] = useState(false);
+  const [editProj, setEditProj] = useState<ProjectItem | null>(null);
+
+  const openEditExperienceModal = (exp: Experience) => {
+    setEditExp(exp);
+    setShowExpModal(true);
   };
+  const openAddExperienceModal = () => {
+    setEditExp(null);
+    setShowExpModal(true);
+  };
+
+  // Project modal logic
+  const openEditProjectModal = (proj: ProjectItem) => {
+    setEditProj(proj);
+    setShowProjModal(true);
+  };
+  const openAddProjectModal = () => {
+    setEditProj(null);
+    setShowProjModal(true);
+  };
+
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -380,61 +417,61 @@ export function ProfileSetup() {
           <p className="text-primary font-medium">Loading existing profile data...</p>
         </div>
       ) : (
-        <div 
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
-            uploading || parsing ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-          }`}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
-          {uploading ? (
-            <div className="space-y-4">
-              <Loader className="w-12 h-12 text-primary mx-auto animate-spin" />
-              <p className="text-primary font-medium">Uploading resume...</p>
+      <div 
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
+          uploading || parsing ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+        }`}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {uploading ? (
+          <div className="space-y-4">
+            <Loader className="w-12 h-12 text-primary mx-auto animate-spin" />
+            <p className="text-primary font-medium">Uploading resume...</p>
+          </div>
+        ) : parsing ? (
+          <div className="space-y-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+              <FileText className="w-6 h-6 text-primary animate-pulse" />
             </div>
-          ) : parsing ? (
-            <div className="space-y-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <FileText className="w-6 h-6 text-primary animate-pulse" />
-              </div>
-              <p className="text-primary font-medium">Parsing resume with AI...</p>
-              <Progress value={60} className="w-48 mx-auto" />
-            </div>
-          ) : resumeUploaded ? (
-            <div className="space-y-4">
-              <CheckCircle className="w-12 h-12 text-green-600 mx-auto" />
+            <p className="text-primary font-medium">Parsing resume with AI...</p>
+            <Progress value={60} className="w-48 mx-auto" />
+          </div>
+        ) : resumeUploaded ? (
+          <div className="space-y-4">
+            <CheckCircle className="w-12 h-12 text-green-600 mx-auto" />
               <p className="text-green-600 font-medium">Resume processed successfully!</p>
-              {showParseResults && (
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-green-800 font-medium">✨ Information extracted and auto-filled!</p>
-                  <p className="text-green-700 text-sm">Review and edit the details in the next steps</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
-              <div>
-                <p className="text-muted-foreground mb-2">Drag and drop your resume here, or</p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Choose File
-                </Button>
+            {showParseResults && (
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-green-800 font-medium">✨ Information extracted and auto-filled!</p>
+                <p className="text-green-700 text-sm">Review and edit the details in the next steps</p>
               </div>
-              <p className="text-sm text-muted-foreground">Supports PDF and Word documents</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
+            <div>
+              <p className="text-muted-foreground mb-2">Drag and drop your resume here, or</p>
+              <Button 
+                variant="outline" 
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Choose File
+              </Button>
             </div>
-          )}
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-        </div>
+            <p className="text-sm text-muted-foreground">Supports PDF and Word documents</p>
+          </div>
+        )}
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+      </div>
       )}
 
       {!resumeUploaded && !loading && (
@@ -621,74 +658,45 @@ export function ProfileSetup() {
         <h2 className="text-2xl font-bold text-foreground mb-2">Work Experience</h2>
         <p className="text-muted-foreground">Add your professional experience</p>
       </div>
-
       <div className="space-y-6">
         {profileData.experience.map((exp, index) => (
-          <div key={exp.Id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="relative">
+          <Card key={exp.Id} className="relative mb-4">
+            <button
+              className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
+              onClick={() => removeExperience(exp.Id)}
+              title="Remove Experience"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
               <button
-                onClick={() => removeExperience(exp.Id)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
+              className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
+              onClick={() => openEditExperienceModal(exp)}
+              title="Edit Experience"
               >
-                <X className="w-4 h-4" />
+              <Pencil className="w-5 h-5" />
               </button>
-              <div className="flex items-center">
-                <Briefcase className="w-5 h-5 text-blue-500 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Experience {index + 1}</h3>
-              </div>
+            <div className="mb-2 text-xl font-bold text-gray-900">{exp.Title}</div>
+            <div className="mb-2 text-lg font-semibold text-gray-700">
+              {exp.Company} | {exp.StartDate} - {exp.EndDate}
             </div>
-            <div className="space-y-4 mt-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Company</Label>
-                  <Input
-                    value={exp.Company}
-                    onChange={(e) => updateExperience(exp.Id, 'Company', e.target.value)}
-                    placeholder="Company name"
-                    className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={exp.Title}
-                    onChange={(e) => updateExperience(exp.Id, 'Title', e.target.value)}
-                    placeholder="Job title"
-                    className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Duration</Label>
-                  <Input
-                    value={exp.Duration}
-                    onChange={(e) => updateExperience(exp.Id, 'Duration', e.target.value)}
-                    placeholder="e.g., 2020-2023"
-                    className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={exp.Description}
-                  onChange={(e) => updateExperience(exp.Id, 'Description', e.target.value)}
-                  rows={3}
-                  placeholder="Describe your responsibilities and achievements..."
-                  className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
-                />
-              </div>
-            </div>
-          </div>
+            <div className="text-gray-700 whitespace-pre-line">{exp.Description}</div>
+          </Card>
         ))}
-
-        <Button variant="outline" onClick={addExperience} className="w-full rounded-lg border-dashed border-2 border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-blue-700 shadow-sm">
+        <Button variant="outline" onClick={openAddExperienceModal} className="w-full rounded-lg border-dashed border-2 border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-blue-700 shadow-sm">
           <Plus className="w-4 h-4 mr-2 text-blue-500" />
           Add Experience
         </Button>
+        <ExperienceModal
+          open={showExpModal}
+          onClose={() => setShowExpModal(false)}
+          onSave={exp => {
+            if (exp.Id) updateExperience(exp.Id, exp);
+            else addExperience(exp);
+            setShowExpModal(false);
+          }}
+          onDelete={id => { removeExperience(id); setShowExpModal(false); }}
+          initialData={editExp}
+        />
       </div>
     </div>
   );
@@ -702,50 +710,41 @@ export function ProfileSetup() {
 
       <div className="space-y-6">
         {profileData.projects.map((p, index) => (
-          <div key={p.Id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="relative">
+          <Card key={p.Id} className="relative mb-4">
               <button
-                onClick={() => removeProject(p.Id)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
+              className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
+              onClick={() => removeProject(p.Id)}
+              title="Remove Project"
               >
-                <X className="w-4 h-4" />
+              <Trash2 className="w-5 h-5" />
               </button>
-              <div className="flex items-center">
-                <Briefcase className="w-5 h-5 text-blue-500 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Project {index + 1}</h3>
-              </div>
-            </div>
-            <div className="space-y-4 mt-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={p.Title}
-                    onChange={(e) => updateProject(p.Id, 'Title', e.target.value)}
-                    placeholder="Project name"
-                    className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={p.Description}
-                  onChange={(e) => updateProject(p.Id, 'Description', e.target.value)}
-                  rows={3}
-                  placeholder="Describe what the project is and the outcome..."
-                  className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
-                />
-              </div>
-            </div>
-          </div>
+                      <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
+              onClick={() => openEditProjectModal(p)}
+              title="Edit Project"
+                      >
+              <Pencil className="w-5 h-5" />
+                      </button>
+            <div className="mb-2 text-xl font-bold text-gray-900">{p.Title}</div>
+            <div className="text-gray-700 whitespace-pre-line">{p.Description}</div>
+          </Card>
         ))}
 
-        <Button variant="outline" onClick={addProject} className="w-full rounded-lg border-dashed border-2 border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-blue-700 shadow-sm">
+        <Button variant="outline" onClick={openAddProjectModal} className="w-full rounded-lg border-dashed border-2 border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-blue-700 shadow-sm">
           <Plus className="w-4 h-4 mr-2 text-blue-500" />
           Add Project
         </Button>
+        <ProjectModal
+          open={showProjModal}
+          onClose={() => setShowProjModal(false)}
+          onSave={proj => {
+            if (proj.Id) updateProject(proj.Id, proj);
+            else addProject(proj);
+            setShowProjModal(false);
+          }}
+          onDelete={id => { removeProject(id); setShowProjModal(false); }}
+          initialData={editProj}
+        />
       </div>
     </div>
   );

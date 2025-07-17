@@ -287,3 +287,27 @@ export const saveProfileSetupData = async (data: {
 }): Promise<void> => {
   await api.post('/freelancer/profile-setup', data);
 }; 
+
+export const updateProfileSetupData = async (data: {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  hourlyRate: number;
+  availability: string;
+  workingHours: string;
+  profileData: ProfileSetupData;
+}): Promise<void> => {
+  await api.put('/freelancer/profile-setup', data);
+}; 
+
+export const getCurrentUserFreelancerProfile = async (userId: number): Promise<FreelancerProfile> => {
+  try {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+    const response = await api.get(`/freelancer/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch freelancer profile');
+  }
+};

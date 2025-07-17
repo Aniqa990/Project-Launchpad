@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Avatar } from '../../components/ui/avatar';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
 import { 
   Plus, 
   FolderOpen, 
@@ -34,7 +34,7 @@ export function ClientDashboard() {
     }
 
     const activeProjects = projects.filter(project => 
-      project.Status === 'Active' || project.Status === 'In Progress' || !project.Status
+      project.Status === 'active' || project.Status === 'in progress' || !project.Status
     ).length;
 
     const totalFreelancers = projects.reduce((sum, project) => 
@@ -47,7 +47,7 @@ export function ClientDashboard() {
 
     // Calculate success rate based on completed projects
     const completedProjects = projects.filter(project => 
-      project.Status === 'Completed' || project.Status === 'Finished'
+      project.Status === 'completed'
     ).length;
     const successRate = projects.length > 0 ? Math.round((completedProjects / projects.length) * 100) : 0;
 
@@ -65,6 +65,7 @@ export function ClientDashboard() {
       value: statistics.activeProjects.toString(),
       icon: FolderOpen,
       color: 'bg-blue-500',
+      backgroundColor: 'bg-blue-50',
       change: `${projects.length} total projects`
     },
     {
@@ -72,6 +73,7 @@ export function ClientDashboard() {
       value: statistics.totalFreelancers.toString(),
       icon: Users,
       color: 'bg-green-500',
+      backgroundColor: 'bg-green-50',
       change: `Across ${projects.length} projects`
     },
     {
@@ -79,6 +81,7 @@ export function ClientDashboard() {
       value: `$${statistics.totalBudget.toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-purple-500',
+      backgroundColor: 'bg-purple-50',
       change: `Average: $${projects.length > 0 ? Math.round(statistics.totalBudget / projects.length).toLocaleString() : 0}`
     },
     {
@@ -86,6 +89,7 @@ export function ClientDashboard() {
       value: `${statistics.successRate}%`,
       icon: TrendingUp,
       color: 'bg-orange-500',
+      backgroundColor: 'bg-orange-50',
       change: `${projects.length} total projects`
     }
   ];
@@ -126,22 +130,25 @@ export function ClientDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <Card key={index} hover>
-            <div className="flex items-center">
-              <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                <stat.icon className="w-6 h-6 text-white" />
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <div key={index} className={`${stat.backgroundColor} rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow cursor-pointer`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-xs font-medium">{stat.label}</p>
+                  <p className="text-xl font-bold text-gray-900 mt-0.5">{stat.value}</p>
+                </div>
+                <div className={`${stat.color} p-2 rounded-lg`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
               </div>
-              <div className="ml-4 flex-1">
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+              <div className="mt-4">
+                <p className="text-sm text-gray-500">{stat.change}</p>
               </div>
             </div>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">{stat.change}</p>
-            </div>
-          </Card>
-        ))}
+          );
+        })}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -173,21 +180,17 @@ export function ClientDashboard() {
                   <div key={project.Id || idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{project.ProjectTitle}</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">{project.Title}</h3>
                         <p className="text-gray-600 text-sm line-clamp-2 mb-1">{project.Description}</p>
                         <div className="flex flex-wrap gap-2 mb-1">
                           <Badge variant="info">{project.PaymentType}</Badge>
-                          <Badge variant="info">{project.CategoryOrDomain}</Badge>
+                          <Badge variant="info">{project.Category}</Badge>
                           <Badge variant="info">Budget: ${project.Budget}</Badge>
                           <Badge variant="info">Freelancers: {project.NumberOfFreelancers}</Badge>
                         </div>
-                        <div className="flex flex-wrap gap-2 mb-1">
-                          <Badge variant="info">Skills: {project.RequiredSkills}</Badge>
-                          <Badge variant="info">Milestones: {project.Milestones}</Badge>
-                        </div>
                       </div>
-                      <Badge variant={project.status === 'active' ? 'success' : 'default'}>
-                        {project.status || 'active'}
+                      <Badge variant={project.Status === 'active' ? 'success' : 'default'}>
+                        {project.Status || 'active'}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-500">
@@ -247,34 +250,7 @@ export function ClientDashboard() {
           <Card>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
             <div className="space-y-4">
-              {[
-                {
-                  action: 'Alex Chen submitted deliverables for E-commerce Platform',
-                  time: '2 hours ago',
-                  avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'
-                },
-                {
-                  action: 'Maria Garcia completed Design System milestone',
-                  time: '1 day ago',
-                  avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400'
-                },
-                {
-                  action: 'New freelancer applied to Mobile App project',
-                  time: '2 days ago',
-                  avatar: 'https://images.pexels.com/photos/2381069/pexels-photo-2381069.jpeg?auto=compress&cs=tinysrgb&w=400'
-                }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <Avatar src={activity.avatar} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">{activity.action}</p>
-                    <div className="flex items-center mt-1 text-xs text-gray-500">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {activity.time}
-                    </div>
-                  </div>
-                </div>
-              ))}
+              {/* logic later */}
             </div>
           </Card>
         </div>

@@ -30,16 +30,23 @@ export interface SignupRequest {
 }
 
 export interface FreelancerProfile {
-  id: number;
-  user: User; // full user object
-  summary: string;
-  hourlyRate: number;
-  workingHours: string;
-  availability: string;
-  rating?: number;
-  skills: string;
-  experience: string;
-  projects: string;
+  Id: number;
+  FirstName: string;
+  LastName: string;
+  Email: string;
+  PhoneNo: string;
+  Gender?: string;
+  ProfilePicture?: string;
+  Role: string;
+  CreatedAt: string;
+  Summary: string;
+  HourlyRate: number;
+  WorkingHours: string;
+  Availability: string;
+  AvgRating: number;
+  Skills: string;
+  Experience: string;
+  Projects: string;
 }
 
 export interface Skill {
@@ -59,7 +66,8 @@ export interface Experience {
   Id: number;
   Title: string;
   Company: string;
-  Duration: string;
+  StartDate: string;
+  EndDate: string;
   Description: string;
   Source: 'parsed' | 'manual';
 }
@@ -81,7 +89,8 @@ export interface ProfileSetupData {
     Id: number;
     Title: string;
     Company: string;
-    Duration: string;
+    StartDate: string;
+    EndDate: string;
     Description: string;
     Source: string;
   }[];
@@ -142,6 +151,10 @@ export interface Project {
   budget: number;
   deadline: string;
   clientId: string;
+  category: string;
+  paymentType: string;
+  numberOfFreelancers: number;  
+  attachedDocumentPath: string;
   client: User;
   skills: string[];
   team: User[];
