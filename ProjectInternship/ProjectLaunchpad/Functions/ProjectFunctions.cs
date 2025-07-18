@@ -253,9 +253,11 @@ public async Task<HttpResponseData> GetProjectsByClient(
             await _unitOfWork.SaveAsync();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
+            Console.WriteLine();
             await response.WriteAsJsonAsync(updatedProject);
             return response;
         }
+
 
         [Function("DeleteProjectPosting")]
         public async Task<HttpResponseData> DeleteProjectPosting(
