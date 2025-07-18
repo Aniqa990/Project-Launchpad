@@ -97,5 +97,13 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 await _db.SaveChangesAsync();
             }
         }
+        public async Task<List<Project>> GetProjectsByClientIdAsync(int clientId)
+        {
+            return await _db.projects
+                .Where(p => p.ClientId == clientId)
+                .ToListAsync();
+        }
+
+
     }
 }

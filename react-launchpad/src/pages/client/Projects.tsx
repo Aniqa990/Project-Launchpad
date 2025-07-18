@@ -20,12 +20,14 @@ import {
   Star,
   X
 } from 'lucide-react';
-import { getProjects, updateProject } from '../../apiendpoints';
+import { getProjects, updateProject, getClientProjects } from '../../apiendpoints';
+import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { EditProjectForm } from '../../components/ui/EditProjectForm';
 
 export function ClientProjects() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'draft'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -44,8 +46,22 @@ export function ClientProjects() {
       setLoading(true);
       setError('');
       try {
-        const data = await getProjects();
-        setProjects(data);
+        let data = [];
+        if (user && user.id) {
+          data = await getClientProjects(user.id);
+        } else {
+          setProjects([]);
+          setLoading(false);
+          return;
+        }
+        // Map backend fields to frontend expected fields (only transform if needed)
+        const mapped = data.map((p: any) => ({
+          ...p,
+          RequiredSkills: Array.isArray(p.RequiredSkills) ? p.RequiredSkills.join(', ') : p.RequiredSkills,
+          Milestones: p.Milestones || [],
+          status: (p.Status || '').toLowerCase(),
+        }));
+        setProjects(mapped);
       } catch (err) {
         setError('Failed to load projects.');
       } finally {
@@ -53,7 +69,7 @@ export function ClientProjects() {
       }
     };
     fetchProjects();
-  }, []);
+  }, [user]);
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = (project.ProjectTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -110,8 +126,18 @@ export function ClientProjects() {
   };
 
   const handleUpdateProject = async (updatedData: any) => {
+    if (!user?.id) {
+      toast.error('User not found. Please log in again.');
+      return;
+    }
     try {
-      await updateProject(editingProject.Id, updatedData);
+      await updateProject(editingProject.Id, {
+        ...updatedData,
+        ClientId: user.id, // Ensure the correct client id is sent
+        Milestones: (Array.isArray(updatedData.Milestones) && updatedData.Milestones.length > 0 && typeof updatedData.Milestones[0] === 'object')
+          ? updatedData.Milestones
+          : [],
+      });
       toast.success('Project updated successfully!');
       handleCloseEditModal();
       // Refresh projects
@@ -131,101 +157,108 @@ export function ClientProjects() {
     return Math.floor(Math.random() * 100);
   };
 
-  const ProjectCard = ({ project }: { project: any }) => (
-    <Card hover className="h-full">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.ProjectTitle}</h3>
-          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{project.Description}</p>
-        </div>
-        <div className="flex items-center space-x-2 ml-4">
-          <Badge variant={getStatusColor(project.status) as any}>
-            {project.status}
-          </Badge>
-          <button className="text-gray-400 hover:text-gray-600">
-            <MoreVertical className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center">
-            <Calendar className="w-4 h-4 mr-1" />
-            Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : 'N/A'}
+  const ProjectCard = ({ project }: { project: any }) => {
+    const statusColor =
+      project.status === 'active' ? 'border-blue-500' :
+      project.status === 'completed' ? 'border-green-500' :
+      project.status === 'draft' ? 'border-yellow-500' :
+      'border-gray-300';
+    return (
+      <Card hover className={`h-full border-l-4 ${statusColor} bg-white rounded-xl shadow-sm hover:shadow-lg transition-transform hover:scale-[1.02] group p-5`}>
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">{project.ProjectTitle}</h3>
+            <p className="text-gray-600 text-sm line-clamp-2 mb-2">{project.Description}</p>
+            <div className="flex flex-wrap gap-2 mb-1">
+              <Badge variant="info">{project.PaymentType}</Badge>
+              <Badge variant="info">{project.CategoryOrDomain}</Badge>
+              <Badge variant="info">Budget: ${project.Budget}</Badge>
+              <Badge variant="info">Freelancers: {project.NumberOfFreelancers}</Badge>
+            </div>
           </div>
-          <div className="flex items-center">
-            <DollarSign className="w-4 h-4 mr-1" />
-            ${project.Budget?.toLocaleString()}
+          <div className="flex items-center space-x-2 ml-4">
+            <Badge variant={getStatusColor(project.status) as any}>
+              {project.status}
+            </Badge>
+            <button className="text-gray-400 hover:text-gray-600">
+              <MoreVertical className="w-4 h-4" />
+            </button>
           </div>
         </div>
-
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center">
-            <Users className="w-4 h-4 mr-1" />
-            {project.NumberOfFreelancers || 1} team members
+        <div className="space-y-3 mb-4">
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center">
+              <Calendar className="w-4 h-4 mr-1" />
+              Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : 'N/A'}
+            </div>
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 mr-1" />
+              ${project.Budget?.toLocaleString()}
+            </div>
           </div>
-          <div className="text-blue-600 font-medium">{calculateProgress(project)}%</div>
-        </div>
-
-        <div className="bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${calculateProgress(project)}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        {Array.isArray(project.team) && (
-          <div className="flex -space-x-2">
-            {project.team.slice(0, 3).map((member: any) => (
-              <Avatar 
-                key={member.id} 
-                src={member.avatar} 
-                alt={member.name} 
-                size="sm"
-                className="border-2 border-white"
-              />
-            ))}
-            {project.team.length > 3 && (
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
-                +{project.team.length - 3}
-              </div>
-            )}
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center">
+              <Users className="w-4 h-4 mr-1" />
+              {project.NumberOfFreelancers || 1} team members
+            </div>
+            <div className="text-blue-600 font-semibold">{calculateProgress(project)}%</div>
           </div>
-        )}
-        <div className="flex space-x-2">
-          <Button 
-            size="sm" 
-            variant="outline"
-            icon={Eye}
-            onClick={() => handleViewProject(project)}
-          >
-            View
-          </Button>
-          {project.status === 'completed' && (
+          {/* Progress bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: `${calculateProgress(project)}%` }} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          {Array.isArray(project.team) && (
+            <div className="flex -space-x-2">
+              {project.team.slice(0, 3).map((member: any) => (
+                <Avatar 
+                  key={member.id} 
+                  src={member.avatar} 
+                  alt={member.name} 
+                  size="sm"
+                  className="border-2 border-white"
+                />
+              ))}
+              {project.team.length > 3 && (
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
+                  +{project.team.length - 3}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex space-x-2">
             <Button 
               size="sm" 
               variant="outline"
-              icon={Star}
-              onClick={() => handleLeaveReview(project)}
+              icon={Eye}
+              onClick={() => handleViewProject(project)}
             >
-              Review
+              View
             </Button>
-          )}
-          <Button 
-            size="sm" 
-            variant="outline"
-            icon={Edit}
-            onClick={() => handleEditProject(project)}
-          >
-            Edit
-          </Button>
+            {project.status === 'completed' && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                icon={Star}
+                onClick={() => handleLeaveReview(project)}
+              >
+                Review
+              </Button>
+            )}
+            <Button 
+              size="sm" 
+              variant="outline"
+              icon={Edit}
+              onClick={() => handleEditProject(project)}
+            >
+              Edit
+            </Button>
+          </div>
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

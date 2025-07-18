@@ -14,10 +14,12 @@ import {
   Clock,
   ArrowRight
 } from 'lucide-react';
-import { getProjects } from '../../apiendpoints';
+import { getProjects, getClientProjects } from '../../apiendpoints';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function ClientDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -99,8 +101,14 @@ export function ClientDashboard() {
       setLoading(true);
       setError('');
       try {
-        const data = await getProjects();
-        console.log('Fetched projects:', data);
+        let data = [];
+        if (user && user.id) {
+          data = await getClientProjects(user.id);
+        } else {
+          setProjects([]);
+          setLoading(false);
+          return;
+        }
         setProjects(data);
       } catch (err) {
         setError('Failed to load projects.');
@@ -109,7 +117,7 @@ export function ClientDashboard() {
       }
     };
     fetchProjects();
-  }, []);
+  }, [user]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -167,7 +175,6 @@ export function ClientDashboard() {
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
-            
             <div className="space-y-4">
               {loading ? (
                 <div className="text-gray-500">Loading projects...</div>

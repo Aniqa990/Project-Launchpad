@@ -21,6 +21,7 @@ import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
+import Meetings from './pages/client/Meetings';
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
   const { isAuthenticated, user, loading } = useAuth();
@@ -89,6 +90,7 @@ function AppRoutes() {
         <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<Settings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
+        <Route path="meetings" element={<Meetings />} />
       </Route>
       
       <Route path="/freelancer/*" element={

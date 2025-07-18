@@ -175,6 +175,19 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(project);
             return response;
         }
+[Function("GetProjectsByClient")]
+public async Task<HttpResponseData> GetProjectsByClient(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "clients/{clientId}/projects")] HttpRequestData req,
+    int clientId)
+{
+    var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientIdAsync(clientId);
+
+    var response = req.CreateResponse(HttpStatusCode.OK);
+    await response.WriteAsJsonAsync(projects);
+    return response;
+}
+
+
 
         [Function("GetProjectsByFreelancer")]
         public async Task<HttpResponseData> GetProjectsByFreelancer(

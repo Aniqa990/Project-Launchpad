@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, 
@@ -16,12 +16,14 @@ import {
   DollarSign,
   Star,
   Settings,
-  Folder
+  Folder,
+  Video
 } from 'lucide-react';
 
 export function Sidebar() {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -37,6 +39,7 @@ export function Sidebar() {
     { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
+    { icon: Video, label: 'Meetings', path: '/client/meetings' },
   ];
 
   const freelancerMenuItems = [

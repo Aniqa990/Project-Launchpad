@@ -207,6 +207,12 @@ export const getProjects = async () => {
   return res.data;
 };
 
+// Fetch projects for a specific client
+export const getClientProjects = async (clientId: number) => {
+  const res = await api.get(`/clients/${clientId}/projects`);
+  return res.data;
+};
+
 export const createProject = async (payload: any) => {
   const res = await api.post('/projects', payload);
   return res.data;
