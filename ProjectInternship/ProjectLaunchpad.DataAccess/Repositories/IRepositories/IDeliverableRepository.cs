@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
 {
-    public interface IDeliverableRepository
+    public interface IDeliverablesRepository
     {
         Task<IEnumerable<Deliverables>> GetAllAsync();
-        Task<Deliverables> GetByIdAsync(int id);
+        Task<Deliverables?> GetByIdAsync(int id);
+        Task<IEnumerable<Deliverables>> GetByMilestoneIdAsync(int milestoneId);
         Task AddAsync(Deliverables deliverable);
-        void Update(Deliverables deliverable);
-        void Delete(Deliverables deliverable);
+        Task UpdateAsync(Deliverables deliverable);
+        Task DeleteAsync(int id);
     }
+
 }

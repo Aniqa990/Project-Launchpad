@@ -104,8 +104,8 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
-        [Function("GetProjectsByFreelancer")]
-        public async Task<HttpResponseData> GetProjectsByFreelancer(
+        [Function("GetProjectsByFreelancerv2")]
+        public async Task<HttpResponseData> GetProjectsByFreelancerv2(
     [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancers/{freelancerId}/projects")] HttpRequestData req,
     int freelancerId)
         {

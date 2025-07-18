@@ -1,4 +1,5 @@
 ﻿using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs.TaskDTO;
 using ProjectLaunchpad.Models.Models.Enums;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,12 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task AddAsync(Logs log);
 
         // Update an existing log (e.g., when timer is paused or stopped)
+
+        // Get all logs by FreelancerId
+        Task<IEnumerable<Logs>> GetLogsByFreelancerIdAsync(int freelancerId);
+
+        Task<IEnumerable<Logs>> GetTasksByProjectIdAsync(int projectId);
+
 
 
 

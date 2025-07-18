@@ -1,8 +1,10 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.LogDTO;
 using ProjectLaunchpad.Models.Models.Enums;
+using ProjectLaunchpad.Repositories.Repositories;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
 using System;
 using System.Collections.Generic;
@@ -75,7 +77,61 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
-        
+        [Function("GetLogsByProjectId")]
+        public async Task<HttpResponseData> GetLogsByProjectId(
+     [HttpTrigger(AuthorizationLevel.Function, "get", Route = "projects/{projectId}/logs")] HttpRequestData req,
+     int projectId)
+        {
+            var logs = await UnitOfWork.logRepository.GetTasksByProjectIdAsync(projectId);
+
+            var logDtos = logs.Select(l => new LogWithDetailsDto
+            {
+                Id = l.Id,
+                FreelancerId = l.FreelancerId,
+                TaskId = l.TaskId,
+                TaskName = l.Task?.Title,
+                ProjectId = l.ProjectId,
+                ProjectName = l.Project?.ProjectTitle,
+                StartTime = l.StartTime,
+                EndTime = l.EndTime
+            });
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(logDtos);
+            return response;
+        }
+
+
+
+        [Function("GetLogsByFreelancerId")]
+        public async Task<HttpResponseData> GetLogsByFreelancerId(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "logs/freelancer/{freelancerId:int}")] HttpRequestData req,
+    int freelancerId)
+        {
+            var logs = await UnitOfWork.logRepository.GetLogsByFreelancerIdAsync(freelancerId);
+
+            var logDtos = logs.Select(l => new LogWithDetailsDto
+            {
+                Id = l.Id,
+                FreelancerId = l.FreelancerId,
+                TaskId = l.TaskId,
+                TaskName = l.Task?.Title,
+                ProjectId = l.ProjectId,
+                ProjectName = l.Project?.ProjectTitle,
+                StartTime = l.StartTime,
+                EndTime = l.EndTime
+            });
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(logDtos);
+            return response;
+
+        }
+
+
+
+
+
+
 
 
     }

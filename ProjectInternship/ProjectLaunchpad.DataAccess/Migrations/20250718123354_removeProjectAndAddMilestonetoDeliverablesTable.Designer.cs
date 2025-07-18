@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProjectLaunchpad.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using ProjectLaunchpad.DataAccess.Data;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250718123354_removeProjectAndAddMilestonetoDeliverablesTable")]
+    partial class removeProjectAndAddMilestonetoDeliverablesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -648,7 +651,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Deliverables", b =>
                 {
-                    b.HasOne("ProjectLaunchpad.Models.Models.Milestone", "Milestone")
+                    b.HasOne("ProjectLaunchpad.Models.Models.Milestone", "milestone")
                         .WithMany("Deliverables")
                         .HasForeignKey("MilestoneId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -658,7 +661,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .WithMany("Deliverables")
                         .HasForeignKey("ProjectId");
 
-                    b.Navigation("Milestone");
+                    b.Navigation("milestone");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Experience", b =>

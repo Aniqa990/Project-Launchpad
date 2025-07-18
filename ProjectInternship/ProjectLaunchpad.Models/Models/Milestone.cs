@@ -41,6 +41,9 @@ namespace ProjectLaunchpad.Models.Models
         [ForeignKey("ProjectId")]
         public Project project { get; set; }
 
+        public ICollection<Deliverables> Deliverables { get; set; } = new List<Deliverables>();
+
+
 
     }
 }

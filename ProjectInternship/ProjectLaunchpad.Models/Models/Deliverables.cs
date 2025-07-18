@@ -17,15 +17,14 @@ namespace ProjectLaunchpad.Models.Models
         public string uploadFiles { get; set; }
 
         [Required]
-        public int projectId { get; set; }
-
-        [ForeignKey("projectId")]
-        public Project project { get; set; }
-
-        [Required]
         public string comment { get; set; }
 
         [Required]
         public string Status  { get; set; }
+
+        public int MilestoneId { get; set; }
+
+        [ForeignKey("MilestoneId")]
+        public Milestone? Milestone { get; set; }
     }
 }

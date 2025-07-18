@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProjectLaunchpad.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using ProjectLaunchpad.DataAccess.Data;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250718091459_addProjectRequestTableToDb")]
+    partial class addProjectRequestTableToDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,12 +84,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("MilestoneId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ProjectId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -95,15 +92,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("projectId")
+                        .HasColumnType("int");
+
                     b.Property<string>("uploadFiles")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MilestoneId");
-
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("projectId");
 
                     b.ToTable("deliverables");
                 });
@@ -189,9 +187,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<int>("FreelancerId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
@@ -201,8 +196,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FreelancerId");
-
-                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TaskId");
 
@@ -648,17 +641,13 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Deliverables", b =>
                 {
-                    b.HasOne("ProjectLaunchpad.Models.Models.Milestone", "Milestone")
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "project")
                         .WithMany("Deliverables")
-                        .HasForeignKey("MilestoneId")
+                        .HasForeignKey("projectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ProjectLaunchpad.Models.Models.Project", null)
-                        .WithMany("Deliverables")
-                        .HasForeignKey("ProjectId");
-
-                    b.Navigation("Milestone");
+                    b.Navigation("project");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Experience", b =>
@@ -699,12 +688,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("ProjectLaunchpad.Models.Models.TaskItem", "Task")
                         .WithMany()
                         .HasForeignKey("TaskId")
@@ -712,8 +695,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("Freelancer");
-
-                    b.Navigation("Project");
 
                     b.Navigation("Task");
                 });
@@ -892,11 +873,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.Navigation("Projects");
-                });
-
-            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Milestone", b =>
-                {
-                    b.Navigation("Deliverables");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Project", b =>

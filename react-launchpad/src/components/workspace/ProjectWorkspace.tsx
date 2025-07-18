@@ -21,10 +21,10 @@ import {
 } from 'lucide-react';
 import { mockProjects, mockTasks, mockTimeEntries, mockMessages } from '../../utils/mockData';
 import { useAuth } from '../../contexts/AuthContext';
-import { getMilestones, updateMilestone, getDeliverables, createDeliverable, updateDeliverable, deleteDeliverable } from '../../apiendpoints';
+import { getDeliverables, createDeliverable, updateDeliverable, deleteDeliverable } from '../../apiendpoints';
 import { Modal } from '../ui/Modal';
 import { Deliverable } from '../../types';
-import HourlyLogViewer from './HourlyLogViewer';
+import { HourlyLogViewer } from "../../pages/freelancer/HourlyLogViewer";
 import { getTimesheets, createTimesheet, approveTimesheet, rejectTimesheet } from '../../apiendpoints';
 
 interface TimeSheetEntry {
@@ -53,11 +53,6 @@ export function ProjectWorkspace() {
   const { projectId } = useParams();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [milestones, setMilestones] = useState<any[]>([]);
-  const [milestonesLoading, setMilestonesLoading] = useState(true);
-  const [selectedMilestone, setSelectedMilestone] = useState<any | null>(null);
-  const [milestoneFormLoading, setMilestoneFormLoading] = useState(false);
-  const [milestoneError, setMilestoneError] = useState<string | null>(null);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [deliverablesLoading, setDeliverablesLoading] = useState(true);
   const [deliverableModalOpen, setDeliverableModalOpen] = useState(false);
@@ -71,21 +66,6 @@ export function ProjectWorkspace() {
   const projectTasks = mockTasks.filter(t => t.projectId === projectId);
   const projectTimeEntries = mockTimeEntries.filter(t => t.projectId === projectId);
   const projectMessages = mockMessages.filter(m => m.projectId === projectId);
-
-  useEffect(() => {
-    async function fetchMilestones() {
-      setMilestonesLoading(true);
-      try {
-        const data = await getMilestones();
-        setMilestones(data);
-      } catch (e) {
-        // handle error
-      } finally {
-        setMilestonesLoading(false);
-      }
-    }
-    fetchMilestones();
-  }, []);
 
   useEffect(() => {
     async function fetchDeliverables() {

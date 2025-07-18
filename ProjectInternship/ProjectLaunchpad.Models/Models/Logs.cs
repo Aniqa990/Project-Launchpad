@@ -24,6 +24,12 @@ namespace ProjectLaunchpad.Models.Models
         [ForeignKey("TaskId")]
         public TaskItem? Task { get; set; }
 
+
+        public int ProjectId { get; set; }
+
+        [ForeignKey("ProjectId")]
+        public Project? Project { get; set; }
+
         public DateTime StartTime { get; set; }
 
         public DateTime EndTime { get; set; }

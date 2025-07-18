@@ -15,39 +15,36 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.Functions
 {
-    public class DeliverableFunctions
+    public class DeliverablesFunctions
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly TokenAuthorization _auth;
 
-        public DeliverableFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
+        public DeliverablesFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
         {
             _unitOfWork = unitOfWork;
             _auth = auth;
         }
 
         [Function("CreateDeliverable")]
-        public async Task<HttpResponseData> CreateDeliverable(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "deliverables")] HttpRequestData req)
+        public async Task<HttpResponseData> CreateDeliverableAsync(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "deliverables")] HttpRequestData req)
         {
             (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+            if (!isAuthorized) return unauthorizedResponse!;
 
             var dto = await req.ReadFromJsonAsync<CreateDeliverableDto>();
-            if (dto == null)
-                return req.CreateResponse(HttpStatusCode.BadRequest);
+            if (dto == null) return req.CreateResponse(HttpStatusCode.BadRequest);
 
             var deliverable = new Deliverables
             {
-                uploadFiles = dto.uploadFiles!,
-                projectId = dto.projectId,
-                comment = dto.comment!,
-                Status = dto.status ?? "Pending"
+                uploadFiles = dto.UploadFiles,
+                MilestoneId = dto.MilestoneId,
+                comment = dto.Comment,
+                Status = dto.Status
             };
 
-            await _unitOfWork.deliverableRepository.AddAsync(deliverable);
+            await _unitOfWork.DeliverablesRepository.AddAsync(deliverable);
             await _unitOfWork.SaveAsync();
 
             var response = req.CreateResponse(HttpStatusCode.Created);
@@ -55,84 +52,19 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
-        [Function("GetAllDeliverables")]
-        public async Task<HttpResponseData> GetAllDeliverables(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "deliverables")] HttpRequestData req)
+        [Function("GetDeliverablesByMilestoneId")]
+        public async Task<HttpResponseData> GetDeliverablesByMilestoneIdAsync(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "deliverables/milestone/{milestoneId:int}")] HttpRequestData req, int milestoneId)
         {
-            var result = await _unitOfWork.deliverableRepository.GetAllAsync();
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(result);
-            return response;
-        }
+            var deliverables = await _unitOfWork.DeliverablesRepository.GetByMilestoneIdAsync(milestoneId);
 
-        [Function("GetDeliverableById")]
-        public async Task<HttpResponseData> GetDeliverableById(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "deliverables/{id:int}")] HttpRequestData req, int id)
-        {
-            var deliverable = await _unitOfWork.deliverableRepository.GetByIdAsync(id);
-            if (deliverable == null)
+            if (!deliverables.Any())
                 return req.CreateResponse(HttpStatusCode.NotFound);
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(deliverable);
+            await response.WriteAsJsonAsync(deliverables);
             return response;
-        }
-
-        [Function("UpdateDeliverable")]
-        public async Task<HttpResponseData> UpdateDeliverable(
-            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "deliverables/{id:int}")] HttpRequestData req, int id)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
-
-            var existing = await _unitOfWork.deliverableRepository.GetByIdAsync(id);
-            if (existing == null)
-                return req.CreateResponse(HttpStatusCode.NotFound);
-
-            var dto = await req.ReadFromJsonAsync<UpdateDeliverableDto>();
-            if (dto == null)
-                return req.CreateResponse(HttpStatusCode.BadRequest);
-
-            if (!string.IsNullOrWhiteSpace(dto.uploadFiles))
-                existing.uploadFiles = dto.uploadFiles;
-
-            if (!string.IsNullOrWhiteSpace(dto.comment))
-                existing.comment = dto.comment;
-
-            if (dto.projectId.HasValue)
-                existing.projectId = dto.projectId.Value;
-
-            if (!string.IsNullOrWhiteSpace(dto.status))
-                existing.Status = dto.status;
-
-
-            _unitOfWork.deliverableRepository.Update(existing);
-            await _unitOfWork.SaveAsync();
-
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(existing);
-            return response;
-        }
-
-        [Function("DeleteDeliverable")]
-        public async Task<HttpResponseData> DeleteDeliverable(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "deliverables/{id:int}")] HttpRequestData req, int id)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
-
-            var deliverable = await _unitOfWork.deliverableRepository.GetByIdAsync(id);
-            if (deliverable == null)
-                return req.CreateResponse(HttpStatusCode.NotFound);
-
-            _unitOfWork.deliverableRepository.Delete(deliverable);
-            await _unitOfWork.SaveAsync();
-
-            return req.CreateResponse(HttpStatusCode.NoContent);
         }
     }
+
 }

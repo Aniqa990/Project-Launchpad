@@ -22,7 +22,8 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
 
         IlogRepository logRepository { get; }
 
-        IDeliverableRepository deliverableRepository { get; }
+        IDeliverablesRepository DeliverablesRepository { get; }
+
 
         IPaymentRepository PaymentRepository { get; }
 

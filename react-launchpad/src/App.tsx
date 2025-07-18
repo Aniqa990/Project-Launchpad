@@ -21,6 +21,8 @@ import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
+import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
+import { Milestones } from './pages/freelancer/Milestones';
 
 class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
   constructor(props: any) {
@@ -128,6 +130,8 @@ function AppRoutes() {
         <Route path="kanban" element={<KanbanBoard />} />
         <Route path="feedback" element={<Feedback />} />
         <Route path="settings" element={<Settings />} />  
+        <Route path="hourly-logs" element={<HourlyLogViewer />} />
+        <Route path="milestones" element={<Milestones />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={

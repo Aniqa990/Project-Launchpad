@@ -84,10 +84,11 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Deliverables>()
-                .HasOne(p => p.project)
-                .WithMany(c => c.Deliverables)
-                .HasForeignKey(p => p.projectId)
-                .OnDelete(DeleteBehavior.Cascade);
+     .HasOne(d => d.Milestone)
+     .WithMany(m => m.Deliverables)
+     .HasForeignKey(d => d.MilestoneId)
+     .OnDelete(DeleteBehavior.Cascade);
+
 
             // Prevent multiple cascade paths for TaskItem → User
             modelBuilder.Entity<TaskItem>()
