@@ -37,33 +37,7 @@ namespace ProjectLaunchpad.Functions
             var dto = await req.ReadFromJsonAsync<UserRegisterDTO>();
             var (token, user) = await _auth.RegisterAsync(dto);
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new
-            {
-                token = token,
-                user = new
-                {
-                    id = user.Id,
-                    email = user.Email,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    phone = user.PhoneNo,
-                    avatar = user.ProfilePicture,
-                    gender = user.Gender,
-                    role = user.Role
-                }
-            });
-            return response;
-        }
-
-        [Function("Login")]
-        public async Task<HttpResponseData> Login(
-     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestData req)
-        {
-            var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
-            var (token, user) = await _auth.LoginAsync(dto); // Now getting both
-
-            if (user.Role == "Client")
+            if (user.Role == "client")
             {
                 _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
                 await _unitOfWork.SaveAsync();
@@ -80,7 +54,34 @@ namespace ProjectLaunchpad.Functions
                     firstName = user.FirstName,
                     lastName = user.LastName,
                     phone = user.PhoneNo,
-                    avatar = user.ProfilePicture,
+                    profilePicture = user.ProfilePicture,
+                    gender = user.Gender,
+                    role = user.Role
+                }
+            });
+            return response;
+        }
+
+        [Function("Login")]
+        public async Task<HttpResponseData> Login(
+     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestData req)
+        {
+            var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
+            var (token, user) = await _auth.LoginAsync(dto); // Now getting both
+
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(new
+            {
+                token = token,
+                user = new
+                {
+                    id = user.Id,
+                    email = user.Email,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    phone = user.PhoneNo,
+                    profilePicture = user.ProfilePicture,
                     gender = user.Gender,
                     role = user.Role
                 }
@@ -149,7 +150,7 @@ namespace ProjectLaunchpad.Functions
                         firstName = user.FirstName,
                         lastName = user.LastName,
                         phone = user.PhoneNo,
-                        avatar = user.ProfilePicture,
+                        profilePicture = user.ProfilePicture,
                         gender = user.Gender,
                         role = user.Role
                     }

@@ -63,6 +63,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.ToTable("freelancerProfiles");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("adminProfiles");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -118,7 +128,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Duration")
+                    b.Property<string>("EndDate")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -126,6 +136,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StartDate")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -607,6 +621,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
                         .WithOne("FreelancerProfile")
                         .HasForeignKey("ProjectLaunchpad.Models.FreelancerProfile", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -51,8 +51,11 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 existingUser.LastName = dto.LastName ?? existingUser.LastName;
                 existingUser.PhoneNo = dto.PhoneNo ?? existingUser.PhoneNo;
                 existingUser.ProfilePicture = dto.ProfilePicture ?? existingUser.ProfilePicture;
+                existingUser.Password = dto.Password ?? existingUser.Password;
+
 
                 _db.users.Update(existingUser);
+                await _db.SaveChangesAsync();
             }
             else
             {

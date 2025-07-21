@@ -39,5 +39,18 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         {
             await _db.users.AddAsync(user);
         }
+        public async Task UpdateUserAsync(User user)
+        {
+            _db.users.Update(user);
+        }
+
+        public async Task DeleteUserAsync(int userId)
+        {
+            var user = await GetUserByIdAsync(userId);
+            if (user != null)
+            {
+                _db.users.Remove(user);
+            }
+        }
     }
 }

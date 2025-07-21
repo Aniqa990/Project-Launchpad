@@ -28,6 +28,7 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<ProjectAssignment> projectFreelancers { get; set; }
         public DbSet<ProjectRequest> projectRequests { get; set; }
         public DbSet<ClientProfile> clientProfiles { get; set; }
+        public DbSet<AdminProfile> adminProfiles { get; set; }
         public DbSet<Milestone> milestones { get; set; }
         public DbSet<Deliverables> deliverables { get; set; }
         public DbSet<Payment> payments { get; set; }
