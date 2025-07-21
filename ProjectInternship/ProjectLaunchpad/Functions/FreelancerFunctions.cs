@@ -140,6 +140,8 @@ namespace ProjectLaunchpad.Functions
                 return errorResponse;
             }
 
+
+
             try
             {
                 var requestData = await req.ReadFromJsonAsync<ProfileSetupRequestDTO>();
@@ -150,6 +152,27 @@ namespace ProjectLaunchpad.Functions
                     return errorResponse;
                 }
 
+                //check if password provided for update is correct
+                if (!string.IsNullOrEmpty(requestData.Password) && !string.IsNullOrEmpty(requestData.NewPassword))
+                {
+                    var freelancer = await _unit.Users.GetUserByIdAsync(userId);
+                    if (freelancer == null)
+                    {
+                        var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                        await errorResponse.WriteAsJsonAsync(new { error = "User not found" });
+                        return errorResponse;
+                    }
+
+                    if (!ProjectLaunchpad.Utility.PasswordHasher.Verify(requestData.Password, freelancer.Password))
+                    {
+                        var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                        await errorResponse.WriteAsJsonAsync(new { error = "Current password is incorrect" });
+                        return errorResponse;
+                    }
+
+                    // Set new password hash
+                    requestData.Password = ProjectLaunchpad.Utility.PasswordHasher.Hash(requestData.NewPassword);
+                }
 
                 // Create FreelancerProfileDTO from request data
                 var profileDto = new FreelancerWithUserDTO
@@ -163,8 +186,15 @@ namespace ProjectLaunchpad.Functions
                     HourlyRate = requestData.HourlyRate,
                     Availability = requestData.Availability,
                     WorkingHours = requestData.WorkingHours,
-                    Summary = requestData.ProfileData.Summary
+                    Summary = requestData.ProfileData.Summary,
+                    ProfilePicture = requestData.ProfilePicture
                 };
+
+                //only add password if it is provided (update password)
+                if (!string.IsNullOrEmpty(requestData.Password) && !string.IsNullOrEmpty(requestData.NewPassword))
+                {
+                    profileDto.Password = requestData.Password;
+                }
 
                 await _resumeParserSyncService.SaveProfileSetupDataAsync(email, requestData.ProfileData, profileDto);
 
@@ -182,21 +212,33 @@ namespace ProjectLaunchpad.Functions
 
         [Function("DeleteFreelancerProfile")]
         public async Task<HttpResponseData> DeleteFreelancerProfileAsync(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "freelancer/{id:int}")] HttpRequestData req,
-            int id)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "freelancer/{id:int}")] HttpRequestData req,
+        int id)
+            {
+                (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
 
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+                if (!isAuthorized)
+                    return unauthorizedResponse!;
 
-            var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
-            if (profile is null)
-                return req.CreateResponse(HttpStatusCode.NotFound);
-            await _unit.FreelancerProfiles.DeleteFreelancerProfileAsync(id);
-            await _unit.SaveAsync();
-            return req.CreateResponse(HttpStatusCode.NoContent);
-        }
+                var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
+                if (profile is null)
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+
+                // Get the email before deleting user
+                var email = profile.User?.Email;
+
+                await _unit.FreelancerProfiles.DeleteFreelancerProfileAsync(id);
+                await _unit.Users.DeleteUserAsync(id);
+                await _unit.SaveAsync();
+
+                // Delete from resume_parser if email is available
+                if (!string.IsNullOrEmpty(email))
+                {
+                    await _resumeParserSyncService.DeleteProfileSetupDataAsync(email);
+                }
+
+                return req.CreateResponse(HttpStatusCode.NoContent);
+            }
 
         [Function("GetFreelancerById")]
         public async Task<HttpResponseData> GetFreelancerById(

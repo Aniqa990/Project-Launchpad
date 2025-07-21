@@ -67,7 +67,7 @@ namespace ProjectLaunchpad.Services
             using var connection = new MySqlConnection(_mysqlConnStr);
             await connection.OpenAsync();
 
-            // Get or create freelancer in resume_parser (other database that stores parsed resume)
+            // Get freelancer in resume_parser (other database that stores parsed resume)
             var freelancerId = await GetFreelancerAsync(connection, email, profileDto);
 
             // Update summary in resume_parser
@@ -106,6 +106,40 @@ namespace ProjectLaunchpad.Services
 
             Console.WriteLine("No freelancer found in database");
             return null;
+        }
+
+        public async Task DeleteProfileSetupDataAsync(string email)
+        {
+            using var connection = new MySqlConnection(_mysqlConnStr);
+            await connection.OpenAsync();
+
+            // Get freelancer id by email
+            int freelancerId = 0;
+            using (var cmd = new MySqlCommand("SELECT id FROM freelancers WHERE email = @Email", connection))
+            {
+                cmd.Parameters.AddWithValue("@Email", email);
+                var result = await cmd.ExecuteScalarAsync();
+                if (result != null)
+                    freelancerId = Convert.ToInt32(result);
+            }
+
+            if (freelancerId == 0)
+                return; // Not found, nothing to delete
+
+            // Delete from experience, projects, skills, then freelancer
+            var tables = new[] { "experience", "projects", "skills" };
+            foreach (var table in tables)
+            {
+                using var cmd = new MySqlCommand($"DELETE FROM {table} WHERE freelancer_id = @FreelancerId", connection);
+                cmd.Parameters.AddWithValue("@FreelancerId", freelancerId);
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            using (var cmd = new MySqlCommand("DELETE FROM freelancers WHERE id = @FreelancerId", connection))
+            {
+                cmd.Parameters.AddWithValue("@FreelancerId", freelancerId);
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
 
         private async Task<List<SkillDTO>> GetSkillsAsync(MySqlConnection connection, int freelancerId)

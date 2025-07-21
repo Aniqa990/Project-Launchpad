@@ -16,7 +16,9 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task<User> GetUserByIdAsync(int id);
         Task<bool> UserExistsAsync(string email);
         Task AddUserAsync(User user);
-        
+        Task UpdateUserAsync(User user);
+        Task DeleteUserAsync(int userId);
+
         // 
     }
 }

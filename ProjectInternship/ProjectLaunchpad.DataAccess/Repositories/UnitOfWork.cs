@@ -16,6 +16,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IUserRepository Users { get; }
         public IFreelancerProfileRepository FreelancerProfiles { get; }
         public IClientProfileRepository ClientProfiles { get; }
+        public IAdminProfileRepository AdminProfiles { get; }
         public IProjectRepository ProjectRepository { get; }
         public ITaskRepository TaskRepository { get; }
         public IProjectAssignmentRepository ProjectFreelancers { get; }
@@ -50,7 +51,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
             ClientProfiles = new ClientProfileRepository(_db);
             TimeSheet = new TimeSheetRepository(_db);
             Feedbacks = new FeedbackRepository(_db);
-
+            AdminProfiles = new AdminProfileRepository(_db);
             ///
         }
 

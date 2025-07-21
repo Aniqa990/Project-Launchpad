@@ -41,6 +41,9 @@ namespace ProjectLaunchpad.Models.Models
         public string? Status { get; set; } = "active"; // active, closed, in progress
 
         public string? AttachedDocumentPath { get; set; }
+
+        public DateTime CreatedAt = DateTime.Now;
+
         [Required]
         public int ClientId { get; set; }
 

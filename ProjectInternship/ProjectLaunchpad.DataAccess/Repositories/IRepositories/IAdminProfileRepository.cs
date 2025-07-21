@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
 {
-    public interface IClientProfileRepository
+    public interface IAdminProfileRepository
     {
-        Task InsertClientProfile(int userId);
-        Task DeleteClientProfileAsync(int userId);
+        Task InsertAdminProfile(int userId);
+        Task DeleteAdminProfileAsync(int userId);
 
     }
 }
