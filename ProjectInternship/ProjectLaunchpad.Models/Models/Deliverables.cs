@@ -26,5 +26,10 @@ namespace ProjectLaunchpad.Models.Models
 
         [ForeignKey("MilestoneId")]
         public Milestone? Milestone { get; set; }
+
+        public  int projectId { get; set; }
+
+        [ForeignKey("projectId")]
+        public Project? Project { get; set; }
     }
 }

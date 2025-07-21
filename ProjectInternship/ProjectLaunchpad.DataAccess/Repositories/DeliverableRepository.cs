@@ -39,6 +39,10 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             await _db.SaveChangesAsync();
         }
 
+        public async Task<IEnumerable<Deliverables>> GetByProjectIdAsync(int projectId)
+    => await _db.deliverables.Where(d => d.projectId == projectId).ToListAsync();
+
+
         public async Task DeleteAsync(int id)
         {
             var deliverable = await _db.deliverables.FindAsync(id);

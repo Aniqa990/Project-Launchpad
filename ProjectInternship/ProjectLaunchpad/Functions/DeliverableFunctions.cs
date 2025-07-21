@@ -28,7 +28,7 @@ namespace ProjectLaunchpad.Functions
 
         [Function("CreateDeliverable")]
         public async Task<HttpResponseData> CreateDeliverableAsync(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "deliverables")] HttpRequestData req)
+     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "deliverables")] HttpRequestData req)
         {
             (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
             if (!isAuthorized) return unauthorizedResponse!;
@@ -40,6 +40,7 @@ namespace ProjectLaunchpad.Functions
             {
                 uploadFiles = dto.UploadFiles,
                 MilestoneId = dto.MilestoneId,
+                projectId = dto.ProjectId,
                 comment = dto.Comment,
                 Status = dto.Status
             };
@@ -52,11 +53,42 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
+        [Function("GetDeliverablesByProjectId")]
+        public async Task<HttpResponseData> GetDeliverablesByProjectIdAsync(
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "deliverables/project/{projectId:int}")] HttpRequestData req, int projectId)
+        {
+            var deliverables = await _unitOfWork.DeliverablesRepository.GetByProjectIdAsync(projectId);
+
+            if (!deliverables.Any())
+                return req.CreateResponse(HttpStatusCode.NotFound);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(deliverables);
+            return response;
+        }
+
+
+
         [Function("GetDeliverablesByMilestoneId")]
         public async Task<HttpResponseData> GetDeliverablesByMilestoneIdAsync(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "deliverables/milestone/{milestoneId:int}")] HttpRequestData req, int milestoneId)
         {
             var deliverables = await _unitOfWork.DeliverablesRepository.GetByMilestoneIdAsync(milestoneId);
+
+            if (!deliverables.Any())
+                return req.CreateResponse(HttpStatusCode.NotFound);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(deliverables);
+            return response;
+        }
+
+
+        [Function("GetAllDeliverables")]
+        public async Task<HttpResponseData> GetAllDeliverablesAsync(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "deliverables")] HttpRequestData req)
+        {
+            var deliverables = await _unitOfWork.DeliverablesRepository.GetAllAsync();
 
             if (!deliverables.Any())
                 return req.CreateResponse(HttpStatusCode.NotFound);

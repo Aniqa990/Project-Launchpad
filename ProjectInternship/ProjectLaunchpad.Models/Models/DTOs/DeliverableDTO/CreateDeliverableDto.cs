@@ -16,6 +16,9 @@ namespace ProjectLaunchpad.Models.Models.DTOs.DeliverableDTO
         public int MilestoneId { get; set; }
 
         [Required]
+        public int ProjectId { get; set; }
+
+        [Required]
         public string Comment { get; set; }
 
         [Required]

@@ -298,6 +298,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClientId");
+
                     b.HasIndex("FreelancerId");
 
                     b.HasIndex("ProjectId");
@@ -683,7 +685,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("Feedbacks")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");
@@ -723,7 +725,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "project")
                         .WithMany("Milestones")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("project");
@@ -731,6 +733,12 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
                 {
+                    b.HasOne("ProjectLaunchpad.Models.Models.ClientProfile", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
                         .WithMany()
                         .HasForeignKey("FreelancerId")
@@ -740,8 +748,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany()
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Client");
 
                     b.Navigation("Freelancer");
 
@@ -753,7 +763,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.ClientProfile", "Client")
                         .WithMany("Projects")
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Client");
@@ -770,7 +780,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("AssignedFreelancers")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");
@@ -789,7 +799,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("ProjectRequests")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");
@@ -868,7 +878,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("TimeSheets")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");

@@ -120,7 +120,7 @@ namespace ProjectLaunchpad.Functions
      [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "updatemilestone/{id:int}")] HttpRequestData req,
      int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req,"freelancer");
 
             if (!isAuthorized)
                 return unauthorizedResponse!;

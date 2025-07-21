@@ -7,9 +7,10 @@ import { Modal } from '../../components/ui/Modal';
 import { Calendar, DollarSign, Upload, MessageSquare, Send, CheckCircle, XCircle, Clock, Filter, Paperclip, X, Target } from 'lucide-react';
 import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 
 export function Milestones() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState('All');
   const [milestones, setMilestones] = useState<any[]>([]);
@@ -19,6 +20,26 @@ export function Milestones() {
   const [uploadedFiles, setUploadedFiles] = useState<{[key: string]: File[]}>({});
   const [comments, setComments] = useState<{[key: string]: string}>({});
   const [deliverables, setDeliverables] = useState<{[key: string]: any[]}>({});
+  const [statusEdits, setStatusEdits] = useState<{[key: string]: string}>({});
+  const [fileInputs, setFileInputs] = useState<{[key: string]: File[]}>({});
+  const [commentInputs, setCommentInputs] = useState<{[key: string]: string}>({});
+  const [uploadLoading, setUploadLoading] = useState<{[key: string]: boolean}>({});
+  const [uploadError, setUploadError] = useState<{[key: string]: string}>({});
+
+  // Status mapping for MilestoneStatus enum
+  const statusMap: Record<'not-started' | 'in-progress' | 'completed', number> = {
+    'not-started': 0,
+    'in-progress': 1,
+    'completed': 2
+  };
+
+  // Map backend integer status to dropdown string value
+  function getDropdownStatusValue(status: number | string): 'not-started' | 'in-progress' | 'completed' {
+    if (status === 0 || status === 'not-started' || status === 'NotSelected') return 'not-started';
+    if (status === 1 || status === 'in-progress' || status === 'InProgress') return 'in-progress';
+    if (status === 2 || status === 'completed' || status === 'Completed') return 'completed';
+    return 'not-started';
+  }
 
   // Fetch projects for freelancer (only on mount or user.id change)
   useEffect(() => {
@@ -77,28 +98,27 @@ export function Milestones() {
   });
 
   // Status badge
-  const getStatusBadge = (status: string | undefined) => {
-    if (!status) {
-      return (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          Unknown
-        </span>
-      );
+  const getStatusBadge = (status: string | number | undefined) => {
+    // Map integer status to string for display
+    let display = { label: 'Unknown', color: 'bg-gray-100 text-gray-800', icon: Clock };
+    if (status === 0 || status === 'not-started' || status === 'NotSelected') {
+      display = { label: 'Not Selected', color: 'bg-gray-100 text-gray-800', icon: Clock };
+    } else if (status === 1 || status === 'in-progress' || status === 'InProgress') {
+      display = { label: 'In Progress', color: 'bg-blue-100 text-blue-800', icon: Clock };
+    } else if (status === 2 || status === 'completed' || status === 'Completed') {
+      display = { label: 'Completed', color: 'bg-green-100 text-green-800', icon: CheckCircle };
+    } else if (status === 'pending') {
+      display = { label: 'Submitted – Awaiting Client Review', color: 'bg-orange-100 text-orange-800', icon: Clock };
+    } else if (status === 'approved') {
+      display = { label: 'Approved', color: 'bg-green-100 text-green-800', icon: CheckCircle };
+    } else if (status === 'rejected') {
+      display = { label: 'Rejected', color: 'bg-red-100 text-red-800', icon: XCircle };
     }
-    const badges = {
-      'not-started': { color: 'bg-gray-100 text-gray-800', icon: Clock },
-      'in-progress': { color: 'bg-blue-100 text-blue-800', icon: Clock },
-      'completed': { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      'pending': { color: 'bg-orange-100 text-orange-800', text: 'Submitted – Awaiting Client Review' },
-      'approved': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      'rejected': { color: 'bg-red-100 text-red-800', icon: XCircle }
-    };
-    const badge = badges[status as keyof typeof badges];
-    const Icon = badge && 'icon' in badge ? badge.icon : undefined;
+    const Icon = display.icon;
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge?.color}`}>
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${display.color}`}>
         {Icon && <Icon className="w-3 h-3 mr-1" />}
-        {badge && 'text' in badge ? badge.text : (typeof status === 'string' ? status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown')}
+        {display.label}
       </span>
     );
   };
@@ -133,6 +153,86 @@ export function Milestones() {
     // Refresh deliverables for this milestone
     const delivs = await getDeliverablesByMilestoneId(Number(milestoneId));
     setDeliverables(prev => ({ ...prev, [milestoneId]: delivs }));
+  };
+
+  // Handle status change
+  const handleStatusChange = (milestone: any, newStatus: string) => {
+    setStatusEdits(prev => ({ ...prev, [milestone.Id]: newStatus }));
+    if (newStatus !== 'completed') {
+      // Immediately update milestone status
+      updateMilestoneStatus(milestone, newStatus as 'not-started' | 'in-progress' | 'completed');
+    }
+  };
+
+  // Update milestone status API
+  const updateMilestoneStatus = async (milestone: any, status: 'not-started' | 'in-progress' | 'completed') => {
+    try {
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Using token for updateMilestoneStatus:', token);
+      }
+      await axios.put(`http://localhost:7053/api/updatemilestone/${milestone.Id}`, {
+        ...milestone,
+        Status: statusMap[status] // send integer value for enum
+      });
+      // Refresh milestones
+      const project = projects.find(p => p.Title === selectedProject);
+      if (project) {
+        const data = await getMilestonesByProjectId(project.Id);
+        setMilestones(data);
+        for (const m of data) {
+          const delivs = await getDeliverablesByMilestoneId(m.Id);
+          setDeliverables(prev => ({ ...prev, [m.Id]: delivs }));
+        }
+      }
+    } catch (err) {
+      // Optionally show error
+    }
+  };
+
+  // Handle file input
+  const handleFileInput = (milestoneId: string, files: FileList) => {
+    setFileInputs(prev => ({ ...prev, [milestoneId]: Array.from(files) }));
+  };
+  const handleCommentInput = (milestoneId: string, comment: string) => {
+    setCommentInputs(prev => ({ ...prev, [milestoneId]: comment }));
+  };
+
+  // Handle deliverable upload
+  const handleDeliverableUpload = async (milestone: any, projectId: number) => {
+    setUploadLoading(prev => ({ ...prev, [milestone.Id]: true }));
+    setUploadError(prev => ({ ...prev, [milestone.Id]: '' }));
+    const files = fileInputs[milestone.Id] || [];
+    const comment = commentInputs[milestone.Id] || '';
+    if (files.length === 0 || !comment.trim()) {
+      setUploadError(prev => ({ ...prev, [milestone.Id]: 'Please upload at least one file and add a comment.' }));
+      setUploadLoading(prev => ({ ...prev, [milestone.Id]: false }));
+      return;
+    }
+    try {
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Using token for handleDeliverableUpload:', token);
+      }
+      // 1. Create deliverable
+      await axios.post('http://localhost:7053/api/deliverables', {
+        UploadFiles: files.map(f => f.name).join(','),
+        MilestoneId: milestone.Id,
+        ProjectId: projectId,
+        Comment: comment,
+        Status: 'submitted'
+      });
+      // 2. Update milestone status
+      await updateMilestoneStatus(milestone, 'completed');
+      // 3. Clear inputs
+      setFileInputs(prev => ({ ...prev, [milestone.Id]: [] }));
+      setCommentInputs(prev => ({ ...prev, [milestone.Id]: '' }));
+      setStatusEdits(prev => ({ ...prev, [milestone.Id]: 'completed' }));
+    } catch (err) {
+      setUploadError(prev => ({ ...prev, [milestone.Id]: 'Failed to upload deliverable or update milestone.' }));
+    } finally {
+      setUploadLoading(prev => ({ ...prev, [milestone.Id]: false }));
+    }
   };
 
   return (
@@ -187,6 +287,13 @@ export function Milestones() {
         {filteredMilestones.map((milestone) => {
           const isExpanded = expandedMilestone === milestone.Id;
           const isSubmitted = ['pending', 'approved', 'rejected'].includes(milestone.status);
+          const project = projects.find(p => p.Title === selectedProject);
+          const currentStatus = statusEdits[milestone.Id] || getDropdownStatusValue(milestone.status);
+          // Ensure dropdown value is always a valid string
+          const dropdownValue: 'not-started' | 'in-progress' | 'completed' =
+            currentStatus === 'not-started' || currentStatus === 'in-progress' || currentStatus === 'completed'
+              ? currentStatus
+              : 'not-started';
           return (
             <div key={milestone.Id} className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all">
               <div className="p-6">
@@ -206,15 +313,15 @@ export function Milestones() {
                       <span>${milestone.Amount?.toLocaleString()}</span>
                     </div>
                   </div>
-                  {getStatusBadge(milestone.status)}
+                  {getStatusBadge(getDropdownStatusValue(milestone.status))}
                 </div>
                 <p className="text-gray-700 text-sm mb-4 max-w-2xl">{milestone.Description}</p>
                 {!isSubmitted && (
                   <div className="mb-4 max-w-xs">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                     <select
-                      value={milestone.status}
-                      onChange={(e) => {}}
+                      value={dropdownValue}
+                      onChange={(e) => handleStatusChange(milestone, e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="not-started">Not Started</option>
@@ -223,71 +330,44 @@ export function Milestones() {
                     </select>
                   </div>
                 )}
-                {/* Expanded Section for Completed Status */}
-                {isExpanded && milestone.status === 'completed' && (
+                {/* Inline file upload and comment if status is being set to completed */}
+                {!isSubmitted && currentStatus === 'completed' && project && (
                   <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
-                    {/* File Upload */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Attachments
-                      </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                        <input
-                          type="file"
-                          multiple
-                          onChange={(e) => e.target.files && handleFileUpload(milestone.Id, e.target.files)}
-                          className="hidden"
-                          id={`file-upload-${milestone.Id}`}
-                        />
-                        <label
-                          htmlFor={`file-upload-${milestone.Id}`}
-                          className="flex flex-col items-center cursor-pointer"
-                        >
-                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                          <span className="text-sm text-gray-600">Click to upload files</span>
-                        </label>
-                      </div>
-                      {/* Uploaded Files */}
-                      {uploadedFiles[milestone.Id]?.length > 0 && (
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={e => e.target.files && handleFileInput(milestone.Id, e.target.files)}
+                      />
+                      {fileInputs[milestone.Id]?.length > 0 && (
                         <div className="mt-2 space-y-2">
-                          {uploadedFiles[milestone.Id].map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                              <div className="flex items-center space-x-2">
-                                <Paperclip className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm text-gray-700">{file.name}</span>
-                              </div>
-                              <button
-                                onClick={() => removeFile(milestone.Id, index)}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
+                          {fileInputs[milestone.Id].map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <span className="text-sm text-gray-700">{file.name}</span>
                             </div>
                           ))}
                         </div>
                       )}
                     </div>
-                    {/* Comment Box */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Notes for Client
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Notes for Client</label>
                       <textarea
-                        value={comments[milestone.Id] || ''}
-                        onChange={(e) => setComments(prev => ({ ...prev, [milestone.Id]: e.target.value }))}
+                        value={commentInputs[milestone.Id] || ''}
+                        onChange={e => handleCommentInput(milestone.Id, e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         rows={3}
                         placeholder="Add any notes or comments for the client..."
                       />
                     </div>
-                    {/* Submit Button */}
-                    <button
-                      onClick={() => handleSubmit(milestone.Id)}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    {uploadError[milestone.Id] && <div className="text-red-500 text-sm mb-2">{uploadError[milestone.Id]}</div>}
+                    <Button
+                      onClick={() => handleDeliverableUpload(milestone, project.Id)}
+                      loading={uploadLoading[milestone.Id]}
+                      disabled={uploadLoading[milestone.Id] || (fileInputs[milestone.Id]?.length === 0 || !commentInputs[milestone.Id])}
                     >
-                      <Send className="w-4 h-4" />
-                      <span>Submit to Client & Platform</span>
-                    </button>
+                      Upload Deliverable & Complete
+                    </Button>
                   </div>
                 )}
                 {/* Deliverables List */}
