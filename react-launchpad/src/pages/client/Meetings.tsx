@@ -19,6 +19,7 @@ export default function Meetings() {
           audioChunks.current.push(event.data);
         }
       };
+      
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
         setAudioUrl(URL.createObjectURL(audioBlob));
