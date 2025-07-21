@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Rocket, Bell, Settings, LogOut } from 'lucide-react';
+import { fetchClientProfile, fetchPlatformProfile } from '../../apiendpoints';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -14,12 +15,28 @@ export function Navbar() {
 
   if (!user) return null;
 
+let profileData;
+
+useEffect(() => {
+  const fetchProfile = async () => {
+if (user.role === 'client') {
+  profileData = await fetchClientProfile(user.id ?? 0); // calls /client/profile
+} else if (user.role === 'freelancer') {
+  //profileData = await fetchFreelancerProfile(user.id); // calls /freelancer/profile
+}
+else if (user.role === 'admin') {
+  profileData = await fetchPlatformProfile(user.id ?? 0);
+  }
+};
+  fetchProfile();
+}, [user]);
+
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to={user.role === 'client' ? '/client/dashboard' : '/freelancer/dashboard'} className="flex items-center space-x-2">
+          <Link to={user.role === 'client' ? '/client/dashboard' : user.role === 'freelancer' ? '/freelancer/dashboard' : '/admin/dashboard'} className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
               <Rocket className="w-5 h-5 text-white" />
             </div>
@@ -36,7 +53,7 @@ export function Navbar() {
             
             <div className="flex items-center space-x-3">
               <img 
-                src={user.avatar} 
+                src={user.profilePicture} 
                 alt={user.firstName}
                 className="w-8 h-8 rounded-full object-cover"
               />

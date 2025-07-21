@@ -77,7 +77,7 @@ interface DashboardProps {
   onNavigate?: (tab: 'payments') => void;
 }
 
-export default function Dashboard({ onNavigate }: DashboardProps) {
+export function PlatformDashboard({ onNavigate }: DashboardProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -107,12 +107,12 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       case 'payments':
         onNavigate?.('payments');
         break;
-      case 'users':
-        alert('User management feature coming soon!');
-        break;
-      case 'projects':
-        alert('Project management feature coming soon!');
-        break;
+      // case 'users':
+      //   alert('User management feature coming soon!');
+      //   break;
+      // case 'projects':
+      //   alert('Project management feature coming soon!');
+      //   break;
     }
   };
 

@@ -36,6 +36,7 @@ export function Sidebar() {
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
     { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
+    { icon: Settings, label: 'Settings', path: '/client/settings' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
   ];
 
@@ -53,7 +54,13 @@ export function Sidebar() {
     { icon: Settings, label: 'Settings', path: '/freelancer/settings' },
   ];
 
-  const menuItems = user.role === 'client' ? clientMenuItems : freelancerMenuItems;
+  const platformMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: DollarSign, label: 'Milestone Payments', path: '/admin/payments' },
+    { icon: Settings, label: 'Settings', path: '/admin/settings' },
+  ];
+
+  const menuItems = user.role === 'client' ? clientMenuItems : user.role === 'freelancer' ? freelancerMenuItems : platformMenuItems;
 
   return (
     <div className="w-full h-full bg-white border-r border-gray-200 overflow-y-auto">

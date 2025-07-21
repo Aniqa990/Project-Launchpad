@@ -25,7 +25,7 @@ import {
   Loader,
   Briefcase,
   Clock,
-  Calendar as CalendarIcon,
+  Calendar,
   Pencil,
   Trash2
 } from 'lucide-react';
@@ -359,9 +359,9 @@ export function ProfileSetup() {
         firstName,
         lastName,
         phone,
-    hourlyRate,
+        hourlyRate,
         availability,
-    workingHours,
+        workingHours,
         profileData: {
           Summary: profileData.summary,
           Skills: profileData.skills,

@@ -22,8 +22,8 @@ api.interceptors.request.use(
 );
 
 //AUTH
-export const loginUser = async (email: string, password: string, role: string)=>{
-  const response = await api.post('/auth/login', { email, password, role });
+export const loginUser = async (email: string, password: string)=>{
+  const response = await api.post('/auth/login', { email, password});
   return response.data;
 };
 
@@ -37,7 +37,6 @@ export async function validateToken(token?: string) {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   }).then(res => res.data);
 }
-
 
 export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
   try{
@@ -270,7 +269,7 @@ export const getFreelancerFeedbacks = async (freelancerId: number): Promise<Feed
   return response.data;
 }; 
 
-// Profile Setup API functions
+// Freelancer Profile Setup API functions
 export const getProfileSetupData = async (): Promise<ProfileSetupData> => {
   const response = await api.get('/freelancer/profile-setup');
   return response.data;
@@ -285,7 +284,7 @@ export const saveProfileSetupData = async (data: {
   workingHours: string;
   profileData: ProfileSetupData;
 }): Promise<void> => {
-  await api.post('/freelancer/profile-setup', data);
+  await api.post('/freelancer/profile-setup', data); //was post
 }; 
 
 export const updateProfileSetupData = async (data: {
@@ -295,7 +294,10 @@ export const updateProfileSetupData = async (data: {
   hourlyRate: number;
   availability: string;
   workingHours: string;
+  profilePicture: string;
   profileData: ProfileSetupData;
+  password?: string;
+  newPassword?: string;
 }): Promise<void> => {
   await api.put('/freelancer/profile-setup', data);
 }; 
@@ -311,3 +313,30 @@ export const getCurrentUserFreelancerProfile = async (userId: number): Promise<F
     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer profile');
   }
 };
+
+export async function deleteFreelancerProfile(userId: number) {
+  const { data } = await api.delete(`/freelancer/${userId}`);
+  return data;
+}
+
+//Client Profile Setup API
+export async function fetchClientProfile(id:number) {
+  const { data } = await api.get(`/client/profile/${id}`);
+  return data;
+}
+
+export async function updateClientProfile(updates: Partial<User>) {
+  const { data } = await api.patch('/client/profile', updates);
+  return data;
+}
+
+export async function deleteClientProfile(userId: number) {
+  const { data } = await api.delete(`/client/profile/${userId}`);
+  return data;
+}
+
+//ADMIN API
+export async function fetchPlatformProfile(id:number) {
+  const { data } = await api.get(`/admin/profile/${id}`);
+  return data;
+}

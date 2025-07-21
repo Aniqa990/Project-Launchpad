@@ -5,7 +5,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import LandingPage from './pages/LandingPage';
 import { Auth } from './pages/Auth';
-import { Settings } from './pages/freelancer/Settings';
+import { FreelancerSettings } from './pages/freelancer/Settings';
+import {ClientSettings} from './pages/client/Settings';
 import { ClientDashboard } from './pages/client/Dashboard';
 import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
@@ -18,11 +19,13 @@ import { Feedback } from './pages/freelancer/Feedback';
 import { KanbanBoard } from './components/workspace/KanbanBoard';
 import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
+import { PlatformDashboard } from './pages/platform/Dashboard';
+import { MilestonePayments } from './pages/platform/Payments';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
+function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' | 'admin' }) {
   const { isAuthenticated, user, loading } = useAuth();
   
   if (loading) {
@@ -87,7 +90,7 @@ function AppRoutes() {
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
         <Route path="messages" element={<ClientMessages />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
       </Route>
       
@@ -101,7 +104,16 @@ function AppRoutes() {
         <Route path="projects" element={<FreelancerProjects />} />
         <Route path="kanban" element={<KanbanBoard />} />
         <Route path="feedback" element={<Feedback />} />
-        <Route path="settings" element={<Settings />} />  
+        <Route path="settings" element={<FreelancerSettings />} />  
+      </Route>
+
+      <Route path="/admin/*" element={
+        <ProtectedRoute requiredRole="admin">
+          <AppShell />
+        </ProtectedRoute>
+      }>
+        <Route path="dashboard" element={<PlatformDashboard />} />
+        <Route path="payments" element={<MilestonePayments />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={

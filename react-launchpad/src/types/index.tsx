@@ -2,13 +2,13 @@ export interface User {
   id?: number;
   firstName: string;
   lastName: string;
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  newPassword?: string;
   phone: string;
-  avatar?: string;
-  role: 'client' | 'freelancer';
+  profilePicture?: string;
+  role?: string;
   gender: string;
-  location?: string;
   joinedDate?: string;
 }
 
@@ -25,7 +25,7 @@ export interface SignupRequest {
   confirmPassword: string
   phone: string;
   gender: string;
-  role: 'client' | 'freelancer';
+  role: string;
   location?: string;
 }
 
@@ -38,12 +38,14 @@ export interface FreelancerProfile {
   Gender?: string;
   ProfilePicture?: string;
   Role: string;
-  CreatedAt: string;
-  Summary: string;
+  CreatedAt?: string;
   HourlyRate: number;
   WorkingHours: string;
   Availability: string;
   AvgRating: number;
+  Password?: string;
+  NewPassword?: string;
+  Summary: string;
   Skills: string;
   Experience: string;
   Projects: string;
