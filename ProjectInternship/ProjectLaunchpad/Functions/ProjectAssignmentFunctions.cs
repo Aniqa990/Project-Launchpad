@@ -55,6 +55,38 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
+        [Function("GetProjectsByFreelancer")]
+        public async Task<HttpResponseData> GetProjectsByFreelancer(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "freelancer/projects")] HttpRequestData req)
+        {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) =
+                await _auth.AuthorizeAsync(req, "freelancer");
+
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
+            var freelancerIdClaim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (freelancerIdClaim == null || !int.TryParse(freelancerIdClaim, out int freelancerId))
+            {
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                await errorResponse.WriteStringAsync("Invalid freelancer ID from token.");
+                return errorResponse;
+            }
+
+            var projects = await _unit.ProjectFreelancers.GetProjectsByFreelancerIdAsync(freelancerId);
+
+            var projectDtos = projects.Select(p => new ProjectBasicDTO
+            {
+                Id = p.Id,
+                Title = p.ProjectTitle
+            }).ToList();
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(projectDtos);
+            return response;
+        }
+
+
         [Function("RemoveFreelancerFromProject")]
         public async Task<HttpResponseData> RemoveFreelancerFromProject(
             [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "projects/{projectId}/freelancers/{freelancerId}")] HttpRequestData req,

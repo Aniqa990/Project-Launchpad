@@ -270,13 +270,14 @@ export interface KanbanSubtask {
 export interface KanbanTask {
   Id: number;
   Title: string;
-  Description: string | null;
-  EstimatedDeadline: string | null;
-  Priority: KanbanTaskPriorityLevel;
-  Status: KanbanTaskStatus;
+  Description: string;
+  EstimatedDeadline: string;
+  Priority: number;
+  Status: number;
   CreatedByUserId: number;
-  CreatedByUser: KanbanUser;
   AssignedToUserId: number;
+  ProjectId: number;
+  CreatedByUser: KanbanUser;
   AssignedToUser: KanbanUser;
   CreatedAt: string;
   Subtasks: KanbanSubtask[];

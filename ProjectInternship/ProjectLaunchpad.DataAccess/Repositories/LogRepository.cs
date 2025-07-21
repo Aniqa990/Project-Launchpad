@@ -3,6 +3,7 @@ using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.Enums;
+using ProjectLaunchpad.Repositories.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +37,26 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             await _db.logs.AddAsync(log);
         }
 
-       
+        public async Task<IEnumerable<Logs>> GetLogsByFreelancerIdAsync(int freelancerId)
+        {
+            return await _db.logs
+       .Where(l => l.FreelancerId == freelancerId)
+       .Include(l => l.Project)
+       .Include(l => l.Task)
+       .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Logs>> GetTasksByProjectIdAsync(int projectId)
+        {
+            return await _db.logs
+          .Include(l => l.Project)
+          .Include(l => l.Task)
+          .Where(l => l.ProjectId == projectId)
+          .ToListAsync();
+        }
+
+
+
 
 
 

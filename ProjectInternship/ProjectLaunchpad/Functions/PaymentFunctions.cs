@@ -3,7 +3,9 @@ using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs.PaymentDTO;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
-using ProjectLaunchpad.Utility;
+using ProjectLaunchpad.Services;
+using Stripe.Checkout;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,111 +13,143 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace ProjectLaunchpad.Functions
 {
     public class PaymentFunctions
     {
+        private readonly IStripeService _stripeService;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly TokenAuthorization _auth;
+        private readonly IConfiguration config;
 
-        public PaymentFunctions(IUnitOfWork unitOfWork, TokenAuthorization auth)
+        public PaymentFunctions(IStripeService stripeService, IUnitOfWork unitOfWork,IConfiguration configuration)
         {
+            _stripeService = stripeService;
             _unitOfWork = unitOfWork;
-            _auth = auth;
+            config = configuration;
         }
 
-        [Function("GetAllPayments")]
-        public async Task<HttpResponseData> GetAllPayments(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments")] HttpRequestData req)
+        [Function("CreateStripePaymentIntent")]
+        public async Task<HttpResponseData> CreateStripePaymentIntent(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "payments/create-intent")] HttpRequestData req)
         {
-            var payments = await _unitOfWork.PaymentRepository.GetAllPaymentsAsync();
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(payments);
-            return response;
-        }
-
-        [Function("GetPaymentById")]
-        public async Task<HttpResponseData> GetPaymentById(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/{id:int}")] HttpRequestData req, int id)
-        {
-            var payment = await _unitOfWork.PaymentRepository.GetPaymentByIdAsync(id);
-            if (payment == null)
+            var dto = await req.ReadFromJsonAsync<CreatePaymentDto>();
+            if (dto == null || dto.Amount <= 0)
             {
-                return req.CreateResponse(HttpStatusCode.NotFound);
+                var bad = req.CreateResponse(HttpStatusCode.BadRequest);
+                await bad.WriteStringAsync("Invalid Payment Data");
+                return bad;
             }
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(payment);
-            return response;
-        }
-
-        [Function("GetPaymentsByProjectId")]
-        public async Task<HttpResponseData> GetPaymentsByProjectId(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/project/{projectId:int}")] HttpRequestData req, int projectId)
-        {
-            var payments = await _unitOfWork.PaymentRepository.GetPaymentsByProjectIdAsync(projectId);
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(payments);
-            return response;
-        }
-
-        [Function("GetPaymentsByFreelancerId")]
-        public async Task<HttpResponseData> GetPaymentsByFreelancerId(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/freelancer/{freelancerId:int}")] HttpRequestData req, int freelancerId)
-        {
-            var payments = await _unitOfWork.PaymentRepository.GetPaymentsByFreelancerIdAsync(freelancerId);
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(payments);
-            return response;
-        }
-
-
-        //[Function("GetPaymentsByClientId")]
-        //public async Task<HttpResponseData> GetPaymentsByClientId(
-        //    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/client/{clientId:int}")] HttpRequestData req, int clientId)
-        //{
-        //    var payments = await _unitOfWork.PaymentRepository.GetPaymentsByClientIdAsync(clientId);
-        //    var response = req.CreateResponse(HttpStatusCode.OK);
-        //    await response.WriteAsJsonAsync(payments);
-        //    return response;
-        //}
-
-        [Function("AddPayment")]
-        public async Task<HttpResponseData> AddPayment(
-     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "payments")] HttpRequestData req)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
-
-            var paymentDto = await req.ReadFromJsonAsync<CreatePaymentDto>();
-            if (paymentDto == null)
-            {
-                return req.CreateResponse(HttpStatusCode.BadRequest);
-            }
+            var intent = await _stripeService.CreatePaymentIntentAsync(dto);
 
             var newPayment = new Payment
             {
-                ProjectId = paymentDto.ProjectId,
-                FreelancerId = paymentDto.FreelancerId,
-                PaymentType = paymentDto.PaymentType,
-                MilestoneId = paymentDto.MilestoneId,
-                TimesheetId = paymentDto.TimesheetId,
-                Amount = paymentDto.Amount,
-                PaymentDate = paymentDto.PaymentDate == default ? DateTime.UtcNow : paymentDto.PaymentDate,
-                PaymentStatus = string.IsNullOrWhiteSpace(paymentDto.PaymentStatus) ? "Pending" : paymentDto.PaymentStatus,
-                TransactionReference = paymentDto.TransactionReference
+                ClientId = dto.ClientId,
+                FreelancerId = dto.FreelancerId,
+                ProjectId = dto.ProjectId,
+                PaymentType = dto.PaymentType,
+                MilestoneId = dto.MilestoneId,
+                TimesheetId = dto.TimesheetId,
+                Amount = (decimal)dto.Amount,
+                PaymentDate = DateTime.UtcNow,
+                PaymentStatus = "Pending",
+                TransactionReference = intent.Id // correct Stripe reference
             };
 
             await _unitOfWork.PaymentRepository.AddPaymentAsync(newPayment);
             await _unitOfWork.SaveAsync();
 
-            var response = req.CreateResponse(HttpStatusCode.Created);
-            await response.WriteAsJsonAsync(newPayment);
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(new { clientSecret = intent.ClientSecret });
             return response;
         }
+
+        [Function("CreateStripeCheckoutSession")]
+        public async Task<HttpResponseData> CreateStripeCheckoutSession(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "payments/create-checkout-session")] HttpRequestData req)
+        {
+            try
+            {
+                var dto = await req.ReadFromJsonAsync<CreatePaymentDto>();
+                if (dto == null || dto.Amount <= 0)
+                {
+                    var bad = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await bad.WriteStringAsync("Invalid Payment Data");
+                    return bad;
+                }
+
+                StripeConfiguration.ApiKey = config["Stripe:SecretKey"];
+
+                // Save payment in DB with status Pending
+                var newPayment = new Payment
+                {
+                    ClientId = dto.ClientId,
+                    FreelancerId = dto.FreelancerId,
+                    ProjectId = dto.ProjectId,
+                    PaymentType = dto.PaymentType,
+                    MilestoneId = dto.MilestoneId,
+                    TimesheetId = dto.TimesheetId,
+                    Amount = (decimal)dto.Amount,
+                    PaymentDate = DateTime.UtcNow,
+                    PaymentStatus = "Pending"
+                };
+
+                await _unitOfWork.PaymentRepository.AddPaymentAsync(newPayment);
+                await _unitOfWork.SaveAsync();
+
+                var options = new SessionCreateOptions
+                {
+                    PaymentMethodTypes = new List<string> { "card" },
+                    LineItems = new List<SessionLineItemOptions>
+            {
+                new SessionLineItemOptions
+                {
+                    PriceData = new SessionLineItemPriceDataOptions
+                    {
+                        Currency = "usd",
+                        ProductData = new SessionLineItemPriceDataProductDataOptions
+                        {
+                            Name = $"Payment for Project #{dto.ProjectId}",
+                        },
+                        UnitAmount = (long)(dto.Amount * 100),
+                    },
+                    Quantity = 1,
+                }
+            },
+                    Mode = "payment",
+                    SuccessUrl = $"http://localhost:5173/payment-success?paymentId={newPayment.Id}",
+                    CancelUrl = "http://localhost:5173/payment-cancelled",
+                    Metadata = new Dictionary<string, string>
+            {
+                { "paymentId", newPayment.Id.ToString() }
+            }
+                };
+
+                var sessionService = new SessionService();
+                var session = await sessionService.CreateAsync(options);
+
+                // Save Stripe session ID as transaction ref
+                newPayment.TransactionReference = session.Id;
+                await _unitOfWork.PaymentRepository.UpdateAsync(newPayment);
+                await _unitOfWork.SaveAsync();
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(new { url = session.Url });
+                return response;
+            }
+            catch (Exception ex)
+            {
+                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await response.WriteStringAsync($"Error: {ex.Message}");
+                return response;
+            }
+        }
+
+
+
 
     }
 }

@@ -15,5 +15,8 @@ namespace ProjectLaunchpad.Models.Models.DTOs.TaskDTO
         public KanbanTaskPriorityLevel Priority { get; set; }
         public int CreatedByUserId { get; set; }
         public int AssignedToUserId { get; set; }
+
+        public int ProjectId { get; set; }  // ✅ New field
+
     }
 }

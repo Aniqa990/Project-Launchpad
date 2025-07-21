@@ -27,11 +27,13 @@ namespace ProjectLaunchpad.Repositories.Repositories
 
         public IlogRepository logRepository { get; }
 
-        public IDeliverableRepository deliverableRepository { get;}
+        public IDeliverablesRepository DeliverablesRepository { get; }
 
         public IPaymentRepository PaymentRepository { get; }
         public ITimeSheetRepository TimeSheet { get; }
         public IFeedbackRepository Feedbacks { get; }
+
+
         // 
 
         public UnitOfWork(ApplicationDbContext db)
@@ -46,7 +48,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
             SubTaskRepository = new SubTaskRepository(_db);
             MilestoneRepository = new MilestoneRepository(_db);
             logRepository = new LogRepository(_db);
-            deliverableRepository = new DeliverableRepository(_db);
+            DeliverablesRepository = new DeliverablesRepository(_db);
             PaymentRepository = new PaymentRepository(_db);
             ClientProfiles = new ClientProfileRepository(_db);
             TimeSheet = new TimeSheetRepository(_db);

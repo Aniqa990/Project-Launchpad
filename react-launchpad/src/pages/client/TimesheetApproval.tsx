@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import { Avatar } from '../../components/ui/avatar';
 import { CheckSquare, X, Clock, MessageSquare, User, Calendar, Filter, Search } from 'lucide-react';
 import { getTimesheets, approveTimesheet, rejectTimesheet } from '../../apiendpoints';
 

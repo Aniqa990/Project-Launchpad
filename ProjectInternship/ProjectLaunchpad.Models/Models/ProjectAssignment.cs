@@ -20,6 +20,7 @@ namespace ProjectLaunchpad.Models.Models
         public FreelancerProfile Freelancer { get; set; }
 
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+
        // public string Role { get; set; } = "UI/UX";
     }
 

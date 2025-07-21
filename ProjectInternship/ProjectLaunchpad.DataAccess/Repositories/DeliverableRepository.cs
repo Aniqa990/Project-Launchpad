@@ -10,38 +10,48 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.DataAccess.Repositories
 {
-    public class DeliverableRepository:IDeliverableRepository
+    public class DeliverablesRepository : IDeliverablesRepository
     {
         private readonly ApplicationDbContext _db;
 
-        public DeliverableRepository(ApplicationDbContext db)
+        public DeliverablesRepository(ApplicationDbContext db)
         {
             _db = db;
         }
 
         public async Task<IEnumerable<Deliverables>> GetAllAsync()
-        {
-            return await _db.deliverables.ToListAsync();
-        }
+            => await _db.deliverables.ToListAsync();
 
-        public async Task<Deliverables> GetByIdAsync(int id)
-        {
-            return await _db.deliverables.FirstOrDefaultAsync(d => d.Id == id);
-        }
+        public async Task<Deliverables?> GetByIdAsync(int id)
+            => await _db.deliverables.FirstOrDefaultAsync(d => d.Id == id);
+
+        public async Task<IEnumerable<Deliverables>> GetByMilestoneIdAsync(int milestoneId)
+            => await _db.deliverables.Where(d => d.MilestoneId == milestoneId).ToListAsync();
 
         public async Task AddAsync(Deliverables deliverable)
         {
             await _db.deliverables.AddAsync(deliverable);
         }
 
-        public void Update(Deliverables deliverable)
+        public async Task UpdateAsync(Deliverables deliverable)
         {
             _db.deliverables.Update(deliverable);
+            await _db.SaveChangesAsync();
         }
 
-        public void Delete(Deliverables deliverable)
+        public async Task<IEnumerable<Deliverables>> GetByProjectIdAsync(int projectId)
+    => await _db.deliverables.Where(d => d.projectId == projectId).ToListAsync();
+
+
+        public async Task DeleteAsync(int id)
         {
-            _db.deliverables.Remove(deliverable);
+            var deliverable = await _db.deliverables.FindAsync(id);
+            if (deliverable != null)
+            {
+                _db.deliverables.Remove(deliverable);
+                await _db.SaveChangesAsync();
+            }
         }
     }
+
 }

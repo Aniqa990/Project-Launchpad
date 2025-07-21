@@ -14,6 +14,12 @@ namespace ProjectLaunchpad.Models.Models
         public int Id { get; set; }
         public int ProjectId { get; set; }
 
+        
+
+        public int ClientId { get; set; }
+
+        public ClientProfile Client { get; set; }
+
         [ForeignKey("ProjectId")]
         public Project Project { get; set; }
         public int FreelancerId { get; set; }

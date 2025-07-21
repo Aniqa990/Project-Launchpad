@@ -100,8 +100,20 @@ export function ClientDashboard() {
       setError('');
       try {
         const data = await getProjects();
-        console.log('Fetched projects:', data);
-        setProjects(data);
+        // Transform fields to PascalCase for dashboard compatibility
+        const transformed = data.map((project: any) => ({
+          Id: project.Id || project.id,
+          Title: project.Title || project.title,
+          Description: project.Description || project.description,
+          Status: project.Status || project.status,
+          Budget: project.Budget || project.budget,
+          NumberOfFreelancers: project.NumberOfFreelancers || project.numberOfFreelancers,
+          PaymentType: project.PaymentType || project.paymentType,
+          Category: project.Category || project.category,
+          Deadline: project.Deadline || project.deadline,
+          // Add more fields as needed
+        }));
+        setProjects(transformed);
       } catch (err) {
         setError('Failed to load projects.');
       } finally {

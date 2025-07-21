@@ -322,7 +322,7 @@ export function ProfileSetup() {
 
   const getCompletionPercentage = () => {
     let completed = 0;
-    let total = 6;
+    const total = 6;
 
     if (fullName) completed++;
     if (email) completed++;

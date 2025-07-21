@@ -63,6 +63,50 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return taskDtos;
         }
 
+        public async Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId)
+        {
+            var taskEntities = await _db.taskItems
+                .Where(t => t.projectId == projectId)
+                .Include(t => t.Subtasks)
+                .Include(t => t.CreatedByUser)
+                .Include(t => t.AssignedToUser)
+                .ToListAsync();
+
+            var taskDtos = taskEntities.Select(task => new TaskDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                EstimatedDeadline = task.EstimatedDeadline,
+                Priority = task.Priority,
+                Status = task.Status,
+                CreatedAt = task.CreatedAt,
+
+                CreatedByUser = new UserRegisterDTO
+                {
+                    FirstName = task.CreatedByUser.FirstName,
+                    LastName = task.CreatedByUser.LastName,
+                },
+                AssignedToUser = new UserRegisterDTO
+                {
+                    FirstName = task.AssignedToUser.FirstName,
+                    LastName = task.AssignedToUser.LastName,
+                },
+
+                Subtasks = task.Subtasks.Select(sub => new SubtaskDto
+                {
+                    Id = sub.Id,
+                    Title = sub.Title,
+                    Description = sub.Description,
+                    DueDate = sub.DueDate,
+                    Status = sub.Status
+                }).ToList()
+            });
+
+            return taskDtos;
+        }
+
+
 
         public async Task<TaskItem?> GetByIdAsync(int id)
         {

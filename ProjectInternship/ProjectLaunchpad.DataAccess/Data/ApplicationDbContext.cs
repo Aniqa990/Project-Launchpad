@@ -12,16 +12,12 @@ namespace ProjectLaunchpad.DataAccess.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options):base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
-            
         }
 
         public DbSet<User> users { get; set; }
-
         public DbSet<FreelancerProfile> freelancerProfiles { get; set; }
-
-        public DbSet<Project> projects { get; set; }
         public DbSet<Subtask> subtasks { get; set; }
         public DbSet<TaskItem> taskItems { get; set; }
         public DbSet<TimeSheet> TimeSheets { get; set; }
@@ -37,41 +33,38 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<Skill> skills { get; set; }
         public DbSet<ResumeProject> resumeProjects { get; set; }
         public DbSet<Experience> experiences { get; set; }
-
+        public DbSet<Project> projects { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // FreelancerProfile
             modelBuilder.Entity<FreelancerProfile>(entity =>
             {
-                entity.Property(f => f.HourlyRate)
-                      .HasPrecision(18, 2);
-
-                entity.Property(f => f.AvgRating)
-                      .HasPrecision(3, 1);
+                entity.Property(f => f.HourlyRate).HasPrecision(18, 2);
+                entity.Property(f => f.AvgRating).HasPrecision(3, 1);
             });
 
+            // Project
             modelBuilder.Entity<Project>(entity =>
             {
-                entity.Property(p => p.Budget)
-                      .HasPrecision(18, 2);
+                entity.Property(p => p.Budget).HasPrecision(18, 2);
+                entity.HasOne(p => p.Client)
+                      .WithMany(c => c.Projects)
+                      .HasForeignKey(p => p.ClientId)
+                      .OnDelete(DeleteBehavior.Restrict); // Changed from Cascade to Restrict
             });
 
-            modelBuilder.Entity<Project>()
-                .HasOne(p => p.Client)
-                .WithMany(c => c.Projects)
-                .HasForeignKey(p => p.ClientId);
-
+            // ProjectAssignment
             modelBuilder.Entity<ProjectAssignment>()
                 .HasKey(r => new { r.ProjectId, r.FreelancerId });
-
 
             modelBuilder.Entity<ProjectAssignment>()
                 .HasOne(pf => pf.Project)
                 .WithMany(f => f.AssignedFreelancers)
                 .HasForeignKey(pf => pf.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict); // Avoids multiple paths
 
             modelBuilder.Entity<ProjectAssignment>()
                 .HasOne(pf => pf.Freelancer)
@@ -79,26 +72,27 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasForeignKey(pf => pf.FreelancerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Deliverables
             modelBuilder.Entity<Deliverables>()
-                .HasOne(p => p.project)
-                .WithMany(c => c.Deliverables)
-                .HasForeignKey(p => p.projectId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(d => d.Milestone)
+                .WithMany(m => m.Deliverables)
+                .HasForeignKey(d => d.MilestoneId)
+                .OnDelete(DeleteBehavior.Cascade); // Safe cascade
 
-            // Prevent multiple cascade paths for TaskItem → User
+            // TaskItem
             modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.AssignedToUser)
                 .WithMany()
                 .HasForeignKey(t => t.AssignedToUserId)
-                .OnDelete(DeleteBehavior.Restrict); // or NoAction
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.CreatedByUser)
                 .WithMany()
                 .HasForeignKey(t => t.CreatedByUserId)
-                .OnDelete(DeleteBehavior.Restrict); // or NoAction
+                .OnDelete(DeleteBehavior.Restrict);
 
-
+            // ProjectRequest
             modelBuilder.Entity<ProjectRequest>()
                 .HasKey(r => new { r.ProjectId, r.FreelancerId });
 
@@ -106,50 +100,50 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasOne(r => r.Project)
                 .WithMany(p => p.ProjectRequests)
                 .HasForeignKey(r => r.ProjectId)
-                .OnDelete(  DeleteBehavior.Cascade);
-            
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<ProjectRequest>()
                 .HasOne(r => r.Freelancer)
                 .WithMany(f => f.ProjectRequests)
                 .HasForeignKey(r => r.FreelancerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Logs: restrict task deletion if logs exist
+            // Logs
             modelBuilder.Entity<Logs>()
                 .HasOne(l => l.Task)
                 .WithMany()
                 .HasForeignKey(l => l.TaskId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Logs: delete logs when freelancer (user) is deleted
             modelBuilder.Entity<Logs>()
                 .HasOne(l => l.Freelancer)
                 .WithMany(f => f.Logs)
                 .HasForeignKey(l => l.FreelancerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade); // Reasonable
 
+            // Milestone
             modelBuilder.Entity<Milestone>()
                 .HasOne(p => p.project)
                 .WithMany(c => c.Milestones)
                 .HasForeignKey(p => p.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict); // Avoid multiple cascade paths
 
             modelBuilder.Entity<Milestone>()
                 .Property(m => m.Amount)
                 .HasPrecision(18, 2);
 
+            // Feedback
             modelBuilder.Entity<Feedback>()
-            .HasKey(r => new { r.ProjectId, r.FreelancerId });
+                .HasKey(r => new { r.ProjectId, r.FreelancerId });
 
             modelBuilder.Entity<Feedback>()
-                .Property(f => f.Rating)
-                .HasPrecision(3, 1); //rating with 1 decimal place
+                .Property(f => f.Rating).HasPrecision(3, 1);
 
             modelBuilder.Entity<Feedback>()
                 .HasOne(r => r.Project)
                 .WithMany(p => p.Feedbacks)
                 .HasForeignKey(r => r.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Feedback>()
                 .HasOne(r => r.Freelancer)
@@ -157,6 +151,7 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasForeignKey(r => r.FreelancerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Payments
             modelBuilder.Entity<Payment>()
                 .Property(p => p.Amount)
                 .HasPrecision(18, 2);
@@ -171,9 +166,9 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasOne(p => p.Project)
                 .WithMany()
                 .HasForeignKey(p => p.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict); // safer than NoAction
 
-
+            // TimeSheets
             modelBuilder.Entity<TimeSheet>()
                 .Property(t => t.HourlyRate)
                 .HasPrecision(18, 2);
@@ -188,32 +183,9 @@ namespace ProjectLaunchpad.DataAccess.Data
                 .HasOne(ts => ts.Project)
                 .WithMany(p => p.TimeSheets)
                 .HasForeignKey(ts => ts.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-           /* modelBuilder.Entity<ResumeProject>()
-                .HasOne(rp => rp.Freelancer)
-                .WithMany(f => f.ResumeProjects)
-                .HasForeignKey(rp => rp.FreelancerId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Skill>()
-                .HasOne(s => s.Freelancer)
-                .WithMany(f => f.Skills)
-                .HasForeignKey(s => s.FreelancerId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Experience>()
-                .HasOne(e => e.Freelancer)
-                .WithMany(f => f.Experiences)
-                .HasForeignKey(e => e.FreelancerId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<ParsedResume>()
-                .HasOne(pr => pr.Resume)
-                .WithMany()
-                .HasForeignKey(pr => pr.ResumeId)
-                .OnDelete(DeleteBehavior.Cascade);*/
+                .OnDelete(DeleteBehavior.Restrict);
         }
+
 
     }
 }

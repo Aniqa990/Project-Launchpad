@@ -3,21 +3,24 @@ import { Project, Task, User, Milestone, TimeEntry, Message } from '../types';
 export const mockClients: User[] = [
   {
     id: '1',
-    name: 'Sarah Johnson',
+    firstName: 'Sarah',
+    lastName: 'Johnson',
     email: 'sarah@client.com',
     role: 'client',
     avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=400'
   },
   {
     id: '5',
-    name: 'Michael Chen',
+    firstName: 'Michael',
+    lastName: 'Chen',
     email: 'michael@techcorp.com',
     role: 'client',
     avatar: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=400'
   },
   {
     id: '6',
-    name: 'Emily Rodriguez',
+    firstName: 'Emily',
+    lastName: 'Rodriguez',
     email: 'emily@startup.io',
     role: 'client',
     avatar: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=400'
@@ -27,7 +30,8 @@ export const mockClients: User[] = [
 export const mockFreelancers: User[] = [
   {
     id: '2',
-    name: 'Alex Chen',
+    firstName: 'Alex',
+    lastName: 'Chen',
     email: 'alex@freelancer.com',
     role: 'freelancer',
     skills: ['React', 'TypeScript', 'Node.js', 'GraphQL', 'AWS'],
@@ -38,7 +42,8 @@ export const mockFreelancers: User[] = [
   },
   {
     id: '3',
-    name: 'Maria Garcia',
+    firstName: 'Maria',
+    lastName: 'Garcia',
     email: 'maria@freelancer.com',
     role: 'freelancer',
     skills: ['UI/UX', 'Figma', 'Adobe XD', 'Prototyping', 'User Research'],
@@ -49,7 +54,8 @@ export const mockFreelancers: User[] = [
   },
   {
     id: '4',
-    name: 'David Kumar',
+    firstName: 'David',
+    lastName: 'Kumar',
     email: 'david@freelancer.com',
     role: 'freelancer',
     skills: ['Python', 'Django', 'PostgreSQL', 'Docker', 'Machine Learning'],
@@ -60,7 +66,8 @@ export const mockFreelancers: User[] = [
   },
   {
     id: '7',
-    name: 'Sophie Williams',
+    firstName: 'Sophie',
+    lastName: 'Williams',
     email: 'sophie@freelancer.com',
     role: 'freelancer',
     skills: ['Flutter', 'Dart', 'iOS', 'Android', 'Firebase'],
@@ -71,7 +78,8 @@ export const mockFreelancers: User[] = [
   },
   {
     id: '8',
-    name: 'James Wilson',
+    firstName: 'James',
+    lastName: 'Wilson',
     email: 'james@freelancer.com',
     role: 'freelancer',
     skills: ['DevOps', 'Kubernetes', 'CI/CD', 'Terraform', 'Monitoring'],
@@ -255,8 +263,8 @@ export const mockTasks: Task[] = [
     title: 'Design Homepage Layout',
     description: 'Create wireframes and mockups for the homepage with modern design principles',
     status: 'done',
-    assigneeId: '3',
-    assignee: mockFreelancers[1],
+    assigneeId: '2',
+    assignee: mockFreelancers[0],
     projectId: '1',
     priority: 'high',
     estimatedHours: 8,
@@ -395,12 +403,12 @@ export const mockTasks: Task[] = [
 ];
 
 export const mockSubtasks = [
-  { Id: 1, Title: 'Wireframe Header', Description: 'Design the header section', DueDate: '2024-01-18', Status: 0, TaskItemId: 1 },
-  { Id: 2, Title: 'Wireframe Footer', Description: 'Design the footer section', DueDate: '2024-01-19', Status: 0, TaskItemId: 1 },
-  { Id: 3, Title: 'Product Card UI', Description: 'UI for product cards', DueDate: '2024-01-20', Status: 1, TaskItemId: 2 },
-  { Id: 4, Title: 'Product Card Logic', Description: 'JS logic for product cards', DueDate: '2024-01-21', Status: 1, TaskItemId: 2 },
-  { Id: 5, Title: 'Auth UI', Description: 'UI for authentication', DueDate: '2024-01-22', Status: 0, TaskItemId: 3 },
-  { Id: 6, Title: 'Auth API', Description: 'API for authentication', DueDate: '2024-01-23', Status: 0, TaskItemId: 3 },
+  { Id: '1', Title: 'Wireframe Header', Description: 'Design the header section', DueDate: '2024-01-18', Status: 0, TaskItemId: '1' },
+  { Id: '2', Title: 'Wireframe Footer', Description: 'Design the footer section', DueDate: '2024-01-19', Status: 0, TaskItemId: '1' },
+  { Id: '3', Title: 'Product Card UI', Description: 'UI for product cards', DueDate: '2024-01-20', Status: 1, TaskItemId: '2' },
+  { Id: '4', Title: 'Product Card Logic', Description: 'JS logic for product cards', DueDate: '2024-01-21', Status: 1, TaskItemId: '2' },
+  { Id: '5', Title: 'Auth UI', Description: 'UI for authentication', DueDate: '2024-01-22', Status: 0, TaskItemId: '3' },
+  { Id: '6', Title: 'Auth API', Description: 'API for authentication', DueDate: '2024-01-23', Status: 0, TaskItemId: '3' },
 ];
 
 

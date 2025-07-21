@@ -8,9 +8,10 @@ namespace ProjectLaunchpad.Models.Models.DTOs.DeliverableDTO
 {
     public class UpdateDeliverableDto
     {
-        public string? uploadFiles { get; set; }  // optional
-        public int? projectId { get; set; }       // optional
-        public string? comment { get; set; }      // optional
-        public string? status { get; set; }       // optional
+        public string? UploadFiles { get; set; }
+        public int? MilestoneId { get; set; }
+        public int? ProjectId { get; set; }
+        public string? Comment { get; set; }
+        public string? Status { get; set; }
     }
 }

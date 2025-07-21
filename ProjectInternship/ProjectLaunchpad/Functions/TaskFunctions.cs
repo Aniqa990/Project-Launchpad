@@ -59,6 +59,7 @@ namespace ProjectLaunchpad.Functions
                 Priority = dto.Priority,
                 CreatedByUserId = dto.CreatedByUserId,
                 AssignedToUserId = dto.AssignedToUserId,
+                projectId = dto.ProjectId, // ✅ New line
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -69,6 +70,20 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(task);
             return response;
         }
+
+
+        [Function("GetTasksByProjectId")]
+        public async Task<HttpResponseData> GetTasksByProjectId(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "tasks/project/{projectId:int}")] HttpRequestData req,
+    int projectId)
+        {
+            var tasks = await _unitOfWork.TaskRepository.GetTasksByProjectIdAsync(projectId);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(tasks);
+            return response;
+        }
+
 
         [Function("UpdateTask")]
         public async Task<HttpResponseData> UpdateTaskAsync(

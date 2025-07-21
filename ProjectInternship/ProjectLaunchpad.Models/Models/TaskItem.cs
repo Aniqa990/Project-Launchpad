@@ -40,6 +40,11 @@ namespace ProjectLaunchpad.Models.Models
             public User AssignedToUser { get; set; }
 
 
+            public int projectId { get; set; }
+
+            [ForeignKey("projectId")]
+            public Project? Project { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
             public ICollection<Subtask> Subtasks { get; set; } = new List<Subtask>();

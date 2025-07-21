@@ -2,7 +2,7 @@ import axios from "axios";
 import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback, ProfileSetupData} from "@/types";
 
 const api = axios.create({
-  baseURL: "http://localhost:7071/api",
+  baseURL: "http://localhost:7053/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -88,6 +88,7 @@ export const createTask = async (task: {
   priority: KanbanTaskPriorityLevel;
   createdByUserId: number;
   assignedToUserId: number;
+  ProjectId: number; // <-- Add this
 }): Promise<KanbanTask> => {
   const response = await api.post('/tasks', task);
   return response.data;
@@ -172,7 +173,7 @@ export const getDeliverables = async (): Promise<Deliverable[]> => {
 
 export const createDeliverable = async (deliverable: {
   uploadFiles: string;
-  projectId: number;
+  milestoneId: number;
   comment: string;
   status: string;
 }): Promise<any> => {
@@ -198,7 +199,25 @@ export const deleteDeliverable = async (id: number): Promise<void> => {
 export const getHourlyLogs = async (): Promise<any[]> => {
   const response = await api.get('/logs');
   return response.data;
-}; 
+};
+
+export const getFreelancerHourlyLogs = async (freelancerId: number): Promise<any[]> => {
+  try {
+    const response = await api.get(`/logs/freelancer/${freelancerId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch freelancer hourly logs');
+  }
+};
+
+export const getLogsByProjectId = async (projectId: number): Promise<any[]> => {
+  try {
+    const response = await api.get(`/projects/${projectId}/logs`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch logs by project');
+  }
+};
 
 // PROJECTS
 export const getProjects = async () => {
@@ -261,13 +280,13 @@ export const markMessageRead = async (messageId: number) => {
 export const deleteMessage = async (messageId: number) => {
   const res = await api.delete(`/messages/${messageId}`);
   return res.data;
-}; 
+};
 
 //Feedbacks
 export const getFreelancerFeedbacks = async (freelancerId: number): Promise<Feedback[]> => {
   const response = await api.get(`/feedbacks/freelancer/${freelancerId}`);
   return response.data;
-}; 
+};
 
 // Freelancer Profile Setup API functions
 export const getProfileSetupData = async (): Promise<ProfileSetupData> => {
@@ -284,8 +303,8 @@ export const saveProfileSetupData = async (data: {
   workingHours: string;
   profileData: ProfileSetupData;
 }): Promise<void> => {
-  await api.post('/freelancer/profile-setup', data); //was post
-}; 
+  await api.post('/freelancer/profile-setup', data);
+};
 
 export const updateProfileSetupData = async (data: {
   firstName: string;
@@ -300,7 +319,7 @@ export const updateProfileSetupData = async (data: {
   newPassword?: string;
 }): Promise<void> => {
   await api.put('/freelancer/profile-setup', data);
-}; 
+};
 
 export const getCurrentUserFreelancerProfile = async (userId: number): Promise<FreelancerProfile> => {
   try {
@@ -312,6 +331,53 @@ export const getCurrentUserFreelancerProfile = async (userId: number): Promise<F
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer profile');
   }
+};
+
+// Stripe Payment API
+export const createStripePaymentIntent = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ clientSecret: string }> => {
+  // Note: This uses the backend port 7053
+  const response = await axios.post(
+    'http://localhost:7053/api/payments/create-intent',
+    params,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return response.data;
+};
+
+// New: Stripe Checkout Session API
+export const createStripeCheckoutSession = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ url: string }> => {
+  const response = await axios.post(
+    'http://localhost:7053/api/payments/create-checkout-session',
+    params,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return response.data;
+};
+
+export const getMilestonesByProjectId = async (projectId: number): Promise<any[]> => {
+  const response = await api.get(`/milestones/project/${projectId}`);
+  return response.data;
+};
+
+export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise<any[]> => {
+  const response = await api.get(`/deliverables/milestone/${milestoneId}`);
+  return response.data;
 };
 
 export async function deleteFreelancerProfile(userId: number) {

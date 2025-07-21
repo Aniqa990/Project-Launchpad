@@ -12,8 +12,8 @@ using ProjectLaunchpad.DataAccess.Data;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250716075147_resume-parsing")]
-    partial class resumeparsing
+    [Migration("20250721064252_initialCreate")]
+    partial class initialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -84,6 +84,12 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("MilestoneId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -92,16 +98,15 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("projectId")
-                        .HasColumnType("int");
-
                     b.Property<string>("uploadFiles")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("projectId");
+                    b.HasIndex("MilestoneId");
+
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("deliverables");
                 });
@@ -121,7 +126,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Duration")
+                    b.Property<string>("EndDate")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -129,6 +134,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StartDate")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -183,6 +192,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<int>("FreelancerId")
                         .HasColumnType("int");
 
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
@@ -192,6 +204,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FreelancerId");
+
+                    b.HasIndex("ProjectId");
 
                     b.HasIndex("TaskId");
 
@@ -258,6 +272,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
                     b.Property<int>("FreelancerId")
                         .HasColumnType("int");
 
@@ -283,6 +300,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
 
                     b.HasIndex("FreelancerId");
 
@@ -503,11 +522,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("projectId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedToUserId");
 
                     b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("projectId");
 
                     b.ToTable("taskItems");
                 });
@@ -629,13 +653,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Deliverables", b =>
                 {
-                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "project")
+                    b.HasOne("ProjectLaunchpad.Models.Models.Milestone", "Milestone")
                         .WithMany("Deliverables")
-                        .HasForeignKey("projectId")
+                        .HasForeignKey("MilestoneId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("project");
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", null)
+                        .WithMany("Deliverables")
+                        .HasForeignKey("ProjectId");
+
+                    b.Navigation("Milestone");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Experience", b =>
@@ -660,7 +688,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("Feedbacks")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");
@@ -676,6 +704,12 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ProjectLaunchpad.Models.Models.TaskItem", "Task")
                         .WithMany()
                         .HasForeignKey("TaskId")
@@ -683,6 +717,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("Freelancer");
+
+                    b.Navigation("Project");
 
                     b.Navigation("Task");
                 });
@@ -692,7 +728,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "project")
                         .WithMany("Milestones")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("project");
@@ -700,6 +736,12 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
                 {
+                    b.HasOne("ProjectLaunchpad.Models.Models.ClientProfile", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
                         .WithMany()
                         .HasForeignKey("FreelancerId")
@@ -709,8 +751,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany()
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Client");
 
                     b.Navigation("Freelancer");
 
@@ -722,7 +766,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.ClientProfile", "Client")
                         .WithMany("Projects")
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Client");
@@ -739,7 +783,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("AssignedFreelancers")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");
@@ -758,7 +802,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("ProjectRequests")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");
@@ -813,9 +857,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("projectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("AssignedToUser");
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.TimeSheet", b =>
@@ -829,7 +881,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("TimeSheets")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Freelancer");
@@ -853,6 +905,11 @@ namespace ProjectLaunchpad.DataAccess.Migrations
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Milestone", b =>
+                {
+                    b.Navigation("Deliverables");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Project", b =>
