@@ -7,9 +7,17 @@ export default function Meetings() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const [meetingActive, setMeetingActive] = useState(true);
+  // AssemblyAI transcription state
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [transcribing, setTranscribing] = useState(false);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
+
+  const ASSEMBLYAI_API_KEY = '2a10d51c006c409681db68820636a14d'; // Replace with your real key for testing
 
   const handleStartRecording = async () => {
     setAudioUrl(null);
+    setTranscript(null);
+    setTranscribeError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new window.MediaRecorder(stream);
@@ -20,7 +28,6 @@ export default function Meetings() {
           audioChunks.current.push(event.data);
         }
       };
-      
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
         setAudioUrl(URL.createObjectURL(audioBlob));
@@ -36,6 +43,57 @@ export default function Meetings() {
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       setRecording(false);
+    }
+  };
+
+  // AssemblyAI transcription handler (plain text only)
+  const handleTranscribe = async () => {
+    setTranscribing(true);
+    setTranscribeError(null);
+    setTranscript(null);
+    try {
+      // 1. Get the audio blob from the audioUrl
+      const audioBlob = await fetch(audioUrl!).then(r => r.blob());
+      // 2. Upload the audio to AssemblyAI
+      const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
+        method: 'POST',
+        headers: {
+          'authorization': ASSEMBLYAI_API_KEY
+        },
+        body: audioBlob
+      });
+      const { upload_url } = await uploadRes.json();
+      // 3. Start the transcription job (no word-level timestamps)
+      const transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
+        method: 'POST',
+        headers: {
+          'authorization': ASSEMBLYAI_API_KEY,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({ audio_url: upload_url })
+      });
+      const { id } = await transcriptRes.json();
+      // 4. Poll for completion
+      let completed = false;
+      let transcriptText = '';
+      while (!completed) {
+        await new Promise(res => setTimeout(res, 4000));
+        const pollingRes = await fetch(`https://api.assemblyai.com/v2/transcript/${id}`, {
+          headers: { 'authorization': ASSEMBLYAI_API_KEY }
+        });
+        const pollingData = await pollingRes.json();
+        if (pollingData.status === 'completed') {
+          completed = true;
+          transcriptText = pollingData.text;
+        } else if (pollingData.status === 'failed') {
+          throw new Error('Transcription failed.');
+        }
+      }
+      setTranscript(transcriptText);
+    } catch (err: any) {
+      setTranscribeError(err.message || 'Transcription failed.');
+    } finally {
+      setTranscribing(false);
     }
   };
 
@@ -89,10 +147,31 @@ export default function Meetings() {
             >
               Download Recording
             </a>
+            <button
+              className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              onClick={handleTranscribe}
+              disabled={transcribing}
+            >
+              {transcribing ? 'Transcribing...' : 'Transcribe Audio'}
+            </button>
+            {transcribeError && <div className="text-red-600 mt-2">{transcribeError}</div>}
+            {transcript && (
+              <div className="mt-4">
+                <h3 className="font-semibold mb-2">Transcript</h3>
+                <textarea value={transcript} readOnly className="w-full h-40 mb-2" />
+                <a
+                  href={`data:text/plain;charset=utf-8,${encodeURIComponent(transcript)}`}
+                  download="transcript.txt"
+                  className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                >
+                  Download Transcript
+                </a>
+              </div>
+            )}
           </div>
         )}
         <p className="mt-4 text-gray-500 text-sm">
-          This will record audio using your microphone and let you download the file.
+          This will record audio using your microphone and let you download the file. You can also transcribe the audio and download the transcript as a text file.
         </p>
       </div>
     </div>
