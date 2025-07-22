@@ -17,6 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import { createProject } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
+import FreelancerSuggestions from './FreelancerSuggestions';
 
 export function CreateProject() {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ export function CreateProject() {
   const [milestoneError, setMilestoneError] = useState('');
   const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -128,7 +130,14 @@ export function CreateProject() {
         attachedDocumentPath: projectData.Files[0]?.name || null,
         clientId: user?.id ?? null,
       };
-      await createProject(payload);
+      const response = await createProject(payload);
+      console.log('Create project response:', response);
+      setCreatedProjectId(
+        response?.Id?.toString() ||
+        response?.id?.toString() ||
+        response?.projectId?.toString() ||
+        null
+      );
       toast.success('Project created successfully!');
     } catch (err) {
       toast.error('Failed to create project.');
@@ -156,61 +165,24 @@ export function CreateProject() {
   if (submitted) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 mb-8">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Send className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Created Successfully!</h1>
-          {/* <p className="text-gray-600 mb-8">
-            We've found {matchingFreelancers.length} matching freelancers for your project.
-            Review and invite the ones you'd like to work with.
-          </p> */}
-
-          {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {matchingFreelancers.map((freelancer: any) => (
-              <Card key={freelancer.id} hover className="text-left">
-                <div className="flex items-start space-x-4 mb-4">
-                  <Avatar src={freelancer.avatar} alt={freelancer.name} size="lg" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{freelancer.name}</h3>
-                    <div className="flex items-center mt-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600 ml-1">
-                        {freelancer.rating} ({freelancer.reviews} reviews)
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      ${freelancer.hourlyRate}/hour
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {freelancer.skills?.slice(0, 3).map((skill: string) => (
-                    <Badge key={skill} variant="info" size="sm">{skill}</Badge>
-                  ))}
-                </div>
-
-                <Button 
-                  className="w-full"
-                  variant={selectedFreelancers.includes(freelancer.id) ? 'secondary' : 'primary'}
-                  onClick={() => toggleFreelancerSelection(freelancer.id)}
-                >
-                  {selectedFreelancers.includes(freelancer.id) ? 'Selected' : 'Invite to Project'}
-                </Button>
-              </Card>
-            ))}
-          </div> */}
-
-          <div className="flex justify-center space-x-4 mt-8">
-            <Button variant="outline" onClick={() => navigate('/client/projects')}>
-              View Projects
-            </Button>
-            <Button onClick={() => navigate('/client/dashboard')}>
-              Back to Dashboard
-            </Button>
-          </div>
+          <p className="text-gray-600 mb-8">
+            Now, discover and invite top freelancers for your project.
+          </p>
         </Card>
+        {createdProjectId && <FreelancerSuggestions projectId={createdProjectId} />}
+        <div className="flex justify-center space-x-4 mt-8">
+          <Button variant="outline" onClick={() => navigate('/client/projects')}>
+            View Projects
+          </Button>
+          <Button onClick={() => navigate('/client/dashboard')}>
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }

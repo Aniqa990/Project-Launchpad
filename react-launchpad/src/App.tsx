@@ -22,6 +22,7 @@ import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 import Meetings from './pages/client/Meetings';
+import FreelancerTimesheets from './pages/freelancer/Timesheets';
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
   const { isAuthenticated, user, loading } = useAuth();
@@ -103,7 +104,8 @@ function AppRoutes() {
         <Route path="projects" element={<FreelancerProjects />} />
         <Route path="kanban" element={<KanbanBoard />} />
         <Route path="feedback" element={<Feedback />} />
-        <Route path="settings" element={<Settings />} />  
+        <Route path="settings" element={<Settings />} />
+        <Route path="timesheets" element={<FreelancerTimesheets />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={

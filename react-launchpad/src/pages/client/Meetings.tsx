@@ -6,6 +6,7 @@ export default function Meetings() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const [meetingActive, setMeetingActive] = useState(true);
 
   const handleStartRecording = async () => {
     setAudioUrl(null);
@@ -39,10 +40,30 @@ export default function Meetings() {
   };
 
   return (
-    <div className="p-8 max-w-3xl mx-auto text-center">
-      <h1 className="text-2xl font-bold mb-6">Meetings</h1>
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6 text-center">Meetings</h1>
+      {/* Jitsi JaaS Meeting Section */}
+      <div className="mb-10">
+        <h2 className="text-xl font-bold mb-4 text-center">Jitsi Meeting (JaaS)</h2>
+        <div className="rounded-xl overflow-hidden shadow border border-gray-200 bg-white">
+          {meetingActive ? (
+            <JaaSMeeting onMeetingEnd={() => setMeetingActive(false)} />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <p className="mb-4 text-gray-600">Meeting ended.</p>
+              <button
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+                onClick={() => setMeetingActive(true)}
+              >
+                Rejoin Meeting
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
       {/* Audio Recording Section */}
-      <div className="mb-8">
+      <div className="mt-12 text-center">
+        <h2 className="text-xl font-bold mb-4">Audio Recording</h2>
         {!recording ? (
           <button
             className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
@@ -74,9 +95,6 @@ export default function Meetings() {
           This will record audio using your microphone and let you download the file.
         </p>
       </div>
-      {/* Jitsi JaaS Meeting Section */}
-      <h2 className="text-xl font-bold mt-8 mb-4">Jitsi Meeting (JaaS)</h2>
-      <JaaSMeeting />
     </div>
   );
 } 

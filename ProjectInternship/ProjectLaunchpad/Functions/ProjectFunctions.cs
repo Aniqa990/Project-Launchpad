@@ -5,6 +5,7 @@ using MySqlX.XDevAPI;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO;
+using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
 using ProjectLaunchpad.Models.Models.DTOs.ProjectDTO;
 using ProjectLaunchpad.Models.Models.Enums;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
@@ -167,32 +168,70 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetProjectPostingById")]
         public async Task<HttpResponseData> GetProjectPostingById(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects/{id:int}")] HttpRequestData req,
-            int id)
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects/{id:int}")] HttpRequestData req,
+    int id)
         {
             var project = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
-            var response = req.CreateResponse(project != null ? HttpStatusCode.OK : HttpStatusCode.NotFound);
-            await response.WriteAsJsonAsync(project);
+
+            if (project == null)
+                return req.CreateResponse(HttpStatusCode.NotFound);
+
+            var projectDto = new ProjectPostingDTO
+            {
+                Id = project.Id,
+                ProjectTitle = project.ProjectTitle,
+                Description = project.Description,
+                PaymentType = project.PaymentType,
+                CategoryOrDomain = project.CategoryOrDomain,
+                Deadline = project.Deadline,
+                RequiredSkills = project.RequiredSkills,
+                Budget = project.Budget,
+                NumberOfFreelancers = project.NumberOfFreelancers,
+                Status = project.Status,
+                AttachedDocumentPath = project.AttachedDocumentPath,
+                Milestones = project.Milestones?.Select(m => new CreateMilestoneDto
+                {
+                    // Map milestone fields here, e.g.:
+                    // Title = m.Title,
+                    // Description = m.Description,
+                    // Amount = m.Amount,
+                    // DueDate = m.DueDate
+                }).ToList()
+            };
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(projectDto);
             return response;
         }
-[Function("GetProjectsByClient")]
-public async Task<HttpResponseData> GetProjectsByClient(
-    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "clients/{clientId}/projects")] HttpRequestData req,
-    int clientId)
-{
-    var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientIdAsync(clientId);
 
-    var response = req.CreateResponse(HttpStatusCode.OK);
-    await response.WriteAsJsonAsync(projects);
-    return response;
-}
+        //[Function("GetProjectPostingById")]
+        //public async Task<HttpResponseData> GetProjectPostingById(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects/{id:int}")] HttpRequestData req,
+        //    int id)
+        //{
+        //    var project = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
+        //    var response = req.CreateResponse(project != null ? HttpStatusCode.OK : HttpStatusCode.NotFound);
+        //    await response.WriteAsJsonAsync(project);
+        //    return response;
+        //}
+        [Function("GetProjectsByClient")]
+        public async Task<HttpResponseData> GetProjectsByClient(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "clients/{clientId}/projects")] HttpRequestData req,
+            int clientId)
+        {
+            var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientIdAsync(clientId);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(projects);
+            return response;
+        }
 
 
 
         [Function("GetProjectsByFreelancer")]
         public async Task<HttpResponseData> GetProjectsByFreelancer(
-    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancers/{freelancerId}/projects")] HttpRequestData req,
-    int freelancerId)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "freelancers/{freelancerId}/projects")] HttpRequestData req,
+            int freelancerId)
         {
             var projects = await _unitOfWork.ProjectRepository.GetProjectsByFreelancerAsync(freelancerId);
 
