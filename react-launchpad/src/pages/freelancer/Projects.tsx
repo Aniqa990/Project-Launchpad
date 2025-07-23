@@ -8,7 +8,7 @@ import { Project } from '@/types';
 export function FreelancerProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'draft' | 'active' | 'completed' | 'cancelled'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -16,8 +16,36 @@ export function FreelancerProjects() {
       if (!user?.id) return;
       try {
         const projectsData = await getFreelancerProjects(user.id);
-        setProjects(projectsData);
-        console.log(projectsData);
+        const transformedProjects: Project[] = projectsData.map((project: any) => ({
+          id: project.Id,
+          title: project.Title,
+          description: project.Description,
+          status: project.Status,
+          budget: project.Budget,
+          deadline: project.Deadline,
+          clientId: project.ClientId,
+          category: project.Category,
+          paymentType: project.PaymentType,
+          numberOfFreelancers: project.NumberOfFreelancers,
+          attachedDocumentPath: project.AttachedDocumentPath,
+          client: project.Client ? {
+            firstName: project.Client.FirstName,
+            lastName: project.Client.LastName,
+            email: project.Client.Email,
+            password: '',
+            phone: project.Client.PhoneNo,
+            avatar: '',
+            role: project.Client.Role,
+            gender: project.Client.Gender,
+            location: '',
+            joinedDate: '',
+          } : undefined,
+          skills: project.Skills || [],
+          team: project.Team || [],
+          progress: project.Progress ?? 0,
+          milestones: project.Milestones || [],
+        }));
+        setProjects(transformedProjects);
       } catch (error) {
         setProjects([]);
       }
@@ -35,6 +63,7 @@ export function FreelancerProjects() {
 
   const tabs = [
     { id: 'all', label: 'All Projects', count: projects.length },
+    { id: 'draft', label: 'Draft', count: projects.filter((p: Project) => p.status === 'draft').length },
     { id: 'active', label: 'Active', count: projects.filter((p: Project) => p.status === 'active').length },
     { id: 'completed', label: 'Completed', count: projects.filter((p: Project) => p.status === 'completed').length },
     { id: 'cancelled', label: 'Cancelled', count: projects.filter((p: Project) => p.status === 'cancelled').length }

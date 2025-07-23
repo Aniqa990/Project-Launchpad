@@ -16,9 +16,12 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createProject } from '../../apiendpoints';
+import { useAuth } from '../../contexts/AuthContext';
+import FreelancerSuggestions from './FreelancerSuggestions';
 
 export function CreateProject() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [projectData, setProjectData] = useState({
     ProjectTitle: '',
@@ -27,7 +30,7 @@ export function CreateProject() {
     Files: [] as File[],
     Budget: '',
     Deadline: '',
-    PaymentType: 'Fixed',
+    PaymentType: 'fixed', // default to lowercase for backend
     CategoryOrDomain: '',
     NumberOfFreelancers: 1,
     Milestones: '',
@@ -44,8 +47,9 @@ export function CreateProject() {
     dueDate: '',
   });
   const [milestoneError, setMilestoneError] = useState('');
-  const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone'>('fixed');
+  const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone' | 'hourly'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -93,6 +97,11 @@ export function CreateProject() {
       setMilestoneError('All fields are required.');
       return;
     }
+    // Validate milestone due date does not exceed project deadline
+    if (projectData.Deadline && new Date(milestoneInput.dueDate) > new Date(projectData.Deadline)) {
+      setMilestoneError('Milestone due date cannot exceed the project deadline.');
+      return;
+    }
     setMilestones(prev => [...prev, milestoneInput]);
     setMilestoneInput({ title: '', description: '', amount: '', dueDate: '' });
     setMilestoneError('');
@@ -105,21 +114,36 @@ export function CreateProject() {
   const handleSubmitProject = async () => {
     setSubmitted(true);
     try {
+      const deadlineISO = projectData.Deadline ? new Date(projectData.Deadline).toISOString() : '';
       const payload: any = {
-        ProjectTitle: projectData.ProjectTitle,
-        Description: projectData.Description,
-        PaymentType: projectData.PaymentType,
-        CategoryOrDomain: projectData.CategoryOrDomain,
-        Deadline: projectData.Deadline,
-        RequiredSkills: projectData.Skills.join(','),
-        Budget: Number(projectData.Budget),
-        NumberOfFreelancers: projectData.NumberOfFreelancers,
-        Milestones: budgetDivision === 'milestone'
-          ? milestones.map(m => m.title).join(',')
-          : 'initial milestone',
-        AttachedDocumentPath: projectData.Files[0]?.name || '',
+        projectTitle: projectData.ProjectTitle,
+        description: projectData.Description,
+        paymentType: projectData.PaymentType.toLowerCase(),
+        categoryOrDomain: projectData.CategoryOrDomain,
+        deadline: deadlineISO,
+        requiredSkills: projectData.Skills.join(','),
+        budget: budgetDivision === 'hourly' ? undefined : Number(projectData.Budget),
+        hourlyRate: budgetDivision === 'hourly' ? Number(projectData.Budget) : undefined,
+        numberOfFreelancers: projectData.NumberOfFreelancers,
+        milestones: budgetDivision === 'milestone'
+          ? milestones.map(m => ({
+              title: m.title,
+              description: m.description,
+              amount: Number(m.amount),
+              dueDate: m.dueDate
+            }))
+          : [],
+        attachedDocumentPath: projectData.Files[0]?.name || null,
+        clientId: user?.id ?? null,
       };
-      await createProject(payload);
+      const response = await createProject(payload);
+      console.log('Create project response:', response);
+      setCreatedProjectId(
+        response?.Id?.toString() ||
+        response?.id?.toString() ||
+        response?.projectId?.toString() ||
+        null
+      );
       toast.success('Project created successfully!');
     } catch (err) {
       toast.error('Failed to create project.');
@@ -147,61 +171,24 @@ export function CreateProject() {
   if (submitted) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 mb-8">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Send className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Created Successfully!</h1>
-          {/* <p className="text-gray-600 mb-8">
-            We've found {matchingFreelancers.length} matching freelancers for your project.
-            Review and invite the ones you'd like to work with.
-          </p> */}
-
-          {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {matchingFreelancers.map((freelancer: any) => (
-              <Card key={freelancer.id} hover className="text-left">
-                <div className="flex items-start space-x-4 mb-4">
-                  <Avatar src={freelancer.avatar} alt={freelancer.name} size="lg" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{freelancer.name}</h3>
-                    <div className="flex items-center mt-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600 ml-1">
-                        {freelancer.rating} ({freelancer.reviews} reviews)
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      ${freelancer.hourlyRate}/hour
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {freelancer.skills?.slice(0, 3).map((skill: string) => (
-                    <Badge key={skill} variant="info" size="sm">{skill}</Badge>
-                  ))}
-                </div>
-
-                <Button 
-                  className="w-full"
-                  variant={selectedFreelancers.includes(freelancer.id) ? 'secondary' : 'primary'}
-                  onClick={() => toggleFreelancerSelection(freelancer.id)}
-                >
-                  {selectedFreelancers.includes(freelancer.id) ? 'Selected' : 'Invite to Project'}
-                </Button>
-              </Card>
-            ))}
-          </div> */}
-
-          <div className="flex justify-center space-x-4 mt-8">
-            <Button variant="outline" onClick={() => navigate('/client/projects')}>
-              View Projects
-            </Button>
-            <Button onClick={() => navigate('/client/dashboard')}>
-              Back to Dashboard
-            </Button>
-          </div>
+          <p className="text-gray-600 mb-8">
+            Now, discover and invite top freelancers for your project.
+          </p>
         </Card>
+        {createdProjectId && <FreelancerSuggestions projectId={createdProjectId} />}
+        <div className="flex justify-center space-x-4 mt-8">
+          <Button variant="outline" onClick={() => navigate('/client/projects')}>
+            View Projects
+          </Button>
+          <Button onClick={() => navigate('/client/dashboard')}>
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -273,6 +260,19 @@ export function CreateProject() {
                 rows={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Describe your project in detail. What are you looking to build? What are your requirements and expectations?"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category or Domain *
+              </label>
+              <input
+                type="text"
+                value={projectData.CategoryOrDomain}
+                onChange={(e) => handleInputChange('CategoryOrDomain', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Web Development, Mobile App, Data Science"
               />
             </div>
           </div>
@@ -383,23 +383,39 @@ export function CreateProject() {
                 <button
                   type="button"
                   className={`px-4 py-2 rounded-lg border-2 ${budgetDivision === 'fixed' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
-                  onClick={() => setBudgetDivision('fixed')}
+                  onClick={() => {
+                    handleInputChange('PaymentType', 'fixed');
+                    setBudgetDivision('fixed');
+                  }}
                 >
                   Fixed
                 </button>
                 <button
                   type="button"
                   className={`px-4 py-2 rounded-lg border-2 ${budgetDivision === 'milestone' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
-                  onClick={() => setBudgetDivision('milestone')}
+                  onClick={() => {
+                    handleInputChange('PaymentType', 'milestone');
+                    setBudgetDivision('milestone');
+                  }}
                 >
                   Milestone-based
+                </button>
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded-lg border-2 ${budgetDivision === 'hourly' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
+                  onClick={() => {
+                    handleInputChange('PaymentType', 'hourly');
+                    setBudgetDivision('hourly');
+                  }}
+                >
+                  Hourly
                 </button>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Budget Amount *
+                {budgetDivision === 'hourly' ? 'Hourly Rate *' : 'Budget Amount *'}
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -408,11 +424,13 @@ export function CreateProject() {
                   value={projectData.Budget}
                   onChange={(e) => handleInputChange('Budget', e.target.value)}
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={projectData.PaymentType === 'Fixed' ? '5000' : '75'}
+                  placeholder={budgetDivision === 'hourly' ? 'Hourly Rate' : (projectData.PaymentType === 'fixed' ? '5000' : '75')}
                 />
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {projectData.PaymentType === 'Fixed' ? 'Total project budget' : 'Hourly rate'}
+                {budgetDivision === 'hourly'
+                  ? 'Enter your hourly rate for this project'
+                  : (projectData.PaymentType === 'fixed' ? 'Total project budget' : 'Hourly rate')}
               </p>
             </div>
 
@@ -426,6 +444,24 @@ export function CreateProject() {
                 onChange={(e) => handleInputChange('Deadline', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Freelancers *
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={projectData.NumberOfFreelancers}
+                onChange={(e) => handleInputChange('NumberOfFreelancers', Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="1"
+                disabled={budgetDivision === 'fixed'}
+              />
+              {budgetDivision === 'fixed' && (
+                <p className="text-xs text-gray-400 mt-1">Number of freelancers is not applicable for fixed price projects.</p>
+              )}
             </div>
           </div>
         )}
@@ -505,7 +541,8 @@ export function CreateProject() {
               !projectData.ProjectTitle || !projectData.Description ||
               projectData.Skills.length === 0 ||
               !projectData.Budget || !projectData.Deadline ||
-              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate)))
+              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate))) ||
+              (budgetDivision === 'fixed' && !projectData.NumberOfFreelancers)
             }>
               Create Project
             </Button>

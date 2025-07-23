@@ -23,6 +23,8 @@ import axios from 'axios';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { Avatar } from '../ui/avatar';
+import { Modal } from '../ui/Modal';
 // Remove import { mockSubtasks } from '../../utils/mockData';
 
 interface KanbanColumnProps {
@@ -313,7 +315,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading }: {
     assignedToUserId: task.AssignedToUserId,
     status: task.Status,
   } : {});
-  React.useEffect(() => {
+  useEffect(() => {
     if (task) {
       setForm({
         title: task.Title,

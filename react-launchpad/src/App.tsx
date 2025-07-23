@@ -27,6 +27,8 @@ import { PlatformSettings } from './pages/platform/Settings';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
+import Meetings from './pages/client/Meetings';
+import FreelancerTimesheets from './pages/freelancer/Timesheets';
 
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
@@ -124,6 +126,7 @@ function AppRoutes() {
         <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
+        <Route path="meetings" element={<Meetings />} />
       </Route>
       
       <Route path="/freelancer/*" element={
@@ -137,6 +140,7 @@ function AppRoutes() {
         <Route path="kanban" element={<KanbanBoard />} />
         <Route path="feedback" element={<Feedback />} />
         <Route path="settings" element={<FreelancerSettings />} />  
+        <Route path="timesheets" element={<FreelancerTimesheets />} />
         <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
       </Route>

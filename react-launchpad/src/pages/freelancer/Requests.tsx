@@ -112,7 +112,7 @@ export function FreelancerRequests() {
         </div>
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
-        {request.skills?.split(',').map(s => s.trim()).slice(0, 3).map((skill: string) => (
+        {request.skills?.split(',').map(s => s.trim()).slice(0, 3).map((skill: string) => ( //skills are comma separated
           <Badge key={skill} variant="info" size="sm">{skill}</Badge>
         ))}
         {request.skills?.split(',').length > 3 && (

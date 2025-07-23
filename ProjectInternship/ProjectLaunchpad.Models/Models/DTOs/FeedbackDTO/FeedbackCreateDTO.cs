@@ -10,8 +10,8 @@ namespace ProjectLaunchpad.Models.Models.DTOs.FeedbackDTO
     {
         public int ProjectId { get; set; }
         public int FreelancerId { get; set; }
-        public string? Review { get; set; } = string.Empty;
-        public decimal? Rating { get; set; }
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public string Review { get; set; } = string.Empty;
+        public decimal Rating { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

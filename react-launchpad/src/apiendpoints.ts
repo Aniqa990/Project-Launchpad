@@ -245,6 +245,17 @@ export const getProjects = async () => {
   return lowercaseFirstLetterKeys(res.data);
 };
 
+export const getProjectById = async (id: string | number) => {
+  const res = await api.get(`/projects/${id}`);
+  return res.data;
+};
+
+// Fetch projects for a specific client
+export const getClientProjects = async (clientId: number) => {
+  const res = await api.get(`/clients/${clientId}/projects`);
+  return res.data;
+};
+
 export const createProject = async (payload: any) => {
   const res = await api.post('/projects', payload);
   return res.data;

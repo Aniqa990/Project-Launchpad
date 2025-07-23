@@ -121,7 +121,7 @@ export interface Milestone {
   description: string;
   amount: number;
   dueDate: string;
-  status: 'pending' | 'approved' | 'paid' | string;
+  status: 'pending' | 'submitted' | string;
   deliverables: string[];
 }
 
