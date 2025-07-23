@@ -104,7 +104,7 @@ function AppRoutes() {
         <Route path="projects" element={<FreelancerProjects />} />
         <Route path="kanban" element={<KanbanBoard />} />
         <Route path="feedback" element={<Feedback />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="settings" element={<Settings />} />  
         <Route path="timesheets" element={<FreelancerTimesheets />} />
       </Route>
 

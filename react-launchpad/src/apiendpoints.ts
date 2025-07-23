@@ -322,3 +322,11 @@ export const getCurrentUserFreelancerProfile = async (userId: number): Promise<F
     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer profile');
   }
 };
+
+export async function getMilestonesByProjectId(projectId: number | string) {
+  const response = await fetch(`http://localhost:7071/api/milestones/project/${projectId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch milestones');
+  }
+  return response.json();
+}

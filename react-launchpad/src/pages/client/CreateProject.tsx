@@ -47,7 +47,7 @@ export function CreateProject() {
     dueDate: '',
   });
   const [milestoneError, setMilestoneError] = useState('');
-  const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone'>('fixed');
+  const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone' | 'hourly'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
 
@@ -97,6 +97,11 @@ export function CreateProject() {
       setMilestoneError('All fields are required.');
       return;
     }
+    // Validate milestone due date does not exceed project deadline
+    if (projectData.Deadline && new Date(milestoneInput.dueDate) > new Date(projectData.Deadline)) {
+      setMilestoneError('Milestone due date cannot exceed the project deadline.');
+      return;
+    }
     setMilestones(prev => [...prev, milestoneInput]);
     setMilestoneInput({ title: '', description: '', amount: '', dueDate: '' });
     setMilestoneError('');
@@ -117,7 +122,8 @@ export function CreateProject() {
         categoryOrDomain: projectData.CategoryOrDomain,
         deadline: deadlineISO,
         requiredSkills: projectData.Skills.join(','),
-        budget: Number(projectData.Budget),
+        budget: budgetDivision === 'hourly' ? undefined : Number(projectData.Budget),
+        hourlyRate: budgetDivision === 'hourly' ? Number(projectData.Budget) : undefined,
         numberOfFreelancers: projectData.NumberOfFreelancers,
         milestones: budgetDivision === 'milestone'
           ? milestones.map(m => ({
@@ -394,12 +400,22 @@ export function CreateProject() {
                 >
                   Milestone-based
                 </button>
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded-lg border-2 ${budgetDivision === 'hourly' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
+                  onClick={() => {
+                    handleInputChange('PaymentType', 'hourly');
+                    setBudgetDivision('hourly');
+                  }}
+                >
+                  Hourly
+                </button>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Budget Amount *
+                {budgetDivision === 'hourly' ? 'Hourly Rate *' : 'Budget Amount *'}
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -408,11 +424,13 @@ export function CreateProject() {
                   value={projectData.Budget}
                   onChange={(e) => handleInputChange('Budget', e.target.value)}
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={projectData.PaymentType === 'fixed' ? '5000' : '75'}
+                  placeholder={budgetDivision === 'hourly' ? 'Hourly Rate' : (projectData.PaymentType === 'fixed' ? '5000' : '75')}
                 />
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {projectData.PaymentType === 'fixed' ? 'Total project budget' : 'Hourly rate'}
+                {budgetDivision === 'hourly'
+                  ? 'Enter your hourly rate for this project'
+                  : (projectData.PaymentType === 'fixed' ? 'Total project budget' : 'Hourly rate')}
               </p>
             </div>
 
@@ -421,7 +439,7 @@ export function CreateProject() {
                 Project Deadline *
               </label>
               <input
-                type="datetime-local"
+                type="date"
                 value={projectData.Deadline}
                 onChange={(e) => handleInputChange('Deadline', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -439,7 +457,11 @@ export function CreateProject() {
                 onChange={(e) => handleInputChange('NumberOfFreelancers', Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="1"
+                disabled={budgetDivision === 'fixed'}
               />
+              {budgetDivision === 'fixed' && (
+                <p className="text-xs text-gray-400 mt-1">Number of freelancers is not applicable for fixed price projects.</p>
+              )}
             </div>
           </div>
         )}
@@ -519,7 +541,8 @@ export function CreateProject() {
               !projectData.ProjectTitle || !projectData.Description ||
               projectData.Skills.length === 0 ||
               !projectData.Budget || !projectData.Deadline ||
-              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate)))
+              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate))) ||
+              (budgetDivision === 'fixed' && !projectData.NumberOfFreelancers)
             }>
               Create Project
             </Button>

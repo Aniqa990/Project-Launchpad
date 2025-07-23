@@ -12,9 +12,10 @@ import {
   Calendar,
   Filter,
   Search,
-  Plus
+  Plus,
+  Pencil
 } from 'lucide-react';
-import { getClientProjects } from '../../apiendpoints';
+import { getClientProjects, getProjectById, updateProject } from '../../apiendpoints';
 
 interface Project {
   Id: number;
@@ -37,6 +38,15 @@ export function ClientProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState<any>({});
+  const [formErrors, setFormErrors] = useState<any>({});
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState('');
+  const [updateError, setUpdateError] = useState('');
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -89,9 +99,12 @@ export function ClientProjects() {
 
   const statusCounts = getStatusCounts();
 
+  // Remove modal logic and use navigation for viewDetails
   const viewDetails = (projectId: number) => {
     navigate(`/workspace/${projectId}`);
   };
+
+  // Remove editProject function
 
   const createNewProject = () => {
     navigate('/client/create-project');
@@ -283,15 +296,16 @@ export function ClientProjects() {
                     </div>
                   </div>
                   
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => viewDetails(project.Id)}
-                    className="ml-4"
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    View Details
-                  </Button>
+                  <div className="flex flex-col gap-2 ml-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => viewDetails(project.Id)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      View Details
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -311,6 +325,7 @@ export function ClientProjects() {
           </div>
         </CardContent>
       </Card>
+      {/* Remove Details Modal from the render tree */}
     </div>
   );
 }
