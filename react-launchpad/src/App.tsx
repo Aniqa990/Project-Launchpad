@@ -11,6 +11,7 @@ import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
 import { ClientPayments } from './pages/client/Payments';
 import { ClientMessages } from './pages/client/Messages';
+import MilestoneTracker from './pages/client/MilestoneTracker';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
@@ -23,6 +24,8 @@ import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
+import MeetingRoom from './pages/client/MeetingRoom';
+import FreelancerMeetingRoom from './pages/freelancer/MeetingRoom';
 
 class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
   constructor(props: any) {
@@ -114,9 +117,11 @@ function AppRoutes() {
         <Route path="projects" element={<ClientProjects />} />
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
+        <Route path="milestones" element={<MilestoneTracker />} />
         <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<Settings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
+        <Route path="meetings" element={<MeetingRoom />} />
       </Route>
       
       <Route path="/freelancer/*" element={
@@ -132,6 +137,7 @@ function AppRoutes() {
         <Route path="settings" element={<Settings />} />  
         <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
+        <Route path="meetings" element={<FreelancerMeetingRoom />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={

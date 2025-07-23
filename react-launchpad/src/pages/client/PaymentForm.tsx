@@ -1,42 +1,40 @@
 import React, { useState } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import axios from "axios";
-
-// Add import for the new API function
 import { createStripePaymentIntent, createStripeCheckoutSession } from "../../apiendpoints";
-// Add fetch for Stripe Checkout session
 
-const PaymentForm = () => {
+interface PaymentFormProps {
+  clientId: number;
+  freelancerId?: number;
+  projectId: number;
+  milestoneId: number;
+  amount: number;
+}
+
+const PaymentForm: React.FC<PaymentFormProps> = ({ clientId, freelancerId = 1, projectId, milestoneId, amount }) => {
   const stripe = useStripe();
   const elements = useElements();
-
-  const [amount] = useState(50.75); // can be dynamic
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   const handlePayment = async () => {
     setLoading(true);
     setMessage("");
-
     try {
-      // 1. Call your backend to create PaymentIntent using the new API function
       const { clientSecret } = await createStripePaymentIntent({
-        clientId: 1,
-        freelancerId: 2,
-        projectId: 3,
+        clientId,
+        freelancerId,
+        projectId,
         paymentType: "Milestone",
-        milestoneId: 4,
+        milestoneId,
         timesheetId: null,
-        amount: amount,
+        amount,
       });
-
-      // 2. Confirm card payment on frontend
       const result = await stripe?.confirmCardPayment(clientSecret, {
         payment_method: {
           card: elements?.getElement(CardElement)!,
         },
       });
-
       if (result?.error) {
         setMessage("  Payment failed: " + result.error.message);
       } else if (result?.paymentIntent?.status === "succeeded") {
@@ -49,20 +47,18 @@ const PaymentForm = () => {
     }
   };
 
-  // Handler for Stripe Checkout (hosted page)
   const handleStripeCheckout = async () => {
     setLoading(true);
     setMessage("");
     try {
-      // Use the same payload as handlePayment, but call the new API
       const { url } = await createStripeCheckoutSession({
-        clientId: 1,
-        freelancerId: 2,
-        projectId: 3,
+        clientId,
+        freelancerId,
+        projectId,
         paymentType: "Milestone",
-        milestoneId: 4,
+        milestoneId,
         timesheetId: null,
-        amount: amount,
+        amount,
       });
       if (url) {
         window.location.href = url;
@@ -99,4 +95,4 @@ const PaymentForm = () => {
   );
 };
 
-export default PaymentForm;
+export default PaymentForm; 

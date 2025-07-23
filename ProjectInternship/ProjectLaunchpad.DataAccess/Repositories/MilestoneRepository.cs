@@ -62,21 +62,21 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task<IEnumerable<Milestone>> GetPendingMilestonesAsync()
         {
             return await _db.milestones
-                .Where(m => m.Status == MilestoneStatus.Pending)
+                .Where(m => m.Status == MilestoneStatus.NotSelected)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Milestone>> GetSubmittedMilestonesAsync()
         {
             return await _db.milestones
-                .Where(m => m.Status == MilestoneStatus.Submitted)
+                .Where(m => m.Status == MilestoneStatus.Completed)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Milestone>> GetUnderReviewMilestonesAsync()
         {
             return await _db.milestones
-                .Where(m => m.Status == MilestoneStatus.UnderReview).ToListAsync();
+                .Where(m => m.Status == MilestoneStatus.InProgress).ToListAsync();
         }
     }
 }

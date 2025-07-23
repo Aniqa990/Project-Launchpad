@@ -81,7 +81,7 @@ namespace ProjectLaunchpad.Functions
             milestone.SubmissionDate = dto.SubmissionDate;
             milestone.SubmittedFileUrls = dto.SubmittedFileUrls;
             milestone.FreelancerComments = dto.FreelancerComments;
-            milestone.Status = MilestoneStatus.Submitted;
+            milestone.Status = MilestoneStatus.Completed;
 
             await _unitOfWork.MilestoneRepository.UpdateMilestoneAsync(milestone);
             await _unitOfWork.SaveAsync();

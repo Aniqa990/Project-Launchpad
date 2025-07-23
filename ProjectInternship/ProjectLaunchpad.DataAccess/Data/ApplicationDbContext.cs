@@ -34,6 +34,14 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<Experience> experiences { get; set; }
         public DbSet<Project> projects { get; set; }
 
+        public DbSet<Meeting> Meetings { get; set; }
+        public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
+
+        public DbSet<MeetingAudioRecording> meetingAudioRecordings { get; set; }
+
+        public DbSet<Notification> notifications { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

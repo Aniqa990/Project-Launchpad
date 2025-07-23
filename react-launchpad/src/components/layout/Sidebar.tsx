@@ -37,6 +37,7 @@ export function Sidebar() {
     { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
+    { icon: LayoutDashboard, label: 'Meetings', path: '/client/meetings' },
   ];
 
   const freelancerMenuItems = [
@@ -52,6 +53,7 @@ export function Sidebar() {
     { icon: MessageSquare, label: 'Messages', path: '/chat' },
     { icon: Star, label: 'Feedback', path: '/freelancer/feedback' },
     { icon: Settings, label: 'Settings', path: '/freelancer/settings' },
+    { icon: Link, label: 'Meetings', path: '/freelancer/meetings' },
   ];
 
   const menuItems = user.role === 'client' ? clientMenuItems : freelancerMenuItems;

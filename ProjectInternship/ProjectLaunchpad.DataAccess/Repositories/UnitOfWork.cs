@@ -33,6 +33,15 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IFeedbackRepository Feedbacks { get; }
 
 
+        public IMeetingRepository Meeting { get; private set; }
+        public IMeetingParticipantRepository MeetingParticipant { get; private set; }
+
+        public IMeetingAudioRecordingRepository MeetingAudioRecording { get; private set; }
+
+        public INotificationRepository Notification { get; private set; }
+
+
+
         // 
 
         public UnitOfWork(ApplicationDbContext db)
@@ -52,6 +61,11 @@ namespace ProjectLaunchpad.Repositories.Repositories
             ClientProfiles = new ClientProfileRepository(_db);
             TimeSheet = new TimeSheetRepository(_db);
             Feedbacks = new FeedbackRepository(_db);
+            Meeting = new MeetingRepository(_db);
+            MeetingParticipant = new MeetingParticipantRepository(_db);
+
+            MeetingAudioRecording = new MeetingAudioRecordingRepository(_db);
+            Notification = new NotificationRepository(_db);
 
             ///
         }

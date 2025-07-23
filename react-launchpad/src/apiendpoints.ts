@@ -377,3 +377,24 @@ export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise
   const response = await api.get(`/deliverables/milestone/${milestoneId}`);
   return response.data;
 };
+
+// Get projects by client id
+export const getClientProjects = async (clientId: number) => {
+  try {
+    const response = await api.get(`/clients/${clientId}/projects`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch client projects');
+  }
+};
+
+// NOTIFICATIONS
+export const getNotifications = async (userId: number) => {
+  const response = await api.get(`/notifications/${userId}`);
+  return response.data;
+};
+
+export const markNotificationRead = async (notificationId: number) => {
+  const response = await api.put(`/notifications/${notificationId}/read`);
+  return response.data;
+};
