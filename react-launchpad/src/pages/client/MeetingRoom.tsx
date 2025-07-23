@@ -108,14 +108,18 @@ export default function Meetings() {
     }
   };
 
-  // AssemblyAI transcription handler (plain text only)
+  // AssemblyAI transcription handler (with timestamps)
   const handleTranscribe = async () => {
     setTranscribing(true);
     setTranscribeError(null);
     setTranscript(null);
     try {
-      // 1. Get the audio blob from the audioUrl
-      const audioBlob = await fetch(audioUrl!).then(r => r.blob());
+      if (!audioUrl) {
+        setTranscribeError('No audio to transcribe.');
+        setTranscribing(false);
+        return;
+      }
+      const audioBlob = await fetch(audioUrl).then(r => r.blob());
       // 2. Upload the audio to AssemblyAI
       const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
         method: 'POST',
@@ -125,19 +129,54 @@ export default function Meetings() {
         body: audioBlob
       });
       const { upload_url } = await uploadRes.json();
-      // 3. Start the transcription job (no word-level timestamps)
-      const transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
+      if (!upload_url) {
+        setTranscribeError('Audio upload failed.');
+        setTranscribing(false);
+        return;
+      }
+      // 3. Start the transcription job (with word-level timestamps)
+      let transcriptBody: any = {
+        audio_url: upload_url,
+        words: true,
+        punctuate: true,
+        format_text: true
+      };
+      let transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
         method: 'POST',
         headers: {
           'authorization': ASSEMBLYAI_API_KEY,
           'content-type': 'application/json'
         },
-        body: JSON.stringify({ audio_url: upload_url })
+        body: JSON.stringify(transcriptBody)
       });
-      const { id } = await transcriptRes.json();
+      let transcriptJson = await transcriptRes.json();
+      // Fallback: If error is about invalid schema or unsupported param, try without words
+      if (!transcriptJson.id && transcriptJson.error && transcriptJson.error.toLowerCase().includes('invalid endpoint schema')) {
+        transcriptBody = {
+          audio_url: upload_url,
+          punctuate: true,
+          format_text: true
+        };
+        transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
+          method: 'POST',
+          headers: {
+            'authorization': ASSEMBLYAI_API_KEY,
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify(transcriptBody)
+        });
+        transcriptJson = await transcriptRes.json();
+      }
+      const id = transcriptJson.id;
+      if (!id) {
+        setTranscribeError(transcriptJson.error || 'Failed to start transcription job. Please try again.');
+        setTranscribing(false);
+        return;
+      }
       // 4. Poll for completion
       let completed = false;
       let transcriptText = '';
+      let words = [];
       while (!completed) {
         await new Promise(res => setTimeout(res, 4000));
         const pollingRes = await fetch(`https://api.assemblyai.com/v2/transcript/${id}`, {
@@ -147,13 +186,45 @@ export default function Meetings() {
         if (pollingData.status === 'completed') {
           completed = true;
           transcriptText = pollingData.text;
+          words = pollingData.words || [];
         } else if (pollingData.status === 'failed') {
-          throw new Error('Transcription failed.');
+          setTranscribeError(pollingData.error || 'Transcription failed.');
+          setTranscribing(false);
+          return;
         }
       }
-      setTranscript(transcriptText);
-    } catch (err: any) {
-      setTranscribeError(err.message || 'Transcription failed.');
+      // 5. Format transcript with timestamps based on pauses
+      let formatted = '';
+      if (words && words.length > 0) {
+        let segment = [];
+        let lastEnd = 0;
+        let lastStart = words[0].start;
+        const PAUSE_THRESHOLD = 1000; // 1 second
+        for (let i = 0; i < words.length; i++) {
+          const w = words[i];
+          // If this word starts more than 1s after the previous word ended, start a new segment
+          if (i > 0 && w.start - lastEnd > PAUSE_THRESHOLD) {
+            // Output the previous segment
+            const ts = new Date(lastStart).toISOString().substr(11, 8);
+            formatted += `[${ts}] ${segment.join(' ')}\n`;
+            // Start new segment
+            segment = [];
+            lastStart = w.start;
+          }
+          segment.push(w.text);
+          lastEnd = w.end;
+        }
+        // Output the last segment
+        if (segment.length > 0) {
+          const ts = new Date(lastStart).toISOString().substr(11, 8);
+          formatted += `[${ts}] ${segment.join(' ')}\n`;
+        }
+      } else {
+        formatted = transcriptText;
+      }
+      setTranscript(formatted);
+    } catch (err) {
+      setTranscribeError('Transcription failed.');
     } finally {
       setTranscribing(false);
     }
@@ -189,6 +260,7 @@ export default function Meetings() {
       setMeetingRoomId(res.data.roomId);
       setShowMeeting(true);
       setMeetingActive(true);
+      await handleStartRecording(); // Start recording automatically
     } catch (err: any) {
       setError(err?.response?.data || 'Failed to start meeting.');
     } finally {
@@ -291,6 +363,7 @@ export default function Meetings() {
       {/* Audio Recording Section */}
       <div className="mt-12 text-center">
         <h2 className="text-xl font-bold mb-4">Audio Recording</h2>
+        {/* Manual recording controls */}
         {!recording ? (
           <button
             className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
