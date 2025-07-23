@@ -31,31 +31,8 @@ export function FreelancerRequests() {
       try {
         if (user?.id) {
           const data = await getProjectRequests(user.id);
+          setRequests(data);
           console.log(data);
-
-          const parsedData: ProjectRequest[] = data.map((req: any) => ({
-            projectId: req.ProjectId,
-            freelancerId: req.FreelancerId,
-            projectTitle: req.ProjectTitle,
-            projectDescription: req.ProjectDescription,
-            projectCategory: req.ProjectCategory,
-            deadline: req.Deadline ? new Date(req.Deadline) : undefined,
-            skills: typeof req.Skills === 'string'
-              ? req.Skills.split(',').map((s: string) => s.trim()).filter(Boolean)
-              : Array.isArray(req.Skills)
-                ? req.Skills
-                : [],
-            budget: req.Budget,
-            clientId: req.ClientId,
-            clientName: req.ClientName,
-            clientEmail: req.ClientEmail,
-            clientPhone: req.ClientPhoneNumber,
-            clientProfile: req.ClientProfilePicture,
-            status: req.Status,
-            sentAt: req.RequestedAt ? new Date(req.RequestedAt) : undefined,
-          }));
-          setRequests(parsedData);
-          console.log(parsedData);
         }
       } catch (error: any) {
         toast.error(error.message || 'Failed to load project requests');
@@ -135,10 +112,10 @@ export function FreelancerRequests() {
         </div>
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
-        {request.skills.slice(0, 3).map((skill: string) => (
+        {request.skills?.split(',').map(s => s.trim()).slice(0, 3).map((skill: string) => (
           <Badge key={skill} variant="info" size="sm">{skill}</Badge>
         ))}
-        {request.skills.length > 3 && (
+        {request.skills?.split(',').length > 3 && (
           <Badge variant="info" size="sm">+{request.skills.length - 3} more</Badge>
         )}
       </div>
@@ -293,7 +270,7 @@ export function FreelancerRequests() {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Required Skills</label>
                   <div className="flex flex-wrap gap-2">
-                    {selectedRequest.skills.map((skill: string) => (
+                  {selectedRequest.skills?.split(',').map(s => s.trim()).map((skill: string) => (
                       <Badge key={skill} variant="info">{skill}</Badge>
                     ))}
                   </div>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getFreelancerProjects } from '../../apiendpoints';
+import { getProjects } from '../../apiendpoints';
 import { Calendar, User, ExternalLink, Filter, Search } from 'lucide-react';
 import { Project } from '@/types';
 
-export function FreelancerProjects() {
+export function AdminViewProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
@@ -13,11 +13,9 @@ export function FreelancerProjects() {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!user?.id) return;
       try {
-        const projectsData = await getFreelancerProjects(user.id);
+        const projectsData = await getProjects();
         setProjects(projectsData);
-        console.log(projectsData);
       } catch (error) {
         setProjects([]);
       }
@@ -136,13 +134,6 @@ export function FreelancerProjects() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <Link
-                  to={`/freelancer/kanban`} //see later if we need to add the project id to view certaon project tasks
-                  className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                >
-                  <span>View Tasks</span>
-                  <ExternalLink className="w-4 h-4" />
-                </Link>
               </div>
             </div>
           );

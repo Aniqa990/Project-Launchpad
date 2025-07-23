@@ -1,13 +1,14 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { getProfileSetupData, saveProfileSetupData } from '../../apiendpoints';
-import { ParsedResumeData, Skill, ProjectItem, Experience } from '@/types';
+import React, { useState, useRef } from 'react';
+import {updateFreelancerProfile} from '../../apiendpoints';
+import { ParsedResumeData } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ProjectModal } from '@/components/ui/ProjectModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Upload, 
@@ -25,32 +26,26 @@ import {
   Loader,
   Briefcase,
   Clock,
-  Calendar,
-  Pencil,
-  Trash2
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import toast from 'react-hot-toast';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { Card } from '@/components/ui/card';
+import { ProjectModal } from '@/components/ui/ProjectModal';
 import { ExperienceModal } from '@/components/ui/ExperienceModal';
+import toast from 'react-hot-toast';
 
 
 export function ProfileSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const skillId = useRef(1);
-  const experienceId = useRef(1);
-  const projectId = useRef(1);
-
   const [step, setStep] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [showParseResults, setShowParseResults] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const experienceId = useRef(1);
+  const projectId = useRef(1);
 
   const [profileData, setProfileData] = useState<ParsedResumeData>({
     summary: '',
@@ -65,264 +60,181 @@ export function ProfileSetup() {
   const [fullName, setName] = useState(`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim());
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
-  //const [location, setLocation] = useState('');
+  const [location, setLocation] = useState('');
 
-  // Debug log to see user object
-  console.log('User object:', user);
-  console.log('User phone:', user?.phone);
+  // UI/UX state for modals
+  const [showExpModal, setShowExpModal] = useState(false);
+  const [editExp, setEditExp] = useState(null);
+  const [showProjModal, setShowProjModal] = useState(false);
+  const [editProj, setEditProj] = useState(null);
 
-  // Fetch pre-parsed data from resume_parser on component mount
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true);
-        const data = await getProfileSetupData();
-        
-        console.log('API Response:', data); 
-        console.log('API Response Skills:', data.Skills); 
-        console.log('API Response Projects:', data.Projects); 
-        console.log('API Response Experience:', data.Experience);
-        
-        // Check if data exists and has the expected structure
-        if (!data) {
-          console.log('No data returned from API');
-          return;
-        }
-        
-        //IDs start from 1 and are sequential
-        const skills = (data.Skills || []).map((skill, idx) => ({
-          Id: idx + 1,
-          SkillName: skill.SkillName,
-          Source: skill.Source as 'parsed' | 'manual'
-        }));
-        const experience = (data.Experience || []).map((exp, idx) => ({
-          Id: idx + 1,
-          Title: exp.Title,
-          Company: exp.Company,
-          StartDate: exp.StartDate,
-          EndDate: exp.EndDate,
-          Description: exp.Description,
-          Source: exp.Source as 'parsed' | 'manual'
-        }));
-        const projects = (data.Projects || []).map((project, idx) => ({
-          Id: idx + 1,
-          Title: project.Title,
-          Description: project.Description,
-          Source: project.Source as 'parsed' | 'manual'
-        }));
+  const openEditExperienceModal = (exp: any) => {
+    setEditExp(exp);
+    setShowExpModal(true);
+  };
+  const openAddExperienceModal = () => {
+    setEditExp(null);
+    setShowExpModal(true);
+  };
+  const openEditProjectModal = (proj: any) => {
+    setEditProj(proj);
+    setShowProjModal(true);
+  };
+  const openAddProjectModal = () => {
+    setEditProj(null);
+    setShowProjModal(true);
+  };
 
-        //Set the next ID for each type
-        skillId.current = skills.length + 1;
-        experienceId.current = experience.length + 1;
-        projectId.current = projects.length + 1;
 
-        const transformedData: ParsedResumeData = {
-          summary: data.Summary || '',
-          skills,
-          experience,
-          projects,
+  const parseResume = async (file: File): Promise<ParsedResumeData> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append('freelancer_id', String(user?.id ?? 0));
+  
+    const response = await fetch("http://localhost:8000/api/parse-resume/", {
+      method: "POST",
+      body: formData,
+    });
+  
+    const parsed = await response.json();
+  
+    if (!response.ok) {
+      throw new Error(parsed.error || "Resume parsing failed.");
+    }
+  
+      const rawSkillsObj: Record<string, string> = parsed.skills || {};
+      const extractedSkills: string[] = Object.values(rawSkillsObj)
+        .flatMap(group => group.split(',').map(skill => skill.trim()))
+        .filter(skill => skill.length > 0);
+  
+      
+  
+      const experiences = (parsed.experience || []).map((exp: any) => {
+      const id = experienceId.current++;
+        return {
+        id,
+          company: exp.company ?? '',
+          title: exp.title ?? '',
+          startDate: exp.startDate ?? '',
+          endDate: exp.endDate ?? '',
+        description: exp.description ?? ''
         };
+    });
 
-        console.log('Transformed Data:', transformedData); 
-        
-        setProfileData(transformedData);
-        
-        if (
-          data.Summary ||
-          (data.Skills && data.Skills.length > 0) ||
-          (data.Experience && data.Experience.length > 0) ||
-          (data.Projects && data.Projects.length > 0)
-        ) {
+        const projects = (parsed.projects || []).map((exp: any) => {
+      const id = projectId.current++;
+          return {
+        id,
+            title: exp.title ?? '',
+            description: exp.description ?? '',
+        tools: Array.isArray(exp.tools) ? exp.tools : [],
+          };
+      });
+  
+      return {
+        summary: parsed.summary,
+        skills: extractedSkills,
+        experience: experiences,
+        projects: projects,
+      };
+  };
+  
+    // Add state for multiple resumes
+    const [uploadedResumes, setUploadedResumes] = useState<{ name: string; status: 'pending' | 'parsing' | 'success' | 'error'; error?: string }[]>([]);
+
+    // Update handleFileUpload to handle multiple files
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      for (const file of files) {
+        setUploadedResumes(prev => [...prev, { name: file.name, status: 'parsing' }]);
+        setUploading(true);
+        try {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Simulate upload
           setResumeUploaded(true);
-          setShowParseResults(true);
-          toast.success('Found existing profile data!');
-        } else {
-          console.log('No existing profile data found - this is normal for new users');
+          setParsing(true);
+          try {
+            const parsedData = await parseResume(file);
+            setProfileData(parsedData); // Optionally merge or replace, as per your logic
+            setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'success' } : r));
+            setShowParseResults(true);
+            toast.success(`Resume ${file.name} parsed successfully!`);
+          } catch (error: any) {
+            setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'error', error: error.message } : r));
+            toast.error(`Failed to parse ${file.name}. Please fill manually.`);
+          }
+          setParsing(false);
+        } finally {
+          setUploading(false);
         }
-      } catch (error) {
-        console.error('Error fetching profile data:', error);
-      } finally {
-        setLoading(false);
       }
     };
-
-    fetchProfileData();
-  }, []);
-
-  // Function to upload resume to resume_parser and then fetch the parsed data
-  const uploadResumeAndFetchData = async (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-    try {
-  const response = await fetch("http://localhost:8000/api/parse-resume/", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail);
+  
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+    };
+  
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const fakeEvent = { target: { files: [file] } } as any;
+        handleFileUpload(fakeEvent);
       }
-
-      const parsedData = await getProfileSetupData();
-      
-      //IDs start from 1 and are sequential
-      const skills = (parsedData.Skills || []).map((skill, idx) => ({
-        Id: idx + 1,
-        SkillName: skill.SkillName,
-        Source: skill.Source as 'parsed' | 'manual'
-      }));
-      const experience = (parsedData.Experience || []).map((exp, idx) => ({
-        Id: idx + 1,
-        Title: exp.Title,
-        Company: exp.Company,
-        StartDate: exp.StartDate,
-        EndDate: exp.EndDate,
-        Description: exp.Description,
-        Source: exp.Source as 'parsed' | 'manual'
-      }));
-      const projects = (parsedData.Projects || []).map((project, idx) => ({
-        Id: idx + 1,
-        Title: project.Title,
-        Description: project.Description,
-        Source: project.Source as 'parsed' | 'manual'
-      }));
-
-      // Set the next ID for each type
-      skillId.current = skills.length + 1;
-      experienceId.current = experience.length + 1;
-      projectId.current = projects.length + 1;
-
-      const transformedData: ParsedResumeData = {
-        summary: parsedData.Summary || '',
-        skills,
-        experience,
-        projects,
-      };
-
-      setProfileData(transformedData);
-      setShowParseResults(true);
-      toast.success('Resume parsed and data loaded successfully!');
-      
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to parse resume. Please fill manually.');
-    }
-};
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf' && !file.type.includes('document')) {
-      toast.error('Please upload a PDF or Word document');
-      return;
-    }
-
-    setUploading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setUploading(false);
-    setResumeUploaded(true);
-    
-    // Start parsing
-    setParsing(true);
-    try {
-      await uploadResumeAndFetchData(file);
-    } finally {
-      setParsing(false);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      const fakeEvent = { target: { files: [file] } } as any;
-      handleFileUpload(fakeEvent);
-    }
-  };
-
-  const updateProfileField = (field: string, value: any) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const addSkill = (skill: string) => {
-    if (skill && !profileData.skills.some(s => s.SkillName === skill)) {
-      const newSkill: Skill = {
-        Id: skillId.current++,
-        SkillName: skill,
-        Source: 'manual'
-      };
-      setProfileData(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill]
-      }));
-    }
-  };
-
-  const removeSkill = (skillId: number) => {
-    updateProfileField('skills', profileData.skills.filter(s => s.Id !== skillId));
-  };
-
-  const addExperience = (exp: Experience) => {
-    const newExp: Experience = {
-      Id: experienceId.current++,
-      Company: exp.Company || '',
-      Title: exp.Title || '',
-      StartDate: exp.StartDate || '', 
-      EndDate: exp.EndDate || '',   
-      Description: exp.Description || '',
-      Source: 'manual'
     };
-    setProfileData(prev => ({
-      ...prev,
-      experience: [...prev.experience, newExp]
-    }));
-  };
-
-  const updateExperience = (id: number, newExp: Experience) => {
-    const updated = profileData.experience.map(exp => 
-      exp.Id === id ? { ...newExp } : exp
-    );
-    updateProfileField('experience', updated);
-  };
-
-  const removeExperience = (id: number) => {
-    updateProfileField('experience', profileData.experience.filter(exp => exp.Id !== id));
-  };
-
-  const addProject = (proj: ProjectItem) => {
-    const newP: ProjectItem = {
-      Id: projectId.current++,
-      Title: proj.Title || '',
-      Description: proj.Description || '',
-      Source: 'manual'
+  
+    const updateProfileField = (field: string, value: any) => {
+      setProfileData(prev => ({ ...prev, [field]: value }));
     };
-    setProfileData(prev => ({
-      ...prev,
-      projects: [...prev.projects, newP]
-    }));
-  };
+  
+    const addSkill = (skill: string) => {
+      if (skill && !profileData.skills.includes(skill)) {
+        updateProfileField('skills', [...profileData.skills, skill]);
+      }
+    };
+  
+    const removeSkill = (skill: string) => {
+      updateProfileField('skills', profileData.skills.filter(s => s !== skill));
+    };
+  
+    // Update add/edit/remove functions for experience and projects to use camelCase fields and assign ids
+    const addExperience = (exp: any) => {
+      exp.id = experienceId.current++;
+      updateProfileField('experience', [...profileData.experience, exp]);
+    };
 
-  const updateProject = (id: number, newProj: ProjectItem) => {
+    const updateExperience = (id: number, newExp: any) => {
+      const updated = profileData.experience.map(exp =>
+        exp.id === id ? { ...newExp } : exp
+      );
+      updateProfileField('experience', updated);
+    };
+
+    const removeExperience = (id: number) => {
+      updateProfileField('experience', profileData.experience.filter(exp => exp.id !== id));
+    };
+
+    const addProject = (proj: any) => {
+      proj.id = projectId.current++;
+      updateProfileField('projects', [...profileData.projects, proj]);
+    };
+
+
+  const updateProject = (id: number, newProj: any) => {
     const updated = profileData.projects.map(p => 
-      p.Id === id ? { ...newProj } : p
+      p.id === id ? { ...newProj } : p
     );
     updateProfileField('projects', updated);
   };
 
   const removeProject = (id: number) => {
-    updateProfileField('projects', profileData.projects.filter(p => p.Id !== id));
+    updateProfileField('projects', profileData.projects.filter(p => p.id !== id));
   };
+
+
 
   const getCompletionPercentage = () => {
     let completed = 0;
-    const total = 6;
+    let total = 6;
 
     if (fullName) completed++;
     if (email) completed++;
@@ -344,137 +256,106 @@ export function ProfileSetup() {
       case 1: return resumeUploaded || showParseResults;
       case 2: return fullName && email && profileData.skills.length > 0;
       case 3: return profileData.experience.length > 0;
-      case 4: return profileData.projects.length > 0;
+      case 4: return profileData.projects.length>0;
       default: return true;
     }
   };
 
-  const handleSaveProfile = async () => {
-    try {
-      const [firstName, ...lastNameParts] = fullName.split(' ');
-      const lastName = lastNameParts.join(' ') || '';
-      console.log('Profile Data:', profileData);
-
-      await saveProfileSetupData({
-        firstName,
-        lastName,
-        phone,
-        hourlyRate,
-        availability,
-        workingHours,
-        profileData: {
-          Summary: profileData.summary,
-          Skills: profileData.skills,
-          Experience: profileData.experience,
-          Projects: profileData.projects
-        }
-      });
-
-    toast.success('Profile saved successfully!');
-    navigate('/freelancer/dashboard');
-  } catch (error: any) {
-    toast.error(error.message || 'Failed to save profile');
+  function stripIds<T extends { id?: any }>(arr: T[]): Omit<T, 'id'>[] {
+    return arr.map(({ id, ...rest }) => rest);
   }
-};
 
-  // Experience modal state
-  const [showExpModal, setShowExpModal] = useState(false);
-  const [editExp, setEditExp] = useState<Experience | null>(null);
-  // Project modal state
-  const [showProjModal, setShowProjModal] = useState(false);
-  const [editProj, setEditProj] = useState<ProjectItem | null>(null);
-
-  const openEditExperienceModal = (exp: Experience) => {
-    setEditExp(exp);
-    setShowExpModal(true);
+  const handleSaveProfile = async () => {
+    const profilePayload = {
+      Id: user?.id,
+    hourlyRate,
+    workingHours,
+    availability,
+    location,
+    summary: profileData.summary,
+    skills: JSON.stringify(profileData.skills),
+    experience: JSON.stringify(stripIds(profileData.experience)),
+    projects: JSON.stringify(stripIds(profileData.projects)),
+    };
+  
+    console.log(JSON.stringify(profileData.skills))
+    console.log(JSON.stringify(profileData.experience))
+    console.log(JSON.stringify(profileData.projects))
+  
+    try {
+    await updateFreelancerProfile(profilePayload, user?.id ?? 0);
+    await fetch("http://localhost:8000/api/update-parsed-json/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        freelancer_id: user?.id,
+        parsed_json: profilePayload
+      })
+    });
+      toast.success('Profile saved successfully!');
+      navigate('/freelancer/dashboard');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save profile');
+    }
   };
-  const openAddExperienceModal = () => {
-    setEditExp(null);
-    setShowExpModal(true);
-  };
-
-  // Project modal logic
-  const openEditProjectModal = (proj: ProjectItem) => {
-    setEditProj(proj);
-    setShowProjModal(true);
-  };
-  const openAddProjectModal = () => {
-    setEditProj(null);
-    setShowProjModal(true);
-  };
-
 
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Upload Your Resume</h2>
-        <p className="text-muted-foreground">We'll automatically extract your information to speed up the process</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Upload Your Resume(s)</h2>
+        <p className="text-muted-foreground">We'll automatically extract your information to speed up the process. You can upload multiple resumes if you wish.</p>
       </div>
-
-      {loading ? (
-        <div className="text-center space-y-4">
-          <Loader className="w-12 h-12 text-primary mx-auto animate-spin" />
-          <p className="text-primary font-medium">Loading existing profile data...</p>
-        </div>
-      ) : (
-      <div 
+      <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
           uploading || parsing ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
         }`}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        {uploading ? (
-          <div className="space-y-4">
-            <Loader className="w-12 h-12 text-primary mx-auto animate-spin" />
-            <p className="text-primary font-medium">Uploading resume...</p>
-          </div>
-        ) : parsing ? (
-          <div className="space-y-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-              <FileText className="w-6 h-6 text-primary animate-pulse" />
-            </div>
-            <p className="text-primary font-medium">Parsing resume with AI...</p>
-            <Progress value={60} className="w-48 mx-auto" />
-          </div>
-        ) : resumeUploaded ? (
-          <div className="space-y-4">
-            <CheckCircle className="w-12 h-12 text-green-600 mx-auto" />
-              <p className="text-green-600 font-medium">Resume processed successfully!</p>
-            {showParseResults && (
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-green-800 font-medium">✨ Information extracted and auto-filled!</p>
-                <p className="text-green-700 text-sm">Review and edit the details in the next steps</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
-            <div>
-              <p className="text-muted-foreground mb-2">Drag and drop your resume here, or</p>
-              <Button 
-                variant="outline" 
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Choose File
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">Supports PDF and Word documents</p>
-          </div>
-        )}
-        
+        <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
+        <div>
+          <p className="text-muted-foreground mb-2">Drag and drop your resume(s) here, or</p>
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Choose File(s)
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">Supports PDF and Word documents. You can upload multiple files.</p>
         <input
           ref={fileInputRef}
           type="file"
           accept=".pdf,.doc,.docx"
           onChange={handleFileUpload}
           className="hidden"
+          multiple
         />
+        {/* Show uploaded files and their status */}
+        {uploadedResumes.length > 0 && (
+          <div className="mt-6 text-left">
+            <h4 className="font-semibold mb-2">Uploaded Files:</h4>
+            <ul className="space-y-2">
+              {uploadedResumes.map((file, idx) => (
+                <li key={file.name + idx} className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span>{file.name}</span>
+                  {file.status === 'parsing' && <Loader className="w-4 h-4 text-primary animate-spin" />}
+                  {file.status === 'success' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                  {file.status === 'error' && <AlertCircle className="w-4 h-4 text-red-600" />}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {showParseResults && (
+          <div className="bg-green-50 p-4 rounded-lg mt-4">
+            <p className="text-green-800 font-medium">✨ Information extracted and auto-filled!</p>
+            <p className="text-green-700 text-sm">Review and edit the details in the next steps</p>
+          </div>
+        )}
       </div>
-      )}
-
-      {!resumeUploaded && !loading && (
+      {!resumeUploaded && (
         <div className="text-center">
           <Button variant="ghost" onClick={() => setStep(2)}>
             Skip and fill manually
@@ -500,13 +381,13 @@ export function ProfileSetup() {
             )}
           </Label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="fullName"
               type="text"
               value={fullName}
-              onChange={(e) => setName(e.target.value)}
-              className={`pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm ${isFieldIncomplete(fullName) ? 'border-destructive bg-destructive/5' : ''}`}
+              onChange={(e) => setName( e.target.value)}
+              className={`pl-10 ${isFieldIncomplete(fullName) ? 'border-destructive bg-destructive/5' : ''}`}
               placeholder="Enter your full name"
             />
           </div>
@@ -520,13 +401,13 @@ export function ProfileSetup() {
             )}
           </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm ${isFieldIncomplete(email) ? 'border-destructive bg-destructive/5' : ''}`}
+              className={`pl-10 ${isFieldIncomplete(email) ? 'border-destructive bg-destructive/5' : ''}`}
               placeholder="Enter your email"
             />
           </div>
@@ -540,24 +421,23 @@ export function ProfileSetup() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Enter your phone number"
-            className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
           />
         </div>
 
-        {/* <div className="space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="location"
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
+              className="pl-10"
               placeholder="City, State/Country"
             />
           </div>
-        </div> */}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -568,7 +448,6 @@ export function ProfileSetup() {
           onChange={(e) => updateProfileField('summary', e.target.value)}
           rows={4}
           placeholder="Brief description of your experience and expertise..."
-          className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
         />
       </div>
 
@@ -581,20 +460,20 @@ export function ProfileSetup() {
         </Label>
         <div className="flex flex-wrap gap-2 mb-3">
           {profileData.skills.map(skill => (
-            <span key={skill.Id} className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium shadow-sm border border-blue-200">
-              {skill.SkillName}
+            <Badge key={skill} variant="info">
+              {skill}
               <button
-                onClick={() => removeSkill(skill.Id)}
-                className="ml-1 text-blue-400 hover:text-red-500"
+                onClick={() => removeSkill(skill)}
+                className="ml-1 text-muted-foreground hover:text-destructive"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
         <Input
           placeholder="Type a skill and press Enter"
-          className={`rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm ${isFieldIncomplete(profileData.skills) ? 'border-destructive bg-destructive/5' : ''}`}
+          className={isFieldIncomplete(profileData.skills) ? 'border-destructive bg-destructive/5' : ''}
           onKeyPress={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -609,13 +488,13 @@ export function ProfileSetup() {
         <div className="space-y-2">
           <Label htmlFor="hourlyRate">Hourly Rate (USD)</Label>
           <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="hourlyRate"
               type="number"
               value={hourlyRate}
               onChange={(e) => setHourlyRate(parseInt(e.target.value))}
-              className="pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
+              className="pl-10"
               placeholder="75"
             />
           </div>
@@ -624,7 +503,7 @@ export function ProfileSetup() {
         <div className="space-y-2">
           <Label htmlFor="availability">Availability</Label>
           <Select value={availability} onValueChange={setAvailability}>
-            <SelectTrigger className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm">
+            <SelectTrigger>
               <SelectValue placeholder="Select availability" />
             </SelectTrigger>
             <SelectContent>
@@ -635,16 +514,16 @@ export function ProfileSetup() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="workingHours">Working Hours</Label>
+          <Label htmlFor="hourlyRate">Working Hours</Label>
           <div className="relative">
-            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="workingHours"
               type="text"
               value={workingHours}
               onChange={(e) => setWorkingHours(e.target.value)}
-              className="pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
-              placeholder="9am-5pm"
+              className="pl-10"
+              placeholder="75"
             />
           </div>
         </div>
@@ -652,34 +531,36 @@ export function ProfileSetup() {
     </div>
   );
 
+
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-2">Work Experience</h2>
         <p className="text-muted-foreground">Add your professional experience</p>
       </div>
+
       <div className="space-y-6">
         {profileData.experience.map((exp, index) => (
-          <Card key={exp.Id} className="relative mb-4">
+          <Card key={exp.id} className="relative mb-4">
             <button
               className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
-              onClick={() => removeExperience(exp.Id)}
+              onClick={() => removeExperience(exp.id)}
               title="Remove Experience"
             >
               <Trash2 className="w-5 h-5" />
             </button>
-              <button
+            <button
               className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
               onClick={() => openEditExperienceModal(exp)}
               title="Edit Experience"
-              >
+            >
               <Pencil className="w-5 h-5" />
-              </button>
-            <div className="mb-2 text-xl font-bold text-gray-900">{exp.Title}</div>
+            </button>
+            <div className="mb-2 text-xl font-bold text-gray-900">{exp.title}</div>
             <div className="mb-2 text-lg font-semibold text-gray-700">
-              {exp.Company} | {exp.StartDate} - {exp.EndDate}
+              {exp.company} | {exp.startDate} - {exp.endDate}
             </div>
-            <div className="text-gray-700 whitespace-pre-line">{exp.Description}</div>
+            <div className="text-gray-700 whitespace-pre-line">{exp.description}</div>
           </Card>
         ))}
         <Button variant="outline" onClick={openAddExperienceModal} className="w-full rounded-lg border-dashed border-2 border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 text-blue-700 shadow-sm">
@@ -690,7 +571,7 @@ export function ProfileSetup() {
           open={showExpModal}
           onClose={() => setShowExpModal(false)}
           onSave={exp => {
-            if (exp.Id) updateExperience(exp.Id, exp);
+            if (exp.id) updateExperience(exp.id, exp);
             else addExperience(exp);
             setShowExpModal(false);
           }}
@@ -710,23 +591,23 @@ export function ProfileSetup() {
 
       <div className="space-y-6">
         {profileData.projects.map((p, index) => (
-          <Card key={p.Id} className="relative mb-4">
-              <button
+          <Card key={p.id} className="relative mb-4">
+            <button
               className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
-              onClick={() => removeProject(p.Id)}
+              onClick={() => removeProject(p.id)}
               title="Remove Project"
-              >
+            >
               <Trash2 className="w-5 h-5" />
-              </button>
-                      <button
+            </button>
+            <button
               className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
               onClick={() => openEditProjectModal(p)}
               title="Edit Project"
-                      >
+            >
               <Pencil className="w-5 h-5" />
-                      </button>
-            <div className="mb-2 text-xl font-bold text-gray-900">{p.Title}</div>
-            <div className="text-gray-700 whitespace-pre-line">{p.Description}</div>
+            </button>
+            <div className="mb-2 text-xl font-bold text-gray-900">{p.title}</div>
+            <div className="text-gray-700 whitespace-pre-line">{p.description}</div>
           </Card>
         ))}
 
@@ -738,7 +619,7 @@ export function ProfileSetup() {
           open={showProjModal}
           onClose={() => setShowProjModal(false)}
           onSave={proj => {
-            if (proj.Id) updateProject(proj.Id, proj);
+            if (proj.id) updateProject(proj.id, proj);
             else addProject(proj);
             setShowProjModal(false);
           }}

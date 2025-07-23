@@ -42,36 +42,13 @@ export interface FreelancerProfile {
   HourlyRate: number;
   WorkingHours: string;
   Availability: string;
-  AvgRating: number;
+  AvgRating?: number;
   Password?: string;
   NewPassword?: string;
   Summary: string;
   Skills: string;
   Experience: string;
   Projects: string;
-}
-
-export interface Skill {
-  Id: number;
-  SkillName: string;
-  Source: 'parsed' | 'manual';
-}
-
-export interface ProjectItem {
-  Id: number;
-  Title: string;
-  Description: string;
-  Source: 'parsed' | 'manual';
-}
-
-export interface Experience {
-  Id: number;
-  Title: string;
-  Company: string;
-  StartDate: string;
-  EndDate: string;
-  Description: string;
-  Source: 'parsed' | 'manual';
 }
 
 export interface ProfileSetupData {
@@ -98,36 +75,91 @@ export interface ProfileSetupData {
   }[];
 }
 
+// export interface ParsedResumeData {
+//   summary: string;
+//   skills: Skill[];
+//   experience: Experience[];
+//   projects: ProjectItem[];
+// }
+
 export interface ParsedResumeData {
   summary: string;
-  skills: Skill[];
-  experience: Experience[];
-  projects: ProjectItem[];
+  skills: string[];
+  experience: {
+    id: number;
+    company: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }[];
+  projects: {
+    id: number;
+    title: string;
+    description: string;
+  }[];
 }
 
-export interface Project {
-  id: string;
+export interface ProjectItem {
+  id: number;
   title: string;
   description: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  budget: number;
-  deadline: string;
-  clientId: string;
-  client: User;
-  skills: string[];
-  team: User[];
-  progress: number;
-  milestones: { name: string }[];
+}
+
+export interface Experience {
+  id: number;
+  company: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  description: string;
 }
 
 export interface Milestone {
-  id: string;
+  id: number;
   title: string;
   description: string;
   amount: number;
   dueDate: string;
-  status: 'pending' | 'approved' | 'paid';
+  status: 'pending' | 'approved' | 'paid' | string;
   deliverables: string[];
+}
+
+export interface MilestoneWithPayment {
+  id: number;
+  title: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: string;
+  isApproved: boolean;
+  submissionDate: string;
+  freelancerComments: string;
+  paymentStatus?: string;
+  paymentDate?: string;
+  transactionReference?: string;
+  submittedFileUrls?: string[];
+}
+
+export interface MilestoneWithUsers {
+  id: number;
+  title: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: string;
+  isApproved: boolean;
+  submissionDate: string;
+  freelancerComments: string;
+  projectId: number;
+  freelancerId: number;
+  clientId: number;
+  freelancerFirstName: string;
+  freelancerLastName: string;
+  freelancerEmail: string;
+  clientFirstName: string;
+  clientLastName: string;
+  clientEmail: string;
 }
 
 export interface Task {
@@ -146,21 +178,20 @@ export interface Task {
 }
 
 export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  budget: number;
-  deadline: string;
-  clientId: string;
-  category: string;
-  paymentType: string;
-  numberOfFreelancers: number;  
-  attachedDocumentPath: string;
-  client: User;
-  skills: string[];
-  team: User[];
-  progress: number;
+  id: number;
+  title?: string;
+  description?: string;
+  status?: 'draft' | 'active' | 'completed' | 'cancelled';
+  budget?: number;
+  deadline?: string;
+  clientId?: string;
+  category?: string;
+  paymentType?: string;
+  numberOfFreelancers?: number;  
+  client?: User;
+  skills?: string[];
+  team?: User[];
+  progress?: number;
 }
 
 export interface ProjectRequest {
@@ -171,7 +202,7 @@ export interface ProjectRequest {
   projectDescription: string;
   projectCategory:string;
   deadline: Date;
-  skills: string[];
+  skills: string;
   budget?:number;
   clientId: number;
   clientName: string;
@@ -179,9 +210,15 @@ export interface ProjectRequest {
   clientPhone: string;
   clientProfile?: string;
   status: 'pending' | 'accepted' | 'rejected';
-  sentAt: string;
+  requestedAt: string;
 }
 
+// export interface ProjectApproval {
+//   projectId: string;
+//   status: 'pending' | 'accepted' | 'rejected';
+//   rejectionReason?: string;
+//   sentAt?: string;
+// }
 
 export interface TimeEntry {
   id: string;

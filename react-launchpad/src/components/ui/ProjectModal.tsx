@@ -14,17 +14,15 @@ export function ProjectModal({ open, onClose, onSave, onDelete, initialData }: {
   initialData: ProjectItem | null;
 }) {
   const [fields, setFields] = useState<ProjectItem>(initialData || {
-    Id: 0,
-    Title: '',
-    Description: '',
-    Source: 'manual',
+    id: 0,
+    title: '',
+    description: '',
   });
   useEffect(() => {
     setFields(initialData || {
-      Id: 0,
-      Title: '',
-      Description: '',
-      Source: 'manual',
+      id: 0,
+      title: '',
+      description: '',
     });
   }, [initialData, open]);
 
@@ -40,15 +38,15 @@ export function ProjectModal({ open, onClose, onSave, onDelete, initialData }: {
           <X className="w-6 h-6" />
         </button>
         <h3 className="text-lg font-medium text-gray-900 mb-4">
-          {fields.Id ? 'Edit Project' : 'Add Project'}
+          {fields.id ? 'Edit Project' : 'Add Project'}
         </h3>
         <form className="space-y-4" onSubmit={e => { e.preventDefault(); onSave(fields); }}>
           <div className="space-y-2">
             <Label htmlFor="proj-title">Title</Label>
             <Input
               id="proj-title"
-              value={fields.Title}
-              onChange={e => setFields(f => ({ ...f, Title: e.target.value }))}
+              value={fields.title}
+              onChange={e => setFields(f => ({ ...f, title: e.target.value }))}
               className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
               placeholder="Ecommerce Web App"
               required
@@ -58,16 +56,16 @@ export function ProjectModal({ open, onClose, onSave, onDelete, initialData }: {
             <Label htmlFor="proj-desc">Description</Label>
             <Textarea
               id="proj-desc"
-              value={fields.Description}
-              onChange={e => setFields(f => ({ ...f, Description: e.target.value }))}
+              value={fields.description}
+              onChange={e => setFields(f => ({ ...f, description: e.target.value }))}
               rows={4}
               className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm"
               placeholder="Describe the project"
             />
           </div>
           <div className="flex justify-between gap-2 mt-4">
-            {fields.Id !== 0 && onDelete && (
-              <Button type="button" variant="danger" onClick={() => onDelete(fields.Id)} className="flex items-center"><Trash2 className="w-4 h-4 mr-1" />Remove</Button>
+            {fields.id !== 0 && onDelete && (
+              <Button type="button" variant="danger" onClick={() => onDelete(fields.id)} className="flex items-center"><Trash2 className="w-4 h-4 mr-1" />Remove</Button>
             )}
             <div className="flex gap-2 ml-auto">
               <Button type="button" variant="outline" onClick={onClose}>

@@ -12,9 +12,11 @@ import {
   TrendingUp,
   Calendar,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Database
 } from 'lucide-react';
 import { getProjects } from '../../apiendpoints';
+import {Project} from '@/types';
 
 export function ClientDashboard() {
   const navigate = useNavigate();
@@ -100,20 +102,7 @@ export function ClientDashboard() {
       setError('');
       try {
         const data = await getProjects();
-        // Transform fields to PascalCase for dashboard compatibility
-        const transformed = data.map((project: any) => ({
-          Id: project.Id || project.id,
-          Title: project.Title || project.title,
-          Description: project.Description || project.description,
-          Status: project.Status || project.status,
-          Budget: project.Budget || project.budget,
-          NumberOfFreelancers: project.NumberOfFreelancers || project.numberOfFreelancers,
-          PaymentType: project.PaymentType || project.paymentType,
-          Category: project.Category || project.category,
-          Deadline: project.Deadline || project.deadline,
-          // Add more fields as needed
-        }));
-        setProjects(transformed);
+        setProjects(data);
       } catch (err) {
         setError('Failed to load projects.');
       } finally {
@@ -188,35 +177,35 @@ export function ClientDashboard() {
               ) : projects.length === 0 ? (
                 <div className="text-gray-500">No projects found.</div>
               ) : (
-                projects.slice(0, 3).map((project, idx) => (
-                  <div key={project.Id || idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                projects.slice(0, 3).map((project:Project, idx) => (
+                  <div key={project.id || idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">{project.Title}</h3>
-                        <p className="text-gray-600 text-sm line-clamp-2 mb-1">{project.Description}</p>
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">{project.title}</h3>
+                        <p className="text-gray-600 text-sm line-clamp-2 mb-1">{project.description}</p>
                         <div className="flex flex-wrap gap-2 mb-1">
-                          <Badge variant="info">{project.PaymentType}</Badge>
-                          <Badge variant="info">{project.Category}</Badge>
-                          <Badge variant="info">Budget: ${project.Budget}</Badge>
-                          <Badge variant="info">Freelancers: {project.NumberOfFreelancers}</Badge>
+                          <Badge variant="info">{project.paymentType}</Badge>
+                          <Badge variant="info">{project.category}</Badge>
+                          <Badge variant="info">Budget: ${project.budget}</Badge>
+                          <Badge variant="info">Freelancers: {project.numberOfFreelancers}</Badge>
                         </div>
                       </div>
-                      <Badge variant={project.Status === 'active' ? 'success' : 'default'}>
-                        {project.Status || 'active'}
+                      <Badge variant={project.status === 'active' ? 'success' : 'default'}>
+                        {project.status || 'active'}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center">
                           <Users className="w-4 h-4 mr-1" />
-                          {project.NumberOfFreelancers || 1} members
+                          {project.numberOfFreelancers || 1} members
                         </div>
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : 'N/A'}
+                          Due {project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}
                         </div>
                       </div>
-                      <div className="text-blue-600 font-medium">${project.Budget}</div>
+                      <div className="text-blue-600 font-medium">${project.budget}</div>
                     </div>
                   </div>
                 ))

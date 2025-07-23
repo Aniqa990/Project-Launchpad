@@ -21,6 +21,9 @@ import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { PlatformDashboard } from './pages/platform/Dashboard';
 import { MilestonePayments } from './pages/platform/Payments';
+import { AdminViewProjects } from './pages/platform/ViewProjects';
+import { AdminProjectApprovals } from './pages/platform/Projects';
+import { PlatformSettings } from './pages/platform/Settings';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
@@ -28,31 +31,31 @@ import TimesheetApproval from './pages/client/TimesheetApproval';
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
 
-class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error: any, errorInfo: any) {
-    // You can log error info here if needed
-    // console.error('Global error boundary caught:', error, errorInfo);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: 40, color: 'red', background: '#fffbe6', fontSize: 20 }}>
-          <h1>⚠️ Something went wrong!</h1>
-          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{String(this.state.error)}</pre>
-          <p>Please take a screenshot and share it with your developer.</p>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+// class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+//   constructor(props: any) {
+//     super(props);
+//     this.state = { hasError: false, error: null };
+//   }
+//   static getDerivedStateFromError(error: any) {
+//     return { hasError: true, error };
+//   }
+//   componentDidCatch(error: any, errorInfo: any) {
+//     // You can log error info here if needed
+//     // console.error('Global error boundary caught:', error, errorInfo);
+//   }
+//   render() {
+//     if (this.state.hasError) {
+//       return (
+//         <div style={{ padding: 40, color: 'red', background: '#fffbe6', fontSize: 20 }}>
+//           <h1>⚠️ Something went wrong!</h1>
+//           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{String(this.state.error)}</pre>
+//           <p>Please take a screenshot and share it with your developer.</p>
+//         </div>
+//       );
+//     }
+//     return this.props.children;
+//   }
+// }
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' | 'admin' }) {
   const { isAuthenticated, user, loading } = useAuth();
@@ -145,6 +148,9 @@ function AppRoutes() {
       }>
         <Route path="dashboard" element={<PlatformDashboard />} />
         <Route path="payments" element={<MilestonePayments />} />
+        <Route path="projects" element={<AdminProjectApprovals />} />
+        <Route path="view-projects" element={<AdminViewProjects />} />
+        <Route path="settings" element={<PlatformSettings />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={
@@ -169,7 +175,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <GlobalErrorBoundary>
+    //<GlobalErrorBoundary>
       <AuthProvider>
         <Router>
           <div className="App">
@@ -187,7 +193,7 @@ function App() {
           </div>
         </Router>
       </AuthProvider>
-    </GlobalErrorBoundary>
+    //</GlobalErrorBoundary>
   );
 }
 
