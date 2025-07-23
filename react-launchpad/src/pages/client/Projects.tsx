@@ -23,6 +23,7 @@ import {
 import { getProjects, updateProject } from '../../apiendpoints';
 import toast from 'react-hot-toast';
 import { EditProjectForm } from '../../components/ui/EditProjectForm';
+import {Project} from '@/types';
 
 export function ClientProjects() {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export function ClientProjects() {
     }
   };
 
-  const handleLeaveReview = (project: any) => {
+  const handleLeaveReview = (project: Project) => {
     // For demo, we'll use the first team member as the freelancer to review
     const freelancerToReview = project.team[0];
     setSelectedProject({
@@ -89,7 +90,7 @@ export function ClientProjects() {
     setShowReviewModal(false);
   };
 
-  const handleViewProject = (project: any) => {
+  const handleViewProject = (project: Project) => {
     setViewingProject(project);
     setShowViewModal(true);
   };
@@ -99,7 +100,7 @@ export function ClientProjects() {
     setViewingProject(null);
   };
 
-  const handleEditProject = (project: any) => {
+  const handleEditProject = (project: Project) => {
     setEditingProject(project);
     setShowEditModal(true);
   };
@@ -111,7 +112,7 @@ export function ClientProjects() {
 
   const handleUpdateProject = async (updatedData: any) => {
     try {
-      await updateProject(editingProject.Id, updatedData);
+      await updateProject(editingProject.id, updatedData);
       toast.success('Project updated successfully!');
       handleCloseEditModal();
       // Refresh projects
@@ -131,15 +132,15 @@ export function ClientProjects() {
     return Math.floor(Math.random() * 100);
   };
 
-  const ProjectCard = ({ project }: { project: any }) => (
+  const ProjectCard = ({ project }: { project: Project }) => (
     <Card hover className="h-full">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.ProjectTitle}</h3>
-          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{project.Description}</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.title}</h3>
+          <p className="text-gray-600 text-sm line-clamp-2 mb-3">{project.description}</p>
         </div>
         <div className="flex items-center space-x-2 ml-4">
-          <Badge variant={getStatusColor(project.status) as any}>
+          <Badge variant={getStatusColor(project.status || '') as any}>
             {project.status}
           </Badge>
           <button className="text-gray-400 hover:text-gray-600">
@@ -152,18 +153,18 @@ export function ClientProjects() {
         <div className="flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-1" />
-            Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : 'N/A'}
+            Due {project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}
           </div>
           <div className="flex items-center">
             <DollarSign className="w-4 h-4 mr-1" />
-            ${project.Budget?.toLocaleString()}
+            ${project.budget?.toLocaleString()}
           </div>
         </div>
 
         <div className="flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center">
             <Users className="w-4 h-4 mr-1" />
-            {project.NumberOfFreelancers || 1} team members
+            {project.numberOfFreelancers || 1} team members
           </div>
           <div className="text-blue-600 font-medium">{calculateProgress(project)}%</div>
         </div>

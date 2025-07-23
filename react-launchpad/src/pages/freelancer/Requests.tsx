@@ -31,31 +31,8 @@ export function FreelancerRequests() {
       try {
         if (user?.id) {
           const data = await getProjectRequests(user.id);
+          setRequests(data);
           console.log(data);
-
-          const parsedData: ProjectRequest[] = data.map((req: any) => ({
-            projectId: req.ProjectId,
-            freelancerId: req.FreelancerId,
-            projectTitle: req.ProjectTitle,
-            projectDescription: req.ProjectDescription,
-            projectCategory: req.ProjectCategory,
-            deadline: req.Deadline ? new Date(req.Deadline) : undefined,
-            skills: typeof req.Skills === 'string'
-              ? req.Skills.split(',').map((s: string) => s.trim()).filter(Boolean)
-              : Array.isArray(req.Skills)
-                ? req.Skills
-                : [],
-            budget: req.Budget,
-            clientId: req.ClientId,
-            clientName: req.ClientName,
-            clientEmail: req.ClientEmail,
-            clientPhone: req.ClientPhoneNumber,
-            clientProfile: req.ClientProfilePicture,
-            status: req.Status,
-            sentAt: req.RequestedAt ? new Date(req.RequestedAt) : undefined,
-          }));
-          setRequests(parsedData);
-          console.log(parsedData);
         }
       } catch (error: any) {
         toast.error(error.message || 'Failed to load project requests');

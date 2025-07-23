@@ -58,6 +58,8 @@ export function Sidebar() {
   const platformMenuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: DollarSign, label: 'Milestone Payments', path: '/admin/payments' },
+    { icon: Folder, label: 'Project Approvals', path: '/admin/projects' },
+    { icon: Folder, label: 'View All Projects', path: '/admin/view-projects' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 

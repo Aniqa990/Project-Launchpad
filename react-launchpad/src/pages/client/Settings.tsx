@@ -36,18 +36,8 @@ export function ClientSettings() {
       setLoading(true);
       setError(null);
       try {
-        const backendData = await fetchClientProfile(user?.id ?? 0);
-        setProfile({
-          id: backendData.Id,
-          firstName: backendData.FirstName ?? '',
-          lastName: backendData.LastName ?? '',
-          email: backendData.Email ?? '',
-          phone: backendData.PhoneNo ?? '',
-          profilePicture: backendData.ProfilePicture?? '',
-          role: backendData.Role === 'client' || backendData.Role === 'freelancer' ? backendData.Role : undefined,
-          gender: backendData.Gender ?? '',
-          joinedDate: backendData.JoinedDate ?? '',
-        });
+        const data = await fetchClientProfile(user?.id ?? 0);
+        setProfile(data);
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
         setProfile(null);
@@ -270,8 +260,8 @@ export function ClientSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
             <Input
               type="tel"
-              value={profile?.phone || ''}
-              onChange={(e) => handleProfileChange('phone', e.target.value)}
+              value={profile?.phoneNo || ''}
+              onChange={(e) => handleProfileChange('phoneNo', e.target.value)}
               disabled={!isEditing}
             />
           </div>
