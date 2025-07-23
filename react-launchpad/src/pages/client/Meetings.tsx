@@ -14,7 +14,8 @@ export default function Meetings() {
 
   const ASSEMBLYAI_API_KEY = '2a10d51c006c409681db68820636a14d'; // Replace with your real key for testing
 
-  const handleStartRecording = async () => {
+  // Helper to start recording (used for auto-start)
+  const startRecording = async () => {
     setAudioUrl(null);
     setTranscript(null);
     setTranscribeError(null);
@@ -39,12 +40,23 @@ export default function Meetings() {
     }
   };
 
-  const handleStopRecording = () => {
+  // Helper to stop recording (used for auto-stop)
+  const stopRecording = () => {
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       setRecording(false);
     }
   };
+
+  // Start recording when meeting starts
+  React.useEffect(() => {
+    if (meetingActive) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingActive]);
 
   // AssemblyAI transcription handler (with timestamps)
   const handleTranscribe = async () => {
@@ -210,17 +222,19 @@ export default function Meetings() {
       {/* Audio Recording Section */}
       <div className="mt-12 text-center">
         <h2 className="text-xl font-bold mb-4">Audio Recording</h2>
-        {!recording ? (
+        {/* Hide manual recording controls during meeting */}
+        {!meetingActive && !recording && !audioUrl && (
           <button
             className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-            onClick={handleStartRecording}
+            onClick={startRecording}
           >
             Start Audio Recording
           </button>
-        ) : (
+        )}
+        {!meetingActive && recording && (
           <button
             className="px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
-            onClick={handleStopRecording}
+            onClick={stopRecording}
           >
             Stop Recording
           </button>
