@@ -76,6 +76,8 @@ export default function Meetings() {
     setMeetingActive(false);
   }, [selectedProjectId, selectedFreelancerId]);
 
+  // Remove stoppedByJitsiRef logic
+
   const handleStartRecording = async () => {
     setAudioUrl(null);
     setTranscript(null);
@@ -103,6 +105,15 @@ export default function Meetings() {
 
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+    }
+  };
+
+  // Jitsi end: always stop recording if recorder exists
+  const handleJitsiEnd = () => {
+    setMeetingActive(false);
+    if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       setRecording(false);
     }
@@ -352,7 +363,10 @@ export default function Meetings() {
         <h2 className="text-xl font-bold mb-4 text-center">Jitsi Meeting (JaaS)</h2>
         <div className="rounded-xl overflow-hidden shadow border border-gray-200 bg-white">
           {showMeeting && meetingActive ? (
-            <JaaSMeeting onMeetingEnd={() => setMeetingActive(false)} />
+            <JaaSMeeting 
+              onMeetingStart={handleStartRecording}
+              onMeetingEnd={handleJitsiEnd}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
               <p className="mb-4 text-gray-600">Meeting not started.</p>
@@ -363,22 +377,7 @@ export default function Meetings() {
       {/* Audio Recording Section */}
       <div className="mt-12 text-center">
         <h2 className="text-xl font-bold mb-4">Audio Recording</h2>
-        {/* Manual recording controls */}
-        {!recording ? (
-          <button
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-            onClick={handleStartRecording}
-          >
-            Start Audio Recording
-          </button>
-        ) : (
-          <button
-            className="px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
-            onClick={handleStopRecording}
-          >
-            Stop Recording
-          </button>
-        )}
+        {/* Show download/transcribe UI after recording stops */}
         {audioUrl && (
           <div className="mt-6">
             <audio controls src={audioUrl} className="w-full mb-2" />
@@ -412,6 +411,27 @@ export default function Meetings() {
             )}
           </div>
         )}
+        {/* Fallback manual controls in a collapsible section */}
+        <details className="mt-8">
+          <summary className="cursor-pointer text-blue-600 underline">Show Manual Recording Controls (Fallback)</summary>
+          <div className="mt-4">
+            {!recording ? (
+              <button
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+                onClick={handleStartRecording}
+              >
+                Start Audio Recording
+              </button>
+            ) : (
+              <button
+                className="px-6 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
+                onClick={handleStopRecording}
+              >
+                Stop Recording
+              </button>
+            )}
+          </div>
+        </details>
         <p className="mt-4 text-gray-500 text-sm">
           This will record audio using your microphone and let you download the file. You can also transcribe the audio and download the transcript as a text file.
         </p>

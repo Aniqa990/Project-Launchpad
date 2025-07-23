@@ -6,7 +6,7 @@ const JAAS_ROOM = 'vpaas-magic-cookie-916ca21a710a40e0ac58af93b2f48abe/SampleApp
 // @ts-ignore
 declare global { interface Window { JitsiMeetExternalAPI: any; } }
 
-export default function JaaSMeeting({ onMeetingEnd }: { onMeetingEnd?: () => void }) {
+export default function JaaSMeeting({ onMeetingStart, onMeetingEnd }: { onMeetingStart?: () => void, onMeetingEnd?: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<any>(null);
   const scriptLoadedRef = useRef(false);
@@ -20,6 +20,11 @@ export default function JaaSMeeting({ onMeetingEnd }: { onMeetingEnd?: () => voi
           roomName: JAAS_ROOM,
           parentNode: containerRef.current,
         });
+        if (onMeetingStart) {
+          apiRef.current.addListener('videoConferenceJoined', () => {
+            onMeetingStart();
+          });
+        }
         if (onMeetingEnd) {
           apiRef.current.addListener('readyToClose', () => {
             onMeetingEnd();
@@ -45,7 +50,7 @@ export default function JaaSMeeting({ onMeetingEnd }: { onMeetingEnd?: () => voi
         apiRef.current = null;
       }
     };
-  }, [onMeetingEnd]);
+  }, [onMeetingStart, onMeetingEnd]);
 
   return <div id="jaas-container" ref={containerRef} style={{ height: 600, width: '100%' }} />;
 } 
