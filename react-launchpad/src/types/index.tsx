@@ -5,7 +5,7 @@ export interface User {
   email?: string;
   password?: string;
   newPassword?: string;
-  phoneNo: string;
+  phone: string;
   profilePicture?: string;
   role?: string;
   gender: string;
@@ -42,7 +42,7 @@ export interface FreelancerProfile {
   HourlyRate: number;
   WorkingHours: string;
   Availability: string;
-  AvgRating: number;
+  AvgRating?: number;
   Password?: string;
   NewPassword?: string;
   Summary: string;
@@ -98,11 +98,29 @@ export interface ProfileSetupData {
   }[];
 }
 
+// export interface ParsedResumeData {
+//   summary: string;
+//   skills: Skill[];
+//   experience: Experience[];
+//   projects: ProjectItem[];
+// }
+
 export interface ParsedResumeData {
   summary: string;
-  skills: Skill[];
-  experience: Experience[];
-  projects: ProjectItem[];
+  skills: string[];
+  experience: {
+    id: string;
+    company: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }[];
+  projects: {
+    id: string;
+    title: string;
+    description: string;
+  }[];
 }
 
 export interface Milestone {
@@ -192,7 +210,7 @@ export interface ProjectRequest {
   projectDescription: string;
   projectCategory:string;
   deadline: Date;
-  skills: string[];
+  skills: string;
   budget?:number;
   clientId: number;
   clientName: string;

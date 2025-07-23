@@ -4,6 +4,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Project, Milestone } from "@/types";
+import toast from 'react-hot-toast';
 
 export function AdminProjectApprovals() {
   const [projects, setProjects] = useState<Project[]>([]);

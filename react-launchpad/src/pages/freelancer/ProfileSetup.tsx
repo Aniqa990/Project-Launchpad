@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { getProfileSetupData, saveProfileSetupData } from '../../apiendpoints';
+import { getProfileSetupData, saveProfileSetupData, updateFreelancerProfile } from '../../apiendpoints';
 import { ParsedResumeData, Skill, ProjectItem, Experience } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -72,254 +72,127 @@ export function ProfileSetup() {
   console.log('User phone:', user?.phone);
 
   // Fetch pre-parsed data from resume_parser on component mount
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true);
-        const data = await getProfileSetupData();
-        
-        console.log('API Response:', data); 
-        console.log('API Response Skills:', data.Skills); 
-        console.log('API Response Projects:', data.Projects); 
-        console.log('API Response Experience:', data.Experience);
-        
-        // Check if data exists and has the expected structure
-        if (!data) {
-          console.log('No data returned from API');
-          return;
-        }
-        
-        //IDs start from 1 and are sequential
-        const skills = (data.Skills || []).map((skill, idx) => ({
-          Id: idx + 1,
-          SkillName: skill.SkillName,
-          Source: skill.Source as 'parsed' | 'manual'
-        }));
-        const experience = (data.Experience || []).map((exp, idx) => ({
-          Id: idx + 1,
-          Title: exp.Title,
-          Company: exp.Company,
-          StartDate: exp.StartDate,
-          EndDate: exp.EndDate,
-          Description: exp.Description,
-          Source: exp.Source as 'parsed' | 'manual'
-        }));
-        const projects = (data.Projects || []).map((project, idx) => ({
-          Id: idx + 1,
-          Title: project.Title,
-          Description: project.Description,
-          Source: project.Source as 'parsed' | 'manual'
-        }));
-
-        //Set the next ID for each type
-        skillId.current = skills.length + 1;
-        experienceId.current = experience.length + 1;
-        projectId.current = projects.length + 1;
-
-        const transformedData: ParsedResumeData = {
-          summary: data.Summary || '',
-          skills,
-          experience,
-          projects,
+  
+  const parseResume = async (file: File): Promise<ParsedResumeData> => {
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    const response = await fetch("http://localhost:8000/api/parse-resume/", {
+      method: "POST",
+      body: formData,
+    });
+  
+    const parsed = await response.json();
+  
+    if (!response.ok) {
+      throw new Error(parsed.error || "Resume parsing failed.");
+    }
+  
+      const rawSkillsObj: Record<string, string> = parsed.skills || {};
+      const extractedSkills: string[] = Object.values(rawSkillsObj)
+        .flatMap(group => group.split(',').map(skill => skill.trim()))
+        .filter(skill => skill.length > 0);
+  
+      
+  
+      const experiences = (parsed.experience || []).map((exp: any) => {
+        return {
+          id: crypto.randomUUID(),
+          company: exp.company ?? '',
+          title: exp.title ?? '',
+          startDate: exp.startDate ?? '',
+          endDate: exp.endDate ?? '',
+          description: (exp.description || []).join('\n')
         };
-
-        console.log('Transformed Data:', transformedData); 
-        
-        setProfileData(transformedData);
-        
-        if (
-          data.Summary ||
-          (data.Skills && data.Skills.length > 0) ||
-          (data.Experience && data.Experience.length > 0) ||
-          (data.Projects && data.Projects.length > 0)
-        ) {
-          setResumeUploaded(true);
-          setShowParseResults(true);
-          toast.success('Found existing profile data!');
-        } else {
-          console.log('No existing profile data found - this is normal for new users');
-        }
+      });
+  
+      return {
+        summary: parsed.summary,
+        skills: extractedSkills,
+        experience: experiences,
+      };
+  };
+  
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+  
+      if (file.type !== 'application/pdf' && !file.type.includes('document')) {
+        toast.error('Please upload a PDF or Word document');
+        return;
+      }
+  
+      setUploading(true);
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setUploading(false);
+      setResumeUploaded(true);
+      
+      // Start parsing
+      setParsing(true);
+      try {
+        const parsedData = await parseResume(file);
+        setProfileData(parsedData);
+        setParsing(false);
+        setShowParseResults(true);
+        toast.success('Resume parsed successfully!');
       } catch (error) {
-        console.error('Error fetching profile data:', error);
-      } finally {
-        setLoading(false);
+        setParsing(false);
+        toast.error('Failed to parse resume. Please fill manually.');
       }
     };
-
-    fetchProfileData();
-  }, []);
-
-  // Function to upload resume to resume_parser and then fetch the parsed data
-  const uploadResumeAndFetchData = async (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-    try {
-  const response = await fetch("http://localhost:8000/api/parse-resume/", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail);
+  
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+    };
+  
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const fakeEvent = { target: { files: [file] } } as any;
+        handleFileUpload(fakeEvent);
       }
-
-      const parsedData = await getProfileSetupData();
-      
-      //IDs start from 1 and are sequential
-      const skills = (parsedData.Skills || []).map((skill, idx) => ({
-        Id: idx + 1,
-        SkillName: skill.SkillName,
-        Source: skill.Source as 'parsed' | 'manual'
-      }));
-      const experience = (parsedData.Experience || []).map((exp, idx) => ({
-        Id: idx + 1,
-        Title: exp.Title,
-        Company: exp.Company,
-        StartDate: exp.StartDate,
-        EndDate: exp.EndDate,
-        Description: exp.Description,
-        Source: exp.Source as 'parsed' | 'manual'
-      }));
-      const projects = (parsedData.Projects || []).map((project, idx) => ({
-        Id: idx + 1,
-        Title: project.Title,
-        Description: project.Description,
-        Source: project.Source as 'parsed' | 'manual'
-      }));
-
-      // Set the next ID for each type
-      skillId.current = skills.length + 1;
-      experienceId.current = experience.length + 1;
-      projectId.current = projects.length + 1;
-
-      const transformedData: ParsedResumeData = {
-        summary: parsedData.Summary || '',
-        skills,
-        experience,
-        projects,
-      };
-
-      setProfileData(transformedData);
-      setShowParseResults(true);
-      toast.success('Resume parsed and data loaded successfully!');
-      
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to parse resume. Please fill manually.');
-    }
-};
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf' && !file.type.includes('document')) {
-      toast.error('Please upload a PDF or Word document');
-      return;
-    }
-
-    setUploading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setUploading(false);
-    setResumeUploaded(true);
-    
-    // Start parsing
-    setParsing(true);
-    try {
-      await uploadResumeAndFetchData(file);
-    } finally {
-      setParsing(false);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      const fakeEvent = { target: { files: [file] } } as any;
-      handleFileUpload(fakeEvent);
-    }
-  };
-
-  const updateProfileField = (field: string, value: any) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const addSkill = (skill: string) => {
-    if (skill && !profileData.skills.some(s => s.SkillName === skill)) {
-      const newSkill: Skill = {
-        Id: skillId.current++,
-        SkillName: skill,
-        Source: 'manual'
-      };
-      setProfileData(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill]
-      }));
-    }
-  };
-
-  const removeSkill = (skillId: number) => {
-    updateProfileField('skills', profileData.skills.filter(s => s.Id !== skillId));
-  };
-
-  const addExperience = (exp: Experience) => {
-    const newExp: Experience = {
-      Id: experienceId.current++,
-      Company: exp.Company || '',
-      Title: exp.Title || '',
-      StartDate: exp.StartDate || '', 
-      EndDate: exp.EndDate || '',   
-      Description: exp.Description || '',
-      Source: 'manual'
     };
-    setProfileData(prev => ({
-      ...prev,
-      experience: [...prev.experience, newExp]
-    }));
-  };
-
-  const updateExperience = (id: number, newExp: Experience) => {
-    const updated = profileData.experience.map(exp => 
-      exp.Id === id ? { ...newExp } : exp
-    );
-    updateProfileField('experience', updated);
-  };
-
-  const removeExperience = (id: number) => {
-    updateProfileField('experience', profileData.experience.filter(exp => exp.Id !== id));
-  };
-
-  const addProject = (proj: ProjectItem) => {
-    const newP: ProjectItem = {
-      Id: projectId.current++,
-      Title: proj.Title || '',
-      Description: proj.Description || '',
-      Source: 'manual'
+  
+    const updateProfileField = (field: string, value: any) => {
+      setProfileData(prev => ({ ...prev, [field]: value }));
     };
-    setProfileData(prev => ({
-      ...prev,
-      projects: [...prev.projects, newP]
-    }));
-  };
+  
+    const addSkill = (skill: string) => {
+      if (skill && !profileData.skills.includes(skill)) {
+        updateProfileField('skills', [...profileData.skills, skill]);
+      }
+    };
+  
+    const removeSkill = (skill: string) => {
+      updateProfileField('skills', profileData.skills.filter(s => s !== skill));
+    };
+  
+    const addExperience = () => {
+      const newExp = {
+        id: '',
+        company: '',
+        title: '',
+        startDate: '',
+        endDate: '',
+        description: ''
+      };
+      updateProfileField('experience', [...profileData.experience, newExp]);
+    };
+  
+    const updateExperience = (id: string, field: string, value: any) => {
+      const updated = profileData.experience.map(exp => 
+        exp.id === id ? { ...exp, [field]: value } : exp
+      );
+      updateProfileField('experience', updated);
+    };
+  
+    const removeExperience = (id: string) => {
+      updateProfileField('experience', profileData.experience.filter(exp => exp.id !== id));
+    };
 
-  const updateProject = (id: number, newProj: ProjectItem) => {
-    const updated = profileData.projects.map(p => 
-      p.Id === id ? { ...newProj } : p
-    );
-    updateProfileField('projects', updated);
-  };
-
-  const removeProject = (id: number) => {
-    updateProfileField('projects', profileData.projects.filter(p => p.Id !== id));
-  };
-
+  
   const getCompletionPercentage = () => {
     let completed = 0;
     const total = 6;
@@ -350,34 +223,32 @@ export function ProfileSetup() {
   };
 
   const handleSaveProfile = async () => {
+    const profilePayload = {
+      Id: user?.id,
+      HourlyRate: hourlyRate,
+      WorkingHours: workingHours,
+      Availability: availability,
+      Location: location,
+      Summary: profileData.summary,
+      Skills: JSON.stringify(profileData.skills),
+      Experience: JSON.stringify(profileData.experience),
+      Projects: JSON.stringify(profileData.projects),
+    };
+  
+    console.log(JSON.stringify(profileData.skills))
+    console.log(JSON.stringify(profileData.experience))
+    console.log(JSON.stringify(profileData.projects))
+  
     try {
-      const [firstName, ...lastNameParts] = fullName.split(' ');
-      const lastName = lastNameParts.join(' ') || '';
-      console.log('Profile Data:', profileData);
+      await updateFreelancerProfile(profilePayload);
+      toast.success('Profile saved successfully!');
+      navigate('/freelancer/dashboard');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save profile');
+    }
+  };
 
-      await saveProfileSetupData({
-        firstName,
-        lastName,
-        phone,
-        hourlyRate,
-        availability,
-        workingHours,
-        profileData: {
-          Summary: profileData.summary,
-          Skills: profileData.skills,
-          Experience: profileData.experience,
-          Projects: profileData.projects
-        }
-      });
-
-    toast.success('Profile saved successfully!');
-    navigate('/freelancer/dashboard');
-  } catch (error: any) {
-    toast.error(error.message || 'Failed to save profile');
-  }
-};
-
-  // Experience modal state
+  // pxperience modal state
   const [showExpModal, setShowExpModal] = useState(false);
   const [editExp, setEditExp] = useState<Experience | null>(null);
   // Project modal state
@@ -581,15 +452,15 @@ export function ProfileSetup() {
         </Label>
         <div className="flex flex-wrap gap-2 mb-3">
           {profileData.skills.map(skill => (
-            <span key={skill.Id} className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium shadow-sm border border-blue-200">
-              {skill.SkillName}
+            <Badge key={skill} variant="secondary" className="flex items-center gap-1">
+              {skill}
               <button
-                onClick={() => removeSkill(skill.Id)}
-                className="ml-1 text-blue-400 hover:text-red-500"
+                onClick={() => removeSkill(skill)}
+                className="ml-1 text-muted-foreground hover:text-destructive"
               >
                 <X className="w-3 h-3" />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
         <Input

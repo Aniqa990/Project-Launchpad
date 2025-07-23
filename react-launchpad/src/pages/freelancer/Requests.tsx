@@ -112,10 +112,10 @@ export function FreelancerRequests() {
         </div>
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
-        {request.skills.slice(0, 3).map((skill: string) => (
+        {request.skills?.split(',').map(s => s.trim()).slice(0, 3).map((skill: string) => (
           <Badge key={skill} variant="info" size="sm">{skill}</Badge>
         ))}
-        {request.skills.length > 3 && (
+        {request.skills?.split(',').length > 3 && (
           <Badge variant="info" size="sm">+{request.skills.length - 3} more</Badge>
         )}
       </div>
@@ -270,7 +270,7 @@ export function FreelancerRequests() {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Required Skills</label>
                   <div className="flex flex-wrap gap-2">
-                    {selectedRequest.skills.map((skill: string) => (
+                  {selectedRequest.skills?.split(',').map(s => s.trim()).map((skill: string) => (
                       <Badge key={skill} variant="info">{skill}</Badge>
                     ))}
                   </div>

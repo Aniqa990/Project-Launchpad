@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { fetchPlatformProfile } from '../../apiendpoints';
+import { fetchPlatformProfile, updatePlatformProfile } from '../../apiendpoints';
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { User } from '@/types';
@@ -22,7 +22,6 @@ export function PlatformSettings() {
     newPassword: '',
     confirmPassword: '',
   });
-  const [dangerModal, setDangerModal] = useState({ open: false, type: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -37,7 +36,11 @@ export function PlatformSettings() {
       setError(null);
       try {
         const data = await fetchPlatformProfile(user?.id ?? 0);
-        setProfile(data);
+        const transformData = {
+          ...data,
+          phone: data.phoneNo,
+        };
+        setProfile(transformData);
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
         setProfile(null);
@@ -58,7 +61,7 @@ export function PlatformSettings() {
     setLoading(true);
     setError(null);
     try {
-      await updatePlatformProfile(profile);
+      await updatePlatformProfile(profile?.id ?? 0, profile);
       setIsEditing(false);
       setSuccessMessage('Profile updated successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -114,7 +117,7 @@ export function PlatformSettings() {
     setLoading(true);
     setError(null);
     try {
-      await updatePlatformProfile({
+      await updatePlatformProfile(profile?.id ?? 0, {
         ...profile,
         password: formData.currentPassword,
         newPassword: formData.newPassword,
@@ -127,17 +130,6 @@ export function PlatformSettings() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDangerAction = (type: string) => {
-    setDangerModal({ open: true, type });
-  };
-
-  const confirmDangerAction = async () => {
-    setDangerModal({ open: false, type: '' });
-    await deletePlatformProfile(profile?.id ?? 0);
-    toast.success('Account deleted!');
-    navigate('/');
   };
 
   if (loading) {
@@ -194,7 +186,7 @@ export function PlatformSettings() {
       {/* Profile Picture Section */}
       <Card>
         <div className="flex items-center space-x-6">
-          <Avatar src={profile?.profilepicture} alt={profile?.firstname} size="xl" />
+          <Avatar src={profile?.profilePicture} alt={profile?.firstName} size="xl" />
           <div>
             <input
               type="file"
@@ -242,8 +234,8 @@ export function PlatformSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
             <Input
               type="text"
-              value={profile?.firstname || ''}
-              onChange={(e) => handleProfileChange('firstname', e.target.value)}
+              value={profile?.firstName || ''}
+              onChange={(e) => handleProfileChange('firstName', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -251,8 +243,8 @@ export function PlatformSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
             <Input
               type="text"
-              value={profile?.lastname || ''}
-              onChange={(e) => handleProfileChange('lastname', e.target.value)}
+              value={profile?.lastName || ''}
+              onChange={(e) => handleProfileChange('lastName', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -310,35 +302,6 @@ export function PlatformSettings() {
           </Button>
         </div>
       </Card>
-
-      {/* Danger Zone Section */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Danger Zone</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
-            <div>
-              <h4 className="font-medium text-red-900">Delete Account</h4>
-              <p className="text-sm text-red-600">Permanently delete your account and all data</p>
-            </div>
-            <Button variant="danger" size="sm" onClick={() => handleDangerAction('delete')}>Delete</Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Danger Modal */}
-      <Modal isOpen={dangerModal.open} onClose={() => setDangerModal({ open: false, type: '' })} title="Delete Account">
-        <div className="space-y-4">
-          <p>
-            Are you sure you want to permanently delete your account? This action cannot be undone.
-          </p>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setDangerModal({ open: false, type: '' })}>Cancel</Button>
-            <Button variant={'danger'} onClick={confirmDangerAction}>
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

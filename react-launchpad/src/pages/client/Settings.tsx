@@ -37,7 +37,11 @@ export function ClientSettings() {
       setError(null);
       try {
         const data = await fetchClientProfile(user?.id ?? 0);
-        setProfile(data);
+        const transformData = {
+          ...data,
+          phone: data.phoneNo,
+        };
+        setProfile(transformData);
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
         setProfile(null);
@@ -260,8 +264,8 @@ export function ClientSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
             <Input
               type="tel"
-              value={profile?.phoneNo || ''}
-              onChange={(e) => handleProfileChange('phoneNo', e.target.value)}
+              value={profile?.phone || ''}
+              onChange={(e) => handleProfileChange('phone', e.target.value)}
               disabled={!isEditing}
             />
           </div>

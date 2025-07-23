@@ -23,6 +23,7 @@ import { PlatformDashboard } from './pages/platform/Dashboard';
 import { MilestonePayments } from './pages/platform/Payments';
 import { AdminViewProjects } from './pages/platform/ViewProjects';
 import { AdminProjectApprovals } from './pages/platform/Projects';
+import { PlatformSettings } from './pages/platform/Settings';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
@@ -149,6 +150,7 @@ function AppRoutes() {
         <Route path="payments" element={<MilestonePayments />} />
         <Route path="projects" element={<AdminProjectApprovals />} />
         <Route path="view-projects" element={<AdminViewProjects />} />
+        <Route path="settings" element={<PlatformSettings />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={

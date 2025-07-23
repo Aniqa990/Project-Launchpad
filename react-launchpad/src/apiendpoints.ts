@@ -48,6 +48,15 @@ export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) =
   }
 };
 
+export const updateFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
+  try{
+  const response = await api.put("/freelancer", profile);
+  return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to save profile');
+  }
+};
+
 //PROJECT REQUESTS
 export const getProjectRequests = async(freelancerId: number) => {
   try{
@@ -426,6 +435,11 @@ export async function deleteClientProfile(userId: number) {
 export async function fetchPlatformProfile(id:number) {
   const { data } = await api.get(`/platform/profile/${id}`);
   return lowercaseFirstLetterKeys(data);
+}
+
+export async function updatePlatformProfile(id:number, updates: Partial<User>) {
+  const { data } = await api.patch(`/platform/profile/${id}`, updates);
+  return data;
 }
 
 //admin dashboard stats
