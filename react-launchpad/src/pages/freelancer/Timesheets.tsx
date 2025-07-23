@@ -77,6 +77,27 @@ const FreelancerTimesheets: React.FC = () => {
   }, [user?.id]);
 
   useEffect(() => {
+    // Restore timer state from localStorage on mount
+    const savedSession = localStorage.getItem('activeSession');
+    const savedStart = localStorage.getItem('sessionStart');
+    if (savedSession && savedStart) {
+      setActiveSession(Number(savedSession));
+      setSessionStart(new Date(savedStart));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Persist timer state to localStorage
+    if (activeSession && sessionStart) {
+      localStorage.setItem('activeSession', String(activeSession));
+      localStorage.setItem('sessionStart', sessionStart.toISOString());
+    } else {
+      localStorage.removeItem('activeSession');
+      localStorage.removeItem('sessionStart');
+    }
+  }, [activeSession, sessionStart]);
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (activeSession && sessionStart) {
       interval = setInterval(() => {
@@ -124,6 +145,9 @@ const FreelancerTimesheets: React.FC = () => {
     setSessionStart(null);
     setSessionTime(0);
     setWorkDescription('');
+    // Remove from localStorage
+    localStorage.removeItem('activeSession');
+    localStorage.removeItem('sessionStart');
   };
 
   const formatTime = (seconds: number) => {
@@ -134,6 +158,15 @@ const FreelancerTimesheets: React.FC = () => {
       .toString()
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Helper to format hours as hh:mm:ss
+  function formatHours(hours: number) {
+    const totalSeconds = Math.round(hours * 3600);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
 
   const filteredProjects = projects.filter(
     p => (projectFilter === 'All' || p.title === projectFilter) && p.status === 'active'
@@ -263,7 +296,7 @@ const FreelancerTimesheets: React.FC = () => {
                   <h3 className="font-semibold text-gray-900">{timesheet.ProjectName}</h3>
                   <p className="text-sm text-gray-600 mt-1">{timesheet.WorkDescription}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {timesheet.TotalHours}h • {timesheet.StartTime} - {timesheet.EndTime}
+                    {formatHours(timesheet.TotalHours)} • {timesheet.StartTime} - {timesheet.EndTime}
                   </p>
                 </div>
                 <div className="flex flex-col items-end space-y-1 min-w-[120px]">

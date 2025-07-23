@@ -36,6 +36,15 @@ function getWeekEnding(dateStr: string): string {
   return date.toISOString().split('T')[0];
 }
 
+// Helper to format hours as hh:mm:ss
+function formatHours(hours: number) {
+  const totalSeconds = Math.round(hours * 3600);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
 
 function groupTimesheets(flat: any[]): TimesheetEntry[] {
   const grouped: { [key: string]: TimesheetEntry } = {};
@@ -338,7 +347,7 @@ const TimesheetApproval: React.FC = () => {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Clock className="w-4 h-4" />
-                        <span>{timesheet.totalHours} hours</span>
+                        <span>{formatHours(timesheet.totalHours)} hours</span>
                       </div>
                     </div>
                   </div>
@@ -347,8 +356,8 @@ const TimesheetApproval: React.FC = () => {
                 <div className="flex flex-col sm:items-end space-y-2">
                   <Badge variant={
                     timesheet.status === 'Approved' ? 'success' :
-                    timesheet.status === 'Pending' ? 'warning' :
-                    timesheet.status === 'Rejected' ? 'danger' : 'default'
+                    timesheet.status === 'Pending' ? 'info' :
+                    timesheet.status === 'Rejected' ? 'destructive' : 'default'
                   }>
                       {timesheet.status}
                    </Badge>
@@ -379,7 +388,7 @@ const TimesheetApproval: React.FC = () => {
                   <Card key={task.id} className="p-4 bg-gray-50">
                     <div className="flex justify-between items-start mb-2">
                       <h5 className="font-medium text-gray-900 text-sm">{task.name}</h5>
-                      <span className="text-sm font-semibold text-gray-700">{task.hours}h</span>
+                      <span className="text-sm font-semibold text-gray-700">{formatHours(task.hours)}</span>
                     </div>
                     <p className="text-xs text-gray-600 line-clamp-2">{task.description}</p>
                     <p className="text-xs text-gray-500 mt-1">{new Date(task.date).toLocaleDateString()}</p>
@@ -411,7 +420,7 @@ const TimesheetApproval: React.FC = () => {
                           <tr key={task.id}>
                             <td className="px-4 py-3 text-sm font-medium text-gray-900">{task.name}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{new Date(task.date).toLocaleDateString()}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900">{task.hours}h</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{formatHours(task.hours)}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{task.description}</td>
                           </tr>
                         ))}
@@ -425,7 +434,7 @@ const TimesheetApproval: React.FC = () => {
                       <div key={task.id} className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <h5 className="font-medium text-gray-900">{task.name}</h5>
-                          <span className="text-sm font-semibold text-gray-700">{task.hours}h</span>
+                          <span className="text-sm font-semibold text-gray-700">{formatHours(task.hours)}</span>
                         </div>
                         <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                         <p className="text-xs text-gray-500">{new Date(task.date).toLocaleDateString()}</p>
