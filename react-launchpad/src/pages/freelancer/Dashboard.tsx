@@ -98,8 +98,8 @@ export function FreelancerDashboard() {
         sentAt: request.RequestedAt
       }));
 
-      setProjects(transformedProjects);
-      setRequests(transformedRequests);
+      setProjects(projectsData);
+      setRequests(requestsData);
 
       // Calculate stats
       const activeProjects = transformedProjects.filter((p: Project) => p.status === 'active').length;

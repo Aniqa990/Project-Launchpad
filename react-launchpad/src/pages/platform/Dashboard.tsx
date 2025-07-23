@@ -56,29 +56,29 @@ export function PlatformDashboard() {
   const activeProjects = projects.filter(p => p.status === 'active').slice(0, 3);
   const completedProjects = projects.filter(p => p.status === 'completed').slice(0, 3);
 
-  const resourceData = [
+const resourceData = [
     { label: 'Allocated Jobs', value: allocated, color: '#8B5CF6' },
     { label: 'Unallocated Jobs', value: unallocated, color: '#F87171' },
-  ];
+];
 
-  const pieData = {
-    labels: resourceData.map(d => d.label),
-    datasets: [
-      {
-        data: resourceData.map(d => d.value),
-        backgroundColor: resourceData.map(d => d.color),
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const pieOptions = {
-    plugins: {
-      legend: { display: false },
+const pieData = {
+  labels: resourceData.map(d => d.label),
+  datasets: [
+    {
+      data: resourceData.map(d => d.value),
+      backgroundColor: resourceData.map(d => d.color),
+      borderWidth: 1,
     },
-    cutout: '70%',
-    responsive: true,
-    maintainAspectRatio: false,
+  ],
+};
+
+const pieOptions = {
+  plugins: {
+    legend: { display: false },
+  },
+  cutout: '70%',
+  responsive: true,
+  maintainAspectRatio: false,
   };
 
   const handleQuickAction = (action: string) => {
@@ -192,7 +192,7 @@ export function PlatformDashboard() {
                           </div>
                         </div>
                       </div>
-                    </li>
+                  </li>
                   ))
                 ) : (
                   <div className="text-center py-6 text-gray-500">
@@ -239,7 +239,7 @@ export function PlatformDashboard() {
                           </div>
                         </div>
                       </div>
-                    </li>
+                  </li>
                   ))
                 ) : (
                   <div className="text-center py-6 text-gray-500">
@@ -265,20 +265,20 @@ export function PlatformDashboard() {
                 <span className="text-sm">{d.label}: {d.value}</span>
               </div>
             ))}
-          </div>
         </div>
+      </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
+          <button 
             onClick={() => handleQuickAction('payments')}
             className="w-full block flex items-center justify-center space-x-2 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
           >
             <DollarSign className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
             <span className="text-sm font-medium text-gray-600 group-hover:text-blue-700">Process Payments</span>
           </button>
-          <button
+          <button 
             onClick={() => handleQuickAction('projects')}
             className="w-full block flex items-center justify-center space-x-2 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
           >
@@ -286,7 +286,7 @@ export function PlatformDashboard() {
             <span className="text-sm font-medium text-gray-600 group-hover:text-blue-700">Review Projects</span>
           </button>
         </div>
-      </div>
+        </div>
       </div>
     </div>
   );

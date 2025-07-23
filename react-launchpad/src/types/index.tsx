@@ -51,29 +51,6 @@ export interface FreelancerProfile {
   Projects: string;
 }
 
-export interface Skill {
-  Id: number;
-  SkillName: string;
-  Source: 'parsed' | 'manual';
-}
-
-export interface ProjectItem {
-  Id: number;
-  Title: string;
-  Description: string;
-  Source: 'parsed' | 'manual';
-}
-
-export interface Experience {
-  Id: number;
-  Title: string;
-  Company: string;
-  StartDate: string;
-  EndDate: string;
-  Description: string;
-  Source: 'parsed' | 'manual';
-}
-
 export interface ProfileSetupData {
   Summary: string;
   Skills: {
@@ -109,7 +86,7 @@ export interface ParsedResumeData {
   summary: string;
   skills: string[];
   experience: {
-    id: string;
+    id: number;
     company: string;
     title: string;
     startDate: string;
@@ -117,10 +94,25 @@ export interface ParsedResumeData {
     description: string;
   }[];
   projects: {
-    id: string;
+    id: number;
     title: string;
     description: string;
   }[];
+}
+
+export interface ProjectItem {
+  id: number;
+  title: string;
+  description: string;
+}
+
+export interface Experience {
+  id: number;
+  company: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  description: string;
 }
 
 export interface Milestone {

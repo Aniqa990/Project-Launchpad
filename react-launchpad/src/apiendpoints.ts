@@ -48,9 +48,9 @@ export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) =
   }
 };
 
-export const updateFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
+export const updateFreelancerProfile = async(profile: Partial<FreelancerProfile>, id:number) => {
   try{
-  const response = await api.put("/freelancer", profile);
+  const response = await api.patch(`/freelancer/profile/${id}`, profile);
   return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to save profile');
