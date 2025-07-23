@@ -82,7 +82,6 @@ public async Task<HttpResponseData> Register(
 
     return response;
 }
-}
 
         [Function("Login")]
         public async Task<HttpResponseData> Login(

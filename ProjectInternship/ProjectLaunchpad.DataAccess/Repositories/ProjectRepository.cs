@@ -76,6 +76,34 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                             .ToListAsync();
         }
 
+        public async Task<IEnumerable<Project>> GetProjectsByStatusAsync(string status)
+        {
+            return await _db.projects
+                            .Where(p => p.Status.ToLower() == status.ToLower())
+                            .ToListAsync();
+        }
+
+        public async Task<List<Project>> GetProjectsWithPendingApprovalAsync()
+        {
+            return await _db.projects
+                .Where(p => p.ApprovalStatus == "pending")
+                .Include(p => p.Client)
+                    .ThenInclude(c => c.User)
+                .Include(p => p.AssignedFreelancers)
+                    .ThenInclude(af => af.Freelancer)
+                        .ThenInclude(f => f.User)
+                .Include(p => p.Milestones)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetProjectCountWithPendingApprovalStatus()
+
+        {
+            return await _db.projects
+                .Where(p => p.ApprovalStatus == "pending")
+                .CountAsync();
+        }
+
         public async Task AddProjectAsync(Project project)
         {
             await _db.projects.AddAsync(project);

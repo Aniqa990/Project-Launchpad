@@ -32,9 +32,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IPaymentRepository PaymentRepository { get; }
         public ITimeSheetRepository TimeSheet { get; }
         public IFeedbackRepository Feedbacks { get; }
-
-
-        // 
+        public INotificationRepository NotificationRepository { get; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -54,7 +52,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
             TimeSheet = new TimeSheetRepository(_db);
             Feedbacks = new FeedbackRepository(_db);
             AdminProfiles = new AdminProfileRepository(_db);
-            ///
+            NotificationRepository = new NotificationRepository(_db);
         }
 
         public async Task<int> SaveAsync()

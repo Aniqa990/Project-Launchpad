@@ -31,19 +31,15 @@ namespace ProjectLaunchpad.Models.Models
 
         public DateTime? SubmissionDate { get; set; }
 
-        public string? SubmittedFileUrls { get; set; } // Optional: use separate table if needed
-
         public string? FreelancerComments { get; set; }
 
         public bool IsApproved { get; set; } = false;
+        public string HandoverStatus { get; set; } = "pending";
         public int ProjectId { get; set; }
 
         [ForeignKey("ProjectId")]
         public Project project { get; set; }
 
         public ICollection<Deliverables> Deliverables { get; set; } = new List<Deliverables>();
-
-
-
     }
 }

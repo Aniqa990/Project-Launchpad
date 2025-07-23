@@ -104,6 +104,25 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(new { message = "Freelancer removed from project." });
             return response;
         }
-    }
 
+        [Function("GetAllocatedResources")]
+        public async Task<HttpResponseData> GetAllocatedResources(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/allocated-resources")] HttpRequestData req)
+        {
+            var count = await _unit.ProjectFreelancers.GetAllocatedResourcesAsync();
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(count);
+            return response;
+        }
+
+        [Function("GetUnallocatedResources")]
+        public async Task<HttpResponseData> GetUnallocatedResources(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/unallocated-resources")] HttpRequestData req)
+        {
+            var count = await _unit.ProjectFreelancers.GetUnallocatedResourcesAsync();
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(count);
+            return response;
+        }
+    }
 }

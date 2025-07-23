@@ -154,23 +154,51 @@ namespace ProjectLaunchpad.Functions
 
         [Function("UpdateProjectPosting")]
         public async Task<HttpResponseData> UpdateProjectPosting(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "projects/{id:int}")] HttpRequestData req,
-            int id)
-        {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "projects/{id:int}")] HttpRequestData req,
+        int id)
+            {
+                (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
 
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+                if (!isAuthorized)
+                    return unauthorizedResponse!;
 
-            var updatedProject = await req.ReadFromJsonAsync<Project>();
-            updatedProject.Id = id;
-            await _unitOfWork.ProjectRepository.UpdateProjectAsync(updatedProject);
-            await _unitOfWork.SaveAsync();
+                var patchDto = await req.ReadFromJsonAsync<ProjectResponseDTO>();
+                if (patchDto == null)
+                {
+                    var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequest.WriteStringAsync("Invalid request body.");
+                    return badRequest;
+                }
 
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(updatedProject);
-            return response;
-        }
+                // Fetch the existing project
+                var existingProject = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
+                if (existingProject == null)
+                {
+                    var notFound = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFound.WriteStringAsync("Project not found.");
+                    return notFound;
+                }
+
+                // Only update fields that are not null in the patchDto
+                if (patchDto.Title != null) existingProject.ProjectTitle = patchDto.Title;
+                if (patchDto.Description != null) existingProject.Description = patchDto.Description;
+                if (patchDto.Status != null) existingProject.Status = patchDto.Status;
+                if (patchDto.Budget != null) existingProject.Budget = patchDto.Budget.Value;
+                if (patchDto.Deadline != null) existingProject.Deadline = patchDto.Deadline.Value;
+                if (patchDto.ClientId != null) existingProject.ClientId = patchDto.ClientId.Value;
+                if (patchDto.Category != null) existingProject.CategoryOrDomain = patchDto.Category;
+                if (patchDto.PaymentType != null) existingProject.PaymentType = patchDto.PaymentType;
+                if (patchDto.NumberOfFreelancers != null) existingProject.NumberOfFreelancers = patchDto.NumberOfFreelancers.Value;
+                if (patchDto.AttachedDocumentPath != null) existingProject.AttachedDocumentPath = patchDto.AttachedDocumentPath;
+                if (patchDto.Skills != null) existingProject.RequiredSkills = string.Join(",", patchDto.Skills);
+
+            await _unitOfWork.ProjectRepository.UpdateProjectAsync(existingProject);
+                await _unitOfWork.SaveAsync();
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(existingProject);
+                return response;
+            }
 
         [Function("DeleteProjectPosting")]
         public async Task<HttpResponseData> DeleteProjectPosting(
@@ -213,5 +241,107 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(projects);
             return response;
         }
+
+        [Function("GetProjectsWithPendingApproval")]
+        public async Task<HttpResponseData> GetProjectsWithPendingApproval(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/projects/pending")] HttpRequestData req)
+        {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
+            var projects = await _unitOfWork.ProjectRepository.GetProjectsWithPendingApprovalAsync();
+
+            var projectDTOs = projects.Select(p => new ProjectResponseDTO
+            {
+                Id = p.Id,
+                Title = p.ProjectTitle,
+                Description = p.Description,
+                Status = p.Status ?? "active",
+                Budget = p.Budget,
+                Deadline = p.Deadline,
+                ClientId = p.ClientId,
+                Category = p.CategoryOrDomain,
+                PaymentType = p.PaymentType,
+                NumberOfFreelancers = p.NumberOfFreelancers,
+                AttachedDocumentPath = p.AttachedDocumentPath,
+                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                {
+                    FirstName = p.Client.User.FirstName,
+                    LastName = p.Client.User.LastName,
+                    Email = p.Client.User.Email,
+                    PhoneNo = p.Client.User.PhoneNo,
+                    Role = p.Client.User.Role,
+                    Gender = p.Client.User.Gender
+                } : null,
+                Skills = p.RequiredSkills?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                {
+                    FirstName = af.Freelancer.User.FirstName,
+                    LastName = af.Freelancer.User.LastName,
+                    Email = af.Freelancer.User.Email,
+                    PhoneNo = af.Freelancer.User.PhoneNo,
+                    Role = af.Freelancer.User.Role,
+                    Gender = af.Freelancer.User.Gender
+                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                Progress = 0 // TODO: Calculate based on milestones if needed
+            }).ToList();
+
+
+
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(projectDTOs);
+            return response;
+        }
+
+        [Function("GetProjectCountWithPendingApprovalStatus")]
+        public async Task<HttpResponseData> GetProjectCountWithPendingApprovalStatus(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/pending-projects")] HttpRequestData req)
+        {
+            var count = await _unitOfWork.ProjectRepository.GetProjectCountWithPendingApprovalStatus();
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(count);
+            return response;
+        }
+
+        [Function("UpdateProjectApprovalStatus")]
+        public async Task<HttpResponseData> UpdateProjectApprovalStatus(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "platform/projects/{id:int}")] HttpRequestData req,
+        int id)
+                {
+                    (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
+
+                    if (!isAuthorized)
+                        return unauthorizedResponse!;
+
+                    var dto = await req.ReadFromJsonAsync<ProjectApprovalDTO>();
+                    if (dto == null)
+                    {
+                        var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                        await badRequest.WriteStringAsync("Invalid request body.");
+                        return badRequest;
+                    }
+
+                    // Fetch the existing project
+                    var existingProject = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
+                    if (existingProject == null)
+                    {
+                        var notFound = req.CreateResponse(HttpStatusCode.NotFound);
+                        await notFound.WriteStringAsync("Project not found.");
+                        return notFound;
+                    }
+
+                    // Only update fields that are not null
+                    if (dto.ApprovalStatus != null) existingProject.ApprovalStatus = dto.ApprovalStatus;
+                    if (dto.RejectionReason != null) existingProject.RejectionReason = dto.RejectionReason;
+
+                    await _unitOfWork.ProjectRepository.UpdateProjectAsync(existingProject);
+                    await _unitOfWork.SaveAsync();
+
+                    var response = req.CreateResponse(HttpStatusCode.OK);
+                    await response.WriteAsJsonAsync(existingProject);
+                    return response;
+                }
     }
 }

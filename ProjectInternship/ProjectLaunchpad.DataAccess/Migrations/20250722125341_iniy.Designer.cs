@@ -12,8 +12,8 @@ using ProjectLaunchpad.DataAccess.Data;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250721064252_initialCreate")]
-    partial class initialCreate
+    [Migration("20250722125341_iniy")]
+    partial class iniy
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,6 +66,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.ToTable("freelancerProfiles");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("adminProfiles");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -87,9 +97,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<int>("MilestoneId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ProjectId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -97,6 +104,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<string>("comment")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("projectId")
+                        .HasColumnType("int");
 
                     b.Property<string>("uploadFiles")
                         .IsRequired()
@@ -106,7 +116,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.HasIndex("MilestoneId");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("projectId");
 
                     b.ToTable("deliverables");
                 });
@@ -234,6 +244,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<string>("FreelancerComments")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HandoverStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");
 
@@ -258,6 +272,31 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("milestones");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("notifications");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
@@ -318,6 +357,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("AttachedDocumentPath")
                         .HasColumnType("nvarchar(max)");
 
@@ -347,6 +390,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.Property<string>("ProjectTitle")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RejectionReason")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RequiredSkills")
@@ -640,6 +686,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
@@ -659,11 +716,15 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ProjectLaunchpad.Models.Models.Project", null)
+                    b.HasOne("ProjectLaunchpad.Models.Models.Project", "Project")
                         .WithMany("Deliverables")
-                        .HasForeignKey("ProjectId");
+                        .HasForeignKey("projectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Milestone");
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Experience", b =>
@@ -732,6 +793,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Notification", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
@@ -937,6 +1009,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("ClientProfile");
 
                     b.Navigation("FreelancerProfile");
+
+                    b.Navigation("Notifications");
                 });
 #pragma warning restore 612, 618
         }

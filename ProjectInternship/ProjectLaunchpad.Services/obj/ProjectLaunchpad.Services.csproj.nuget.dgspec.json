@@ -231,6 +231,10 @@
             "MySql.Data": {
               "target": "Package",
               "version": "[9.3.0, )"
+            },
+            "Stripe.net": {
+              "target": "Package",
+              "version": "[48.3.0, )"
             }
           },
           "imports": [

@@ -23,7 +23,7 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetAdminProfile")]
         public async Task<HttpResponseData> GetAdminProfile(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/profile/{id:int}")] HttpRequestData req, int id)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/profile/{id:int}")] HttpRequestData req, int id)
         {
             (bool isAuthorized, ClaimsPrincipal? userClaims, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
             if (!isAuthorized) return unauthorizedResponse!;
@@ -52,7 +52,7 @@ namespace ProjectLaunchpad.Functions
 
         [Function("UpdateAdminProfile")]
         public async Task<HttpResponseData> UpdateAdminProfile(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "admin/profile/{id:int}")] HttpRequestData req, int id)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "platform/profile/{id:int}")] HttpRequestData req, int id)
         {
             (bool isAuthorized, ClaimsPrincipal? userClaims, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
             if (!isAuthorized) return unauthorizedResponse!;
@@ -104,7 +104,7 @@ namespace ProjectLaunchpad.Functions
 
         [Function("DeleteAdminAccount")]
         public async Task<HttpResponseData> DeleteAdminAccount(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "admin/profile/{id}")] HttpRequestData req, int id)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "platform/profile/{id}")] HttpRequestData req, int id)
         {
             (bool isAuthorized, ClaimsPrincipal? userClaims, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
             if (!isAuthorized) return unauthorizedResponse!;

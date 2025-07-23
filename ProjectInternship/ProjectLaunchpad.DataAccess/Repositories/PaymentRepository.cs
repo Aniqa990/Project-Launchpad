@@ -23,6 +23,10 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             await _db.payments.Where(p => p.FreelancerId == freelancerId).ToListAsync();
         public async Task<IEnumerable<Payment>> GetPaymentsByClientIdAsync(int clientId) =>
             await _db.payments.Where(p => p.ClientId == clientId).ToListAsync();
+
+        public async Task<IEnumerable<Payment>> GetPaymentsByMilestoneIdAsync(int milestoneId) =>
+            await _db.payments.Where(p => p.MilestoneId == milestoneId).ToListAsync();
+
         public async Task<Payment?> GetByTransactionReferenceAsync(string transactionRef) =>
             await _db.payments.FirstOrDefaultAsync(p => p.TransactionReference == transactionRef);
         public async Task AddPaymentAsync(Payment payment) => await _db.payments.AddAsync(payment);

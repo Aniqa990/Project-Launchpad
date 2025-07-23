@@ -79,7 +79,6 @@ namespace ProjectLaunchpad.Functions
 
             // ✅ Update existing milestone with submission details
             milestone.SubmissionDate = dto.SubmissionDate;
-            milestone.SubmittedFileUrls = dto.SubmittedFileUrls;
             milestone.FreelancerComments = dto.FreelancerComments;
             milestone.Status = MilestoneStatus.Submitted;
 
@@ -147,7 +146,6 @@ namespace ProjectLaunchpad.Functions
             milestone.DueDate = updated.DueDate;
             milestone.Amount = updated.Amount;
             milestone.FreelancerComments = updated.FreelancerComments;
-            milestone.SubmittedFileUrls = updated.SubmittedFileUrls;
             milestone.SubmissionDate = updated.SubmissionDate;
             milestone.Status = updated.Status;
 
@@ -240,7 +238,42 @@ namespace ProjectLaunchpad.Functions
         }
 
 
+        [Function("GetMilestonesWithPaymentByHandoverStatus")]
+        public async Task<HttpResponseData> GetMilestonesWithPaymentByHandoverStatusAsync(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/milestones/handover/{status}")] HttpRequestData req, string status)
+        {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
 
+            var result = await _unitOfWork.MilestoneRepository.GetMilestonesByHandoverStatusAsync(status);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(result);
+            return response;
+        }
+
+        [Function("UpdateHandoverStatus")]
+        public async Task<HttpResponseData> UpdateHandoverStatusAsync(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "platform/handover/{id:int}")] HttpRequestData req, int id)
+        {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+            var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(id);
+            if (milestone == null)
+                return req.CreateResponse(HttpStatusCode.NotFound);
+            var dto = await req.ReadFromJsonAsync<UpdateHandoverStatusDTO>();
+            if (dto == null)
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+   
+            milestone.HandoverStatus = dto.HandoverStatus;
+            await _unitOfWork.MilestoneRepository.UpdateMilestoneAsync(milestone);
+            await _unitOfWork.SaveAsync();
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(milestone);
+            return response;
+        }
 
 
     }

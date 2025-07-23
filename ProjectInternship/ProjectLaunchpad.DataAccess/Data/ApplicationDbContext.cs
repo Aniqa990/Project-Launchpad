@@ -34,6 +34,7 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<ResumeProject> resumeProjects { get; set; }
         public DbSet<Experience> experiences { get; set; }
         public DbSet<Project> projects { get; set; }
+        public DbSet<Notification> notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
