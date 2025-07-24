@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { 
@@ -135,73 +135,63 @@ export function ClientProjects() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Projects</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{statusCounts.all}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <FolderOpen className="w-6 h-6 text-white" />
-              </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Projects</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{statusCounts.all}</p>
             </div>
-          </CardContent>
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <FolderOpen className="w-6 h-6 text-white" />
+            </div>
+          </div>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Open</p>
-                <p className="text-2xl font-bold text-yellow-600 mt-1">{statusCounts.Open}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Open</p>
+              <p className="text-2xl font-bold text-yellow-600 mt-1">{statusCounts.Open}</p>
             </div>
-          </CardContent>
+            <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+          </div>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">{statusCounts.Active}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{statusCounts.Active}</p>
             </div>
-          </CardContent>
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <User className="w-6 h-6 text-white" />
+            </div>
+          </div>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{statusCounts.Completed}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Completed</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">{statusCounts.Completed}</p>
             </div>
-          </CardContent>
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-white" />
+            </div>
+          </div>
         </Card>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-5 h-5 text-gray-600" />
-              <CardTitle>Filters</CardTitle>
-            </div>
+        <div className="flex items-center justify-between p-6 pb-0">
+          <div className="flex items-center space-x-2">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <span className="text-lg font-semibold">Filters</span>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="p-6 pt-2">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Status Filter Tabs */}
             <div className="flex space-x-2">
@@ -233,18 +223,16 @@ export function ClientProjects() {
               />
             </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Projects List */}
       <Card>
-        <CardHeader>
-          <CardTitle>Projects ({filteredProjects.length})</CardTitle>
-          <CardDescription>
+        <div className="p-6">
+          <span className="text-lg font-semibold">Projects ({filteredProjects.length})</span>
+          <div className="text-gray-500 text-sm mb-4">
             {statusFilter === 'all' ? 'All your projects' : `Projects with status: ${statusFilter}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </div>
           <div className="space-y-4">
             {filteredProjects.map((project) => (
               <div key={project.Id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
@@ -252,7 +240,11 @@ export function ClientProjects() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <h4 className="font-semibold text-gray-900">{project.ProjectTitle}</h4>
-                      <Badge className={getStatusColor(project.Status)}>
+                      <Badge variant={
+                        project.Status === 'Open' ? 'warning' :
+                        project.Status === 'Active' ? 'info' :
+                        project.Status === 'Completed' ? 'success' : 'default'
+                      }>
                         {project.Status}
                       </Badge>
                     </div>
@@ -323,9 +315,8 @@ export function ClientProjects() {
               </div>
             )}
           </div>
-        </CardContent>
+        </div>
       </Card>
-      {/* Remove Details Modal from the render tree */}
     </div>
   );
 }

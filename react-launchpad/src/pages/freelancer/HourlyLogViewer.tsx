@@ -213,7 +213,9 @@ const HourlyLogViewer: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
-                  {projects.map(project => (
+                  {projects
+                  .filter(project => project.Id !== undefined && project.Id !== null)
+                  .map(project => (
                     <SelectItem key={project.Id} value={project.Id.toString()}>{project.Title}</SelectItem>
                   ))}
                 </SelectContent>
@@ -309,7 +311,7 @@ const HourlyLogViewer: React.FC = () => {
                         <span className="text-sm text-gray-900">{log.endTime}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" size="sm">
                           {log.projectName}
                         </Badge>
                       </td>
@@ -326,7 +328,7 @@ const HourlyLogViewer: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-blue-600">{log.logId}</span>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" size="sm">
                         {log.projectName}
                       </Badge>
                     </div>

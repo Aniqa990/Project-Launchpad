@@ -16,36 +16,8 @@ export function FreelancerProjects() {
       if (!user?.id) return;
       try {
         const projectsData = await getFreelancerProjects(user.id);
-        const transformedProjects: Project[] = projectsData.map((project: any) => ({
-          id: project.Id,
-          title: project.Title,
-          description: project.Description,
-          status: project.Status,
-          budget: project.Budget,
-          deadline: project.Deadline,
-          clientId: project.ClientId,
-          category: project.Category,
-          paymentType: project.PaymentType,
-          numberOfFreelancers: project.NumberOfFreelancers,
-          attachedDocumentPath: project.AttachedDocumentPath,
-          client: project.Client ? {
-            firstName: project.Client.FirstName,
-            lastName: project.Client.LastName,
-            email: project.Client.Email,
-            password: '',
-            phone: project.Client.PhoneNo,
-            avatar: '',
-            role: project.Client.Role,
-            gender: project.Client.Gender,
-            location: '',
-            joinedDate: '',
-          } : undefined,
-          skills: project.Skills || [],
-          team: project.Team || [],
-          progress: project.Progress ?? 0,
-          milestones: project.Milestones || [],
-        }));
-        setProjects(transformedProjects);
+        console.log(projectsData);
+        setProjects(projectsData);
       } catch (error) {
         setProjects([]);
       }
@@ -56,7 +28,7 @@ export function FreelancerProjects() {
   const filteredProjects = projects.filter((project: Project) => {
     const matchesTab = activeTab === 'all' || project.status === activeTab;
     const clientName = project.client ? `${project.client.firstName ?? ''} ${project.client.lastName ?? ''}` : '';
-    const matchesSearch = (project.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (project.projectTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (clientName.toLowerCase()).includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
   });
@@ -132,7 +104,7 @@ export function FreelancerProjects() {
             <div key={project.id} className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{project.title}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{project.projectTitle}</h3>
                   <p className="text-gray-600 text-sm mb-3 line-clamp-2">{project.description}</p>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status || '')}`}>
@@ -140,7 +112,7 @@ export function FreelancerProjects() {
                 </span>
               </div>
               <div className="flex flex-wrap gap-2 mb-4">
-                {project.skills?.slice(0, 3).map((skill: string, index: number) => (
+                {project.requiredSkills?.split(',').slice(0, 3).map((skill: string, index: number) => (
                   <span
                     key={index}
                     className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"
@@ -148,9 +120,9 @@ export function FreelancerProjects() {
                     {skill}
                   </span>
                 ))}
-                {project.skills?.length && project.skills.length > 3 && (
+                {project.requiredSkills?.split(',').length && project.requiredSkills?.split(',').length > 3 && (
                   <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-                    +{project.skills.length - 3} more
+                    +{project.requiredSkills?.split(',').length - 3} more
                   </span>
                 )}
               </div>

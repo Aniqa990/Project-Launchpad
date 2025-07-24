@@ -253,7 +253,7 @@ export const getProjectById = async (id: string | number) => {
 // Fetch projects for a specific client
 export const getClientProjects = async (clientId: number) => {
   const res = await api.get(`/clients/${clientId}/projects`);
-  return res.data;
+  return lowercaseFirstLetterKeys(res.data);
 };
 
 export const createProject = async (payload: any) => {

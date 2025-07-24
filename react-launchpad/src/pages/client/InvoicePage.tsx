@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function InvoicePage({ invoiceData, onPayNow, onClose }: { invoiceData: any, onPayNow: (data: any) => void, onClose?: () => void }) {
+export function InvoicePage({ invoiceData, onPayNow, onClose }: { invoiceData: any, onPayNow: (data: any) => void, onClose?: () => void }) {
   // Allow editing of user details
   const [userDetails, setUserDetails] = useState({
     name: invoiceData.name || '',

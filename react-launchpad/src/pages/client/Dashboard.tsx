@@ -14,7 +14,7 @@ import {
   Clock,
   ArrowRight
 } from 'lucide-react';
-import { getProjects, getClientProjects } from '../../apiendpoints';
+import { getClientProjects } from '../../apiendpoints';
 import {Project} from '@/types';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -188,11 +188,11 @@ export function ClientDashboard() {
                   <div key={project.id || idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">{project.title}</h3>
+                        <h3 className="font-bold text-gray-900 text-base mb-0.5">{project.projectTitle}</h3>
                         <p className="text-gray-600 text-sm line-clamp-2 mb-1">{project.description}</p>
                         <div className="flex flex-wrap gap-2 mb-1">
                           <Badge variant="info">{project.paymentType}</Badge>
-                          <Badge variant="info">{project.category}</Badge>
+                          <Badge variant="info">{project.categoryOrDomain}</Badge>
                           <Badge variant="info">Budget: ${project.budget}</Badge>
                           <Badge variant="info">Freelancers: {project.numberOfFreelancers}</Badge>
                         </div>

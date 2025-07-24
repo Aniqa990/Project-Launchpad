@@ -179,19 +179,21 @@ export interface Task {
 
 export interface Project {
   id: number;
-  title?: string;
+  projectTitle?: string;
   description?: string;
   status?: 'draft' | 'active' | 'completed' | 'cancelled';
   budget?: number;
   deadline?: string;
   clientId?: string;
-  category?: string;
+  categoryOrDomain?: string;
   paymentType?: string;
-  numberOfFreelancers?: number;  
+  numberOfFreelancers?: number; 
+  attachedDocumentPath?: string;
   client?: User;
-  skills?: string[];
+  requiredSkills?: string;
   team?: User[];
   progress?: number;
+  handoverStatus?: string;
 }
 
 export interface ProjectRequest {
