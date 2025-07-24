@@ -8,6 +8,8 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
 {
     public interface IClientProfileRepository
     {
-        void InsertClientProfile(int userId);
+        Task InsertClientProfile(int userId);
+        Task DeleteClientProfileAsync(int userId);
+
     }
 }

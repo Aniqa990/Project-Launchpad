@@ -6,7 +6,7 @@ import axios from 'axios';
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string, role: 'client' | 'freelancer') => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   signup: (userData: Partial<SignupRequest>) => Promise<void>;
   isAuthenticated: boolean;
@@ -117,8 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const login = async (email: string, password: string, role: 'client' | 'freelancer') => {
-    const { token: newToken, user: userData } = await loginUser(email, password, role);
+  const login = async (email: string, password: string) => {
+    const { token: newToken, user: userData } = await loginUser(email, password);
     console.log('Login successful:', { user: userData, token: newToken ? 'exists' : 'missing' });
     setToken(newToken);
     setUser(userData);

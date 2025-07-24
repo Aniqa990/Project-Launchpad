@@ -1,27 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
-import { User, Phone, Camera, Save, Briefcase, DollarSign, Clock, Edit2 } from 'lucide-react';
-import { getProfileSetupData, updateProfileSetupData, getCurrentUserFreelancerProfile } from '../../apiendpoints';
+import { User, Phone, Camera, Save, Briefcase, DollarSign, Clock, Edit2, Eye, EyeOff, Lock } from 'lucide-react';
+import { getProfileSetupData, updateProfileSetupData, getCurrentUserFreelancerProfile, deleteFreelancerProfile } from '../../apiendpoints';
 import { ProfileSetupData } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
+import { Modal } from '../../components/ui/Modal';
 
-export function Settings() {
+export function FreelancerSettings() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<ProfileSetupData | null>(null);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [hourlyRate, setHourlyRate] = useState(0);
-  const [availability, setAvailability] = useState('');
-  const [workingHours, setWorkingHours] = useState('');
-  const [avatar, setAvatar] = useState('');
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [dangerModal, setDangerModal] = useState({ open: false });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
 
   const formatDateRange = (startDate: string, endDate: string) => {
@@ -38,7 +47,6 @@ export function Settings() {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       setError(null);
       try {
@@ -46,24 +54,13 @@ export function Settings() {
           getProfileSetupData(),
           getCurrentUserFreelancerProfile(user.id)
         ]);
-
         setProfile({
+          ...freelancerProfile,
           ...profileData,
           Skills: profileData.Skills ?? [],
           Projects: profileData.Projects ?? [],
           Experience: profileData.Experience ?? [],
         });
-
-        // Use actual user data from the database (now directly in the response DTO)
-        if (freelancerProfile) {
-          setFirstName(freelancerProfile.FirstName || '');
-          setLastName(freelancerProfile.LastName || '');
-          setPhone(freelancerProfile.PhoneNo || '');
-          setAvatar(freelancerProfile.ProfilePicture || '');
-          setHourlyRate(freelancerProfile.HourlyRate || 0);
-          setAvailability(freelancerProfile.Availability || '');
-          setWorkingHours(freelancerProfile.WorkingHours || '');
-        }
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
       } finally {
@@ -73,38 +70,130 @@ export function Settings() {
     fetchProfile();
   }, [user?.id]);
 
-  const handleSave = async () => {
-    if (!profile) return;
-    setLoading(true);
-    setError(null);
-    try {
-      await updateProfileSetupData({
-        firstName,
-        lastName,
-        phone,
-        hourlyRate,
-        availability,
-        workingHours,
-        profileData: profile,
-      });
-      
-      setIsEditing(false);
-      setSuccessMessage('Profile updated successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
-    } finally {
-      setLoading(false);
-    }
+  const handleProfileChange = (field: string, value: any) => {
+    setProfile((prev: any) => prev ? { ...prev, [field]: value } : prev);
   };
+
+const handleSave = async () => {
+  if (!profile) return;
+  setLoading(true);
+  setError(null);
+  try {
+    await updateProfileSetupData({
+      firstName: profile.FirstName,
+      lastName: profile.LastName,
+      phone: profile.PhoneNo,
+      hourlyRate: profile.HourlyRate,
+      availability: profile.Availability,
+      workingHours: profile.WorkingHours,
+      profilePicture: profile.ProfilePicture,
+      profileData: {
+        Summary: profile.Summary,
+        Skills: profile.Skills,
+        Projects: profile.Projects,
+        Experience: profile.Experience,
+      },
+    });
+    setIsEditing(false);
+    setSuccessMessage('Profile updated successfully!');
+    console.log(profile);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  } catch (err: any) {
+    setError(err.message || 'Failed to update profile');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleCancel = () => {
     setIsEditing(false);
     window.location.reload();
   };
 
-  const handleImageUpload = () => {
-    alert('Image upload functionality would be implemented here');
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSavePassword = async () => {
+    if (formData.newPassword !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (!profile) return;
+    try {
+      // Only include password fields if newPassword is present
+      const payload: any = {
+        firstName: profile.FirstName,
+        lastName: profile.LastName,
+        phone: profile.PhoneNo,
+        hourlyRate: profile.HourlyRate,
+        availability: profile.Availability,
+        workingHours: profile.WorkingHours,
+        profileData: {
+          Summary: profile.Summary,
+          Skills: profile.Skills,
+          Projects: profile.Projects,
+          Experience: profile.Experience,
+        },
+      };
+      if (formData.newPassword) {
+        payload.password = formData.currentPassword;
+        payload.newPassword = formData.newPassword;
+      }
+      await updateProfileSetupData(payload);
+      toast.success('Password updated successfully!');
+      setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      const backendMsg = err?.response?.data?.message;
+      toast.error(backendMsg || 'Failed to update password');
+    }
+  };
+
+  const handleDangerAction = () => {
+    setDangerModal({ open: true });
+  };
+
+  const confirmDangerAction = async () => {
+    setDangerModal({ open: false });
+    await deleteFreelancerProfile(profile?.id ?? 0);
+    toast.success('Account deleted!');
+    navigate('/');
+  };
+
+  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+  //   const filename = file.name;
+  //   setProfile((prev: any) => prev ? { ...prev, ProfilePicture: filename } : prev);
+  //   toast.success(`Selected file: ${filename}`);
+  // };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET ?? 'undefined');
+
+    try {
+      const res = await fetch(CLOUDINARY_URL ?? 'undefined', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setProfile((prev: any) => prev ? { ...prev, profilePicture: data.secure_url } : prev);
+        setIsEditing(true);
+        toast.success('Image uploaded!');
+      } else {
+        toast.error('Failed to upload image');
+      }
+    } catch (err) {
+      toast.error('Image upload error');
+    }
   };
 
   if (loading) {
@@ -164,15 +253,22 @@ export function Settings() {
       <Card>
         <div className="flex items-center space-x-6">
           <img 
-            src={avatar} 
+            src={`/assets/${profile.ProfilePicture}` } 
             alt="Profile"
             className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
           />
           <div>
-            <Button onClick={handleImageUpload} variant="outline" disabled={!isEditing}>
+            <Button onClick={() => fileInputRef.current?.click()} variant="outline" disabled={!isEditing}>
               <Camera className="w-4 h-4 mr-2" />
               Change Picture
             </Button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handleImageUpload}
+            />
             <p className="text-sm text-gray-500 mt-2">JPG, PNG or GIF. Max size 5MB.</p>
           </div>
         </div>
@@ -209,8 +305,8 @@ export function Settings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
             <Input
               type="text"
-              value={firstName}
-              onChange={e => setFirstName(e.target.value)}
+              value={profile.FirstName}
+              onChange={e => handleProfileChange('FirstName', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -218,8 +314,8 @@ export function Settings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
             <Input
               type="text"
-              value={lastName}
-              onChange={e => setLastName(e.target.value)}
+              value={profile.LastName}
+              onChange={e => handleProfileChange('LastName', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -229,8 +325,8 @@ export function Settings() {
               <Phone className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <Input
                 type="tel"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
+                value={profile.PhoneNo}
+                onChange={e => handleProfileChange('PhoneNo', e.target.value)}
                 disabled={!isEditing}
                 className="pl-10"
               />
@@ -250,7 +346,7 @@ export function Settings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Summary</label>
             <Textarea
               value={profile.Summary}
-              onChange={e => setProfile({ ...profile, Summary: e.target.value })}
+              onChange={e => handleProfileChange('Summary', e.target.value)}
               disabled={!isEditing}
               rows={3}
             />
@@ -259,8 +355,8 @@ export function Settings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
             <Input
               type="text"
-              value={(profile.Skills ?? []).map(s => s.SkillName).join(', ')}
-              onChange={e => setProfile({ ...profile, Skills: e.target.value.split(',').map(s => ({ SkillName: s.trim(), Id: 0, Source: 'manual' })) })}
+              value={(profile.Skills ?? []).map((s: { SkillName: string }) => s.SkillName).join(', ')}
+              onChange={e => handleProfileChange('Skills', e.target.value.split(',').map((s: string) => ({ SkillName: s.trim(), Id: 0, Source: 'manual' })))}
               disabled={!isEditing}
               placeholder="e.g. Python, React, SQL"
             />
@@ -271,8 +367,8 @@ export function Settings() {
               <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <Input
                 type="number"
-                value={hourlyRate}
-                onChange={e => setHourlyRate(Number(e.target.value))}
+                value={profile.HourlyRate}
+                onChange={e => handleProfileChange('HourlyRate', Number(e.target.value))}
                 disabled={!isEditing}
                 className="pl-10"
               />
@@ -282,8 +378,8 @@ export function Settings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
             <Input
               type="text"
-              value={availability}
-              onChange={e => setAvailability(e.target.value)}
+              value={profile.Availability}
+              onChange={e => handleProfileChange('Availability', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -293,8 +389,8 @@ export function Settings() {
               <Clock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
-                value={workingHours}
-                onChange={e => setWorkingHours(e.target.value)}
+                value={profile.WorkingHours}
+                onChange={e => handleProfileChange('WorkingHours', e.target.value)}
                 disabled={!isEditing}
                 className="pl-10"
               />
@@ -311,7 +407,7 @@ export function Settings() {
         </div>
         <div className="space-y-4">
           {(profile.Projects ?? []).length === 0 && <div className="text-gray-500">No projects added yet.</div>}
-          {(profile.Projects ?? []).map((p, idx) => (
+          {(profile.Projects ?? []).map((p: any, idx: number) => (
             <div key={p.Id || idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
               <div className="flex items-center mb-2">
                 <Briefcase className="w-4 h-4 text-blue-500 mr-2" />
@@ -353,7 +449,7 @@ export function Settings() {
         </div>
         <div className="space-y-4">
           {(profile.Experience ?? []).length === 0 && <div className="text-gray-500">No experience added yet.</div>}
-          {(profile.Experience ?? []).map((exp, idx) => (
+          {(profile.Experience ?? []).map((exp: any, idx: number) => (
             <div key={exp.Id || idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
               <div className="flex items-center mb-2">
                 <Briefcase className="w-4 h-4 text-green-500 mr-2" />
@@ -432,6 +528,79 @@ export function Settings() {
           ))}
         </div>
       </Card>
+      
+      {/* Account Settings Section */}
+      <Card>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
+        <div className="space-y-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={formData.currentPassword}
+                onChange={(e) => handleInputChange('currentPassword', e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+            <Input
+              type="password"
+              value={formData.newPassword}
+              onChange={(e) => handleInputChange('newPassword', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+            <Input
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+            />
+          </div>
+          <Button onClick={handleSavePassword} icon={Lock}>
+            Update Password
+          </Button>
+        </div>
+      </Card>
+
+      {/* Danger Zone Section */}
+      <Card>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Danger Zone</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
+            <div>
+              <h4 className="font-medium text-red-900">Delete Account</h4>
+              <p className="text-sm text-red-600">Permanently delete your account and all data</p>
+            </div>
+            <Button variant="danger" size="sm" onClick={() => handleDangerAction()}>Delete</Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Danger Modal */}
+      <Modal isOpen={dangerModal.open} onClose={() => setDangerModal({ open: false })} title="Delete Account">
+        <div className="space-y-4">
+          <p>
+            Are you sure you want to permanently delete your account? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setDangerModal({ open: false })}>Cancel</Button>
+            <Button variant={'danger'} onClick={confirmDangerAction}>
+              Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      
     </div>
   );
 } 

@@ -25,7 +25,7 @@ namespace ProjectLaunchpad.Functions
     [HttpTrigger(AuthorizationLevel.Function, "get", Route = "notifications/{userId:int}")] HttpRequestData req,
     int userId)
         {
-            var notifications = await _unitOfWork.Notification.GetByUserId(userId);
+            var notifications = await _unitOfWork.NotificationRepository.GetByUserId(userId);
             return new OkObjectResult(notifications);
         }
 
@@ -35,12 +35,12 @@ namespace ProjectLaunchpad.Functions
     [HttpTrigger(AuthorizationLevel.Function, "put", Route = "notifications/{notificationId:int}/read")] HttpRequestData req,
     int notificationId)
         {
-            var notification = await _unitOfWork.Notification.GetByIdAsync(notificationId);
+            var notification = await _unitOfWork.NotificationRepository.GetByIdAsync(notificationId);
             if (notification == null)
                 return new NotFoundResult();
 
             notification.Read = true;
-            await _unitOfWork.Notification.UpdateAsync(notification);
+            await _unitOfWork.NotificationRepository.UpdateAsync(notification);
             await _unitOfWork.SaveAsync();
 
             return new OkResult();

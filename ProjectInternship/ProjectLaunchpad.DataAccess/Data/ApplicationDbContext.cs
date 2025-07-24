@@ -24,6 +24,7 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<ProjectAssignment> projectFreelancers { get; set; }
         public DbSet<ProjectRequest> projectRequests { get; set; }
         public DbSet<ClientProfile> clientProfiles { get; set; }
+        public DbSet<AdminProfile> adminProfiles { get; set; }
         public DbSet<Milestone> milestones { get; set; }
         public DbSet<Deliverables> deliverables { get; set; }
         public DbSet<Payment> payments { get; set; }
@@ -33,13 +34,13 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<ResumeProject> resumeProjects { get; set; }
         public DbSet<Experience> experiences { get; set; }
         public DbSet<Project> projects { get; set; }
+        public DbSet<Notification> notifications { get; set; }
 
         public DbSet<Meeting> Meetings { get; set; }
         public DbSet<MeetingParticipant> MeetingParticipants { get; set; }
 
         public DbSet<MeetingAudioRecording> meetingAudioRecordings { get; set; }
 
-        public DbSet<Notification> notifications { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -23,9 +23,6 @@ namespace ProjectLaunchpad.Models.Models
         [ForeignKey("FreelancerId")]
         public FreelancerProfile Freelancer { get; set; }
 
-        
-
-
         [Required]
         public DateTime DateOfWork { get; set; }
 

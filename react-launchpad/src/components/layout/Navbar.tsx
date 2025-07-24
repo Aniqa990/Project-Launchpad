@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect }, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Rocket, Bell, Settings, LogOut, Check } from 'lucide-react';
+import { fetchClientProfile, fetchPlatformProfile } from '../../apiendpoints';
 import { getNotifications, markNotificationRead } from '../../apiendpoints';
 
 function renderMessage(msg) {
@@ -97,7 +98,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to={user.role === 'client' ? '/client/dashboard' : '/freelancer/dashboard'} className="flex items-center space-x-2">
+          <Link to={user.role === 'client' ? '/client/dashboard' : user.role === 'freelancer' ? '/freelancer/dashboard' : '/admin/dashboard'} className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
               <Rocket className="w-5 h-5 text-white" />
             </div>
@@ -153,7 +154,7 @@ export function Navbar() {
             </div>
             <div className="flex items-center space-x-3">
               <img 
-                src={user.avatar} 
+                src={user.profilePicture} 
                 alt={user.firstName}
                 className="w-8 h-8 rounded-full object-cover"
               />

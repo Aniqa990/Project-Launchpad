@@ -63,6 +63,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.ToTable("freelancerProfiles");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("adminProfiles");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -355,6 +365,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<string>("FreelancerComments")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HandoverStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");
 
@@ -402,6 +416,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Type")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
@@ -472,6 +487,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("AttachedDocumentPath")
                         .HasColumnType("nvarchar(max)");
 
@@ -501,6 +520,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.Property<string>("ProjectTitle")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RejectionReason")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RequiredSkills")
@@ -794,6 +816,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
@@ -944,7 +977,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Notification", b =>
                 {
                     b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
-                        .WithMany()
+                        .WithMany("Notifications")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1160,6 +1193,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("ClientProfile");
 
                     b.Navigation("FreelancerProfile");
+
+                    b.Navigation("Notifications");
                 });
 #pragma warning restore 612, 618
         }

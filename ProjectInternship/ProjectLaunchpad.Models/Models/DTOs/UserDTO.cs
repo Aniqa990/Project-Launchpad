@@ -14,6 +14,8 @@ namespace ProjectLaunchpad.Models.Models.DTOs
         public string? Email { get; set; }
         public string? PhoneNo { get; set; }
         public string? Password { get; set; }
+        public string? ProfilePicture { get; set; }
+        public string? NewPassword { get; set; }
         public string? Role { get; set; } 
         public string? Gender { get; set; }
     }

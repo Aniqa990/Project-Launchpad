@@ -16,6 +16,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IUserRepository Users { get; }
         public IFreelancerProfileRepository FreelancerProfiles { get; }
         public IClientProfileRepository ClientProfiles { get; }
+        public IAdminProfileRepository AdminProfiles { get; }
         public IProjectRepository ProjectRepository { get; }
         public ITaskRepository TaskRepository { get; }
         public IProjectAssignmentRepository ProjectFreelancers { get; }
@@ -38,7 +39,7 @@ namespace ProjectLaunchpad.Repositories.Repositories
 
         public IMeetingAudioRecordingRepository MeetingAudioRecording { get; private set; }
 
-        public INotificationRepository Notification { get; private set; }
+        public INotificationRepository NotificationRepository { get; private set; }
 
 
 
@@ -65,9 +66,9 @@ namespace ProjectLaunchpad.Repositories.Repositories
             MeetingParticipant = new MeetingParticipantRepository(_db);
 
             MeetingAudioRecording = new MeetingAudioRecordingRepository(_db);
-            Notification = new NotificationRepository(_db);
-
+            NotificationRepository = new NotificationRepository(_db);
             ///
+            AdminProfiles = new AdminProfileRepository(_db);
         }
 
         public async Task<int> SaveAsync()

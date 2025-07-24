@@ -78,7 +78,7 @@ namespace ProjectLaunchpad.Functions
                             CreatedAt = DateTime.UtcNow,
                             Read = false
                         };
-                        await _unitOfWork.Notification.AddAsync(notification);
+                        await _unitOfWork.NotificationRepository.AddAsync(notification);
                     }
                 }
 

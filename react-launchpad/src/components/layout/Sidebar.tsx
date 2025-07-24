@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, 
@@ -16,12 +16,14 @@ import {
   DollarSign,
   Star,
   Settings,
-  Folder
+  Folder,
+  Video
 } from 'lucide-react';
 
 export function Sidebar() {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -36,8 +38,10 @@ export function Sidebar() {
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
     { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
+    { icon: Settings, label: 'Settings', path: '/client/settings' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
     { icon: LayoutDashboard, label: 'Meetings', path: '/client/meetings' },
+    { icon: Video, label: 'Meetings', path: '/client/meetings' },
   ];
 
   const freelancerMenuItems = [
@@ -47,7 +51,7 @@ export function Sidebar() {
     { icon: Kanban, label: 'Task Board', path: '/freelancer/kanban' },
     { icon: Clock, label: 'Hourly Logs', path: '/freelancer/hourly-logs' },
     { icon: CheckSquare, label: 'Milestones', path: '/freelancer/milestones' },
-    { icon: Clock, label: 'Submit Timesheet', path: '/freelancer/submit-timesheet' },
+    { icon: Clock, label: 'Timesheet', path: '/freelancer/timesheets' },
     { icon: Upload, label: 'Submit Work', path: '/freelancer/submit-deliverables' },
     { icon: DollarSign, label: 'Earnings', path: '/freelancer/payment' },
     { icon: MessageSquare, label: 'Messages', path: '/chat' },
@@ -56,7 +60,15 @@ export function Sidebar() {
     { icon: Link, label: 'Meetings', path: '/freelancer/meetings' },
   ];
 
-  const menuItems = user.role === 'client' ? clientMenuItems : freelancerMenuItems;
+  const platformMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: DollarSign, label: 'Milestone Payments', path: '/admin/payments' },
+    { icon: Folder, label: 'Project Approvals', path: '/admin/projects' },
+    { icon: Folder, label: 'View All Projects', path: '/admin/view-projects' },
+    { icon: Settings, label: 'Settings', path: '/admin/settings' },
+  ];
+
+  const menuItems = user.role === 'client' ? clientMenuItems : user.role === 'freelancer' ? freelancerMenuItems : platformMenuItems;
 
   return (
     <div className="w-full h-full bg-white border-r border-gray-200 overflow-y-auto">

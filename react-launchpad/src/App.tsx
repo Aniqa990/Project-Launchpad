@@ -5,7 +5,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import LandingPage from './pages/LandingPage';
 import { Auth } from './pages/Auth';
-import { Settings } from './pages/freelancer/Settings';
+import { FreelancerSettings } from './pages/freelancer/Settings';
+import {ClientSettings} from './pages/client/Settings';
 import { ClientDashboard } from './pages/client/Dashboard';
 import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
@@ -19,41 +20,49 @@ import { Feedback } from './pages/freelancer/Feedback';
 import { KanbanBoard } from './components/workspace/KanbanBoard';
 import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
+import { PlatformDashboard } from './pages/platform/Dashboard';
+import { MilestonePayments } from './pages/platform/Payments';
+import { AdminViewProjects } from './pages/platform/ViewProjects';
+import { AdminProjectApprovals } from './pages/platform/Projects';
+import { PlatformSettings } from './pages/platform/Settings';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
+import Meetings from './pages/client/Meetings';
+import FreelancerTimesheets from './pages/freelancer/Timesheets';
+
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
 import MeetingRoom from './pages/client/MeetingRoom';
 import FreelancerMeetingRoom from './pages/freelancer/MeetingRoom';
 
-class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error: any, errorInfo: any) {
-    // You can log error info here if needed
-    // console.error('Global error boundary caught:', error, errorInfo);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: 40, color: 'red', background: '#fffbe6', fontSize: 20 }}>
-          <h1>⚠️ Something went wrong!</h1>
-          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{String(this.state.error)}</pre>
-          <p>Please take a screenshot and share it with your developer.</p>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+// class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
+//   constructor(props: any) {
+//     super(props);
+//     this.state = { hasError: false, error: null };
+//   }
+//   static getDerivedStateFromError(error: any) {
+//     return { hasError: true, error };
+//   }
+//   componentDidCatch(error: any, errorInfo: any) {
+//     // You can log error info here if needed
+//     // console.error('Global error boundary caught:', error, errorInfo);
+//   }
+//   render() {
+//     if (this.state.hasError) {
+//       return (
+//         <div style={{ padding: 40, color: 'red', background: '#fffbe6', fontSize: 20 }}>
+//           <h1>⚠️ Something went wrong!</h1>
+//           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{String(this.state.error)}</pre>
+//           <p>Please take a screenshot and share it with your developer.</p>
+//         </div>
+//       );
+//     }
+//     return this.props.children;
+//   }
+// }
 
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' }) {
+function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: 'client' | 'freelancer' | 'admin' }) {
   const { isAuthenticated, user, loading } = useAuth();
   
   if (loading) {
@@ -119,9 +128,10 @@ function AppRoutes() {
         <Route path="payments" element={<ClientPayments />} />
         <Route path="milestones" element={<MilestoneTracker />} />
         <Route path="messages" element={<ClientMessages />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
         <Route path="meetings" element={<MeetingRoom />} />
+        <Route path="meetings" element={<Meetings />} />
       </Route>
       
       <Route path="/freelancer/*" element={
@@ -134,10 +144,23 @@ function AppRoutes() {
         <Route path="projects" element={<FreelancerProjects />} />
         <Route path="kanban" element={<KanbanBoard />} />
         <Route path="feedback" element={<Feedback />} />
-        <Route path="settings" element={<Settings />} />  
+        <Route path="settings" element={<FreelancerSettings />} />  
+        <Route path="timesheets" element={<FreelancerTimesheets />} />
         <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
         <Route path="meetings" element={<FreelancerMeetingRoom />} />
+      </Route>
+
+      <Route path="/admin/*" element={
+        <ProtectedRoute requiredRole="admin">
+          <AppShell />
+        </ProtectedRoute>
+      }>
+        <Route path="dashboard" element={<PlatformDashboard />} />
+        <Route path="payments" element={<MilestonePayments />} />
+        <Route path="projects" element={<AdminProjectApprovals />} />
+        <Route path="view-projects" element={<AdminViewProjects />} />
+        <Route path="settings" element={<PlatformSettings />} />
       </Route>
 
       <Route path="/workspace/:projectId" element={
@@ -162,7 +185,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <GlobalErrorBoundary>
+    //<GlobalErrorBoundary>
       <AuthProvider>
         <Router>
           <div className="App">
@@ -180,7 +203,7 @@ function App() {
           </div>
         </Router>
       </AuthProvider>
-    </GlobalErrorBoundary>
+    //</GlobalErrorBoundary>
   );
 }
 

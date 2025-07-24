@@ -74,7 +74,7 @@ public async Task<HttpResponseData> Register(
             firstName = user.FirstName,
             lastName = user.LastName,
             phone = user.PhoneNo,
-            avatar = user.ProfilePicture,
+            profilePicture = user.ProfilePicture,
             gender = user.Gender,
             role = user.Role
         }
@@ -90,11 +90,6 @@ public async Task<HttpResponseData> Register(
             var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
             var (token, user) = await _auth.LoginAsync(dto); // Now getting both
 
-            //if (user.Role == "Client")
-            //{
-            //    _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
-            //    await _unitOfWork.SaveAsync();
-            //}
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(new
@@ -107,7 +102,7 @@ public async Task<HttpResponseData> Register(
                     firstName = user.FirstName,
                     lastName = user.LastName,
                     phone = user.PhoneNo,
-                    avatar = user.ProfilePicture,
+                    profilePicture = user.ProfilePicture,
                     gender = user.Gender,
                     role = user.Role
                 }
@@ -131,13 +126,14 @@ public async Task<HttpResponseData> Register(
 
                 var bearerToken = values.FirstOrDefault();
                 if (bearerToken == null || !bearerToken.StartsWith("Bearer "))
-                {
+                {   
                     var response = req.CreateResponse(HttpStatusCode.Unauthorized);
                     await response.WriteAsJsonAsync(new { valid = false, message = "Invalid token format" });
                     return response;
                 }
 
                 var token = bearerToken.Substring("Bearer ".Length).Trim();
+                
                 
                 var principal = _jwtValidator.ValidateToken(token);
                 
@@ -147,6 +143,7 @@ public async Task<HttpResponseData> Register(
                     await response.WriteAsJsonAsync(new { valid = false, message = "Token validation failed" });
                     return response;
                 }
+
                 
                 // Get user ID from token
                 var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -165,6 +162,7 @@ public async Task<HttpResponseData> Register(
                     await response.WriteAsJsonAsync(new { valid = false, message = "User not found" });
                     return response;
                 }
+
                 var successResponse = req.CreateResponse(HttpStatusCode.OK);
                 await successResponse.WriteAsJsonAsync(new
                 {
@@ -176,7 +174,7 @@ public async Task<HttpResponseData> Register(
                         firstName = user.FirstName,
                         lastName = user.LastName,
                         phone = user.PhoneNo,
-                        avatar = user.ProfilePicture,
+                        profilePicture = user.ProfilePicture,
                         gender = user.Gender,
                         role = user.Role
                     }

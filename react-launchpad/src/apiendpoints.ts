@@ -1,8 +1,9 @@
 import axios from "axios";
 import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback, ProfileSetupData} from "@/types";
+import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst";
 
 const api = axios.create({
-  baseURL: "http://localhost:7053/api",
+  baseURL: "http://localhost:7071/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -22,8 +23,8 @@ api.interceptors.request.use(
 );
 
 //AUTH
-export const loginUser = async (email: string, password: string, role: string)=>{
-  const response = await api.post('/auth/login', { email, password, role });
+export const loginUser = async (email: string, password: string)=>{
+  const response = await api.post('/auth/login', { email, password});
   return response.data;
 };
 
@@ -38,10 +39,18 @@ export async function validateToken(token?: string) {
   }).then(res => res.data);
 }
 
-
 export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
   try{
   const response = await api.post("/freelancer", profile);
+  return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to save profile');
+  }
+};
+
+export const updateFreelancerProfile = async(profile: Partial<FreelancerProfile>, id:number) => {
+  try{
+  const response = await api.patch(`/freelancer/profile/${id}`, profile);
   return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to save profile');
@@ -52,7 +61,7 @@ export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) =
 export const getProjectRequests = async(freelancerId: number) => {
   try{
   const response = await api.get(`/requests/${freelancerId}`);
-  return response.data;
+  return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch requests');
   }
@@ -70,7 +79,7 @@ export const respondToProjectRequest = async (projectId: number, status: string,
 export const getFreelancerProjects = async (freelancerId: number) => {
   try {
     const response = await api.get(`/freelancers/${freelancerId}/projects`);
-    return response.data;
+    return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer projects');
   }
@@ -140,6 +149,16 @@ export const getMilestones = async (): Promise<any[]> => {
   const response = await api.get('/milestones');
   return response.data;
 };
+
+export const getMilestonesByHandoverStatus = async(status: string) =>{
+  const response = await api.get(`/platform/milestones/handover/${status}`);
+  return response.data;
+}
+
+export const updateHandoverStatus = async(milestoneId: number, handoverStatus: string) => {
+  const response = await api.patch(`/platform/handover/${milestoneId}`, {handoverStatus});
+  return response.data;
+}
 
 export const createMilestone = async (milestone: {
   title: string;
@@ -223,7 +242,18 @@ export const getLogsByProjectId = async (projectId: number): Promise<any[]> => {
 // PROJECTS
 export const getProjects = async () => {
   const res = await api.get('/projects');
+  return lowercaseFirstLetterKeys(res.data);
+};
+
+export const getProjectById = async (id: string | number) => {
+  const res = await api.get(`/projects/${id}`);
   return res.data;
+};
+
+// Fetch projects for a specific client
+export const getClientProjects = async (clientId: number) => {
+  const res = await api.get(`/clients/${clientId}/projects`);
+  return lowercaseFirstLetterKeys(res.data);
 };
 
 export const createProject = async (payload: any) => {
@@ -233,6 +263,16 @@ export const createProject = async (payload: any) => {
 
 export const updateProject = async (id: number, updatedData: any) => {
   const res = await api.put(`/projects/${id}`, updatedData);
+  return res.data;
+};
+
+export const getProjectsWithPendingApproval = async () => {
+  const res = await api.get('platform/projects/pending');
+  return lowercaseFirstLetterKeys(res.data);
+};
+
+export const updateProjectApprovalStatus = async (Id: number, ApprovalStatus : string, RejectionReason? : string) => {
+  const res = await api.patch(`platform/projects/${Id}`, { ApprovalStatus, RejectionReason });
   return res.data;
 };
 
@@ -289,7 +329,7 @@ export const getFreelancerFeedbacks = async (freelancerId: number): Promise<Feed
   return response.data;
 };
 
-// Profile Setup API functions
+// Freelancer Profile Setup API functions
 export const getProfileSetupData = async (): Promise<ProfileSetupData> => {
   const response = await api.get('/freelancer/profile-setup');
   return response.data;
@@ -314,7 +354,10 @@ export const updateProfileSetupData = async (data: {
   hourlyRate: number;
   availability: string;
   workingHours: string;
+  profilePicture: string;
   profileData: ProfileSetupData;
+  password?: string;
+  newPassword?: string;
 }): Promise<void> => {
   await api.put('/freelancer/profile-setup', data);
 };
@@ -370,7 +413,7 @@ export const createStripeCheckoutSession = async (params: {
 
 export const getMilestonesByProjectId = async (projectId: number): Promise<any[]> => {
   const response = await api.get(`/milestones/project/${projectId}`);
-  return response.data;
+  return lowercaseFirstLetterKeys(response.data);
 };
 
 export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise<any[]> => {
@@ -378,6 +421,7 @@ export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise
   return response.data;
 };
 
+<<<<<<< HEAD
 // Get projects by client id
 export const getClientProjects = async (clientId: number) => {
   try {
@@ -398,3 +442,47 @@ export const markNotificationRead = async (notificationId: number) => {
   const response = await api.put(`/notifications/${notificationId}/read`);
   return response.data;
 };
+=======
+export async function deleteFreelancerProfile(userId: number) {
+  const { data } = await api.delete(`/freelancer/${userId}`);
+  return data;
+}
+
+//Client Profile Setup API
+export async function fetchClientProfile(id:number) {
+  const { data } = await api.get(`/client/profile/${id}`);
+  return lowercaseFirstLetterKeys(data);
+}
+
+export async function updateClientProfile(updates: Partial<User>) {
+  const { data } = await api.patch('/client/profile', updates);
+  return data;
+}
+
+export async function deleteClientProfile(userId: number) {
+  const { data } = await api.delete(`/client/profile/${userId}`);
+  return data;
+}
+
+//ADMIN API
+export async function fetchPlatformProfile(id:number) {
+  const { data } = await api.get(`/platform/profile/${id}`);
+  return lowercaseFirstLetterKeys(data);
+}
+
+export async function updatePlatformProfile(id:number, updates: Partial<User>) {
+  const { data } = await api.patch(`/platform/profile/${id}`, updates);
+  return data;
+}
+
+//admin dashboard stats
+export async function getAllocatedResources() {
+  const { data } = await api.get('/platform/allocated-resources');
+  return data;
+}
+
+export async function getUnallocatedResources() {
+  const { data } = await api.get('/platform/unallocated-resources');
+  return data;
+}
+>>>>>>> origin/dev

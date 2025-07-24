@@ -17,8 +17,11 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task<List<Project>> GetProjectsByClientAsync(int clientId);
         Task<IEnumerable<Project>> GetProjectsByCategoryAsync(string categoryOrDomain);
         Task<IEnumerable<Project>> GetProjectsByDeadlineRangeAsync(DateTime start, DateTime end);
+        Task<List<Project>> GetProjectsWithPendingApprovalAsync();
+        Task<int> GetProjectCountWithPendingApprovalStatus();
         Task AddProjectAsync(Project project);
         Task UpdateProjectAsync(Project project);
         Task DeleteProjectAsync(int id);
+        Task<List<Project>> GetProjectsByClientIdAsync(int clientId);
     }
 }

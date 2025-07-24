@@ -98,8 +98,8 @@ export function FreelancerDashboard() {
         sentAt: request.RequestedAt
       }));
 
-      setProjects(transformedProjects);
-      setRequests(transformedRequests);
+      setProjects(projectsData);
+      setRequests(requestsData);
 
       // Calculate stats
       const activeProjects = transformedProjects.filter((p: Project) => p.status === 'active').length;
@@ -222,7 +222,7 @@ export function FreelancerDashboard() {
                 <div key={project.id} className="border border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors"> 
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 text-base mb-0.5">{project.title}</h3> 
+                      <h3 className="font-bold text-gray-900 text-base mb-0.5">{project.projectTitle}</h3> 
                       <p className="text-gray-600 text-xs line-clamp-2">{project.description}</p> 
                     </div>
                     <div className="ml-3 text-right">
@@ -234,11 +234,11 @@ export function FreelancerDashboard() {
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center">
                         <Calendar className="w-3 h-3 mr-1" />
-                        Due {new Date(project.deadline).toLocaleDateString()}
+                        Due {new Date(project.deadline!).toLocaleDateString()}
                       </div>
                       <div className="flex items-center">
                         <User className="w-3 h-3 mr-1" />
-                        {project.client.firstName} {project.client.lastName}
+                        {project.client?.firstName} {project.client?.lastName}
                       </div>
                     </div>
                     {/* <Button size="sm" variant="outline" onClick={() => navigate(`/freelancer/projects/${project.id}`)}>

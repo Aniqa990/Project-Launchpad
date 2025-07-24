@@ -17,13 +17,22 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             _db = db;
         }
 
-        public void InsertClientProfile(int userId)
+        public async Task InsertClientProfile(int userId)
         {
             var clientProfile = new ProjectLaunchpad.Models.Models.ClientProfile
             {
                 Id = userId
             };
-            _db.clientProfiles.Add(clientProfile);
+            await _db.clientProfiles.AddAsync(clientProfile);
+        }
+
+        public async Task DeleteClientProfileAsync(int userId)
+        {
+            var clientProfile = await _db.clientProfiles.FindAsync(userId);
+            if (clientProfile != null)
+            {
+                _db.clientProfiles.Remove(clientProfile);
+            }
         }
 
 

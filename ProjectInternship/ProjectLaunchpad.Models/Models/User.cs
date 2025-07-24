@@ -30,7 +30,7 @@ namespace ProjectLaunchpad.Models.Models
         public string? Password { get; set; }
 
         [Required]
-        public string? Role { get; set; }  // e.g., "Client", "Freelancer"
+        public string? Role { get; set; }  // e.g., "Client", "Freelancer", "Admin"
 
         public string? Gender { get; set; } // (Male/Female/Other/)
 
@@ -40,5 +40,7 @@ namespace ProjectLaunchpad.Models.Models
 
         public ClientProfile? ClientProfile { get; set; }
         public FreelancerProfile? FreelancerProfile { get; set; }
+        public ICollection<Notification> Notifications { get; set; }
+
     }
 }

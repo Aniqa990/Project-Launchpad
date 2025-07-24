@@ -5,6 +5,7 @@ using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs.FreelancerProfile;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -81,6 +82,30 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 _db.projectFreelancers.Remove(assignment);
         }
 
+        public async Task<int> GetAllocatedResourcesAsync()
+            
+        {
+            return await _db.projectFreelancers
+                .Select(pf => pf.FreelancerId)
+                .Distinct()
+                .CountAsync();
+        }
+
+        public async Task<int> GetUnallocatedResourcesAsync()
+        {
+            // All freelancer IDs
+            var allFreelancerIds = await _db.freelancerProfiles.Select(f => f.Id).ToListAsync();
+
+            // Assigned freelancer IDs
+            var assignedFreelancerIds = await _db.projectFreelancers
+                .Select(pa => pa.FreelancerId)
+                .Distinct()
+                .ToListAsync();
+
+            // Unallocated = in allFreelancerIds but not in assignedFreelancerIds
+            var unallocatedCount = allFreelancerIds.Except(assignedFreelancerIds).Count();
+            return unallocatedCount;
+        }
 
     }
 

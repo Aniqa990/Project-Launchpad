@@ -1,4 +1,5 @@
 ﻿using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,5 +19,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task<IEnumerable<Milestone>> GetPendingMilestonesAsync();
         Task<IEnumerable<Milestone>> GetSubmittedMilestonesAsync();
         Task<IEnumerable<Milestone>> GetUnderReviewMilestonesAsync();
+        Task<IEnumerable<MilestoneWithPaymentDTO>> GetMilestonesByHandoverStatusAsync(string status);
+        Task UpdateHandoverStatusAsync(int id, string newStatus);
     }
 }

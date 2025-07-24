@@ -52,7 +52,7 @@ export function Auth({ mode }: AuthProps) {
     if (mode === "login") {
       setLoading(true);
       try {
-        await login(formData.email, formData.password, formData.role);
+        await login(formData.email, formData.password);
         toast.success("Welcome back!");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Authentication failed");
@@ -109,37 +109,6 @@ export function Auth({ mode }: AuthProps) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  I am a:
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: 'client' })}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                      formData.role === 'client'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <User className="w-6 h-6 mx-auto mb-2" />
-                    <span className="font-medium">Client</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: 'freelancer' })}
-                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                      formData.role === 'freelancer'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <User className="w-6 h-6 mx-auto mb-2" />
-                    <span className="font-medium">Freelancer</span>
-                  </button>
-                </div>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>

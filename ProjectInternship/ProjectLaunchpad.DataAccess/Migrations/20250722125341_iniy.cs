@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class initialCreate : Migration
+    public partial class iniy : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,6 +30,23 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "adminProfiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_adminProfiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_adminProfiles_users_Id",
+                        column: x => x.Id,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -75,6 +92,27 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_notifications_users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "projects",
                 columns: table => new
                 {
@@ -90,6 +128,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     NumberOfFreelancers = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AttachedDocumentPath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ApprovalStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RejectionReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClientId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -213,6 +253,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     SubmittedFileUrls = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FreelancerComments = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsApproved = table.Column<bool>(type: "bit", nullable: false),
+                    HandoverStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ProjectId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -399,7 +440,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     comment = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     MilestoneId = table.Column<int>(type: "int", nullable: false),
-                    ProjectId = table.Column<int>(type: "int", nullable: true)
+                    projectId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -411,10 +452,11 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_deliverables_projects_ProjectId",
-                        column: x => x.ProjectId,
+                        name: "FK_deliverables_projects_projectId",
+                        column: x => x.projectId,
                         principalTable: "projects",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -481,9 +523,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 column: "MilestoneId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_deliverables_ProjectId",
+                name: "IX_deliverables_projectId",
                 table: "deliverables",
-                column: "ProjectId");
+                column: "projectId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_experiences_FreelancerId",
@@ -514,6 +556,11 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 name: "IX_milestones_ProjectId",
                 table: "milestones",
                 column: "ProjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_notifications_UserId",
+                table: "notifications",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_payments_ClientId",
@@ -590,6 +637,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "adminProfiles");
+
+            migrationBuilder.DropTable(
                 name: "deliverables");
 
             migrationBuilder.DropTable(
@@ -600,6 +650,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "logs");
+
+            migrationBuilder.DropTable(
+                name: "notifications");
 
             migrationBuilder.DropTable(
                 name: "payments");
