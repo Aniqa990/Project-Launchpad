@@ -1,29 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card } from '../../components/ui/card';
 import { getProjectById } from '../../apiendpoints';
+import { Project } from '@/types';
 
 interface FreelancerSuggestionsProps {
   projectId: string;
 }
 
-interface Project {
-  Id?: number;
-  ProjectTitle?: string;
-  Title?: string;
-  Description?: string;
-  PaymentType?: string;
-  CategoryOrDomain?: string;
-  Category?: string;
-  Deadline?: string;
-  Duration?: string;
-  RequiredSkills?: string;
-  Skills?: string[];
-  Budget?: number;
-  NumberOfFreelancers?: number;
-  Status?: string;
-  [key: string]: any;
-}
 
 const FreelancerSuggestions: React.FC<FreelancerSuggestionsProps> = ({ projectId }) => {
   const navigate = useNavigate();

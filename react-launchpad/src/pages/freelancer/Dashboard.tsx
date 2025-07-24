@@ -222,7 +222,7 @@ export function FreelancerDashboard() {
                 <div key={project.id} className="border border-gray-200 rounded-md p-3 hover:bg-gray-50 transition-colors"> 
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 text-base mb-0.5">{project.title}</h3> 
+                      <h3 className="font-bold text-gray-900 text-base mb-0.5">{project.projectTitle}</h3> 
                       <p className="text-gray-600 text-xs line-clamp-2">{project.description}</p> 
                     </div>
                     <div className="ml-3 text-right">

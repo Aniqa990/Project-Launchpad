@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { mockProjects } from '../../utils/mockData';
 import toast from 'react-hot-toast';
-import InvoicePage from './InvoicePage';
+import {InvoicePage} from './InvoicePage';
 
 export function ClientPayments() {
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
