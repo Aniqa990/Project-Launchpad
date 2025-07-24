@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import { createProject } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
 import FreelancerSuggestions from './FreelancerSuggestions';
+import SignatureCanvas from 'react-signature-canvas';
 
 export function CreateProject() {
   const navigate = useNavigate();
@@ -50,6 +51,9 @@ export function CreateProject() {
   const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone' | 'hourly'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const sigCanvasRef = useRef<any>(null);
+  const [signatureError, setSignatureError] = useState('');
+  const [isSigned, setIsSigned] = useState(false);
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -165,6 +169,7 @@ export function CreateProject() {
     'Files & Resources',
     'Budget & Timeline',
     'Milestones',
+    'Terms and Condition Agreement', // <-- new step
     'Review & Submit',
   ];
 
@@ -532,8 +537,51 @@ export function CreateProject() {
           </div>
         )}
 
-        {/* Step 6: Review & Submit */}
+        {/* Step 6: Terms and Condition Agreement */}
         {step === 6 && (
+          <div className="space-y-6 flex flex-col items-center">
+            <h2 className="text-xl font-bold mb-2">Terms and Condition Agreement</h2>
+            <p className="text-gray-600 mb-4">Please sign below to agree to the terms and conditions before creating your project.</p>
+            <SignatureCanvas
+              ref={sigCanvasRef}
+              penColor="black"
+              canvasProps={{ width: 400, height: 200, className: "border rounded shadow" }}
+              onEnd={() => setIsSigned(!sigCanvasRef.current.isEmpty())}
+            />
+            <div className="flex space-x-2 mt-2">
+              <button
+                onClick={() => {
+                  sigCanvasRef.current.clear();
+                  setSignatureError('');
+                  setIsSigned(false);
+                }}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Clear
+              </button>
+            </div>
+            {signatureError && <div className="text-red-600 text-sm mt-2">{signatureError}</div>}
+            <div className="flex justify-end w-full">
+              <Button
+                onClick={() => {
+                  if (!isSigned) {
+                    setSignatureError('Signature is required to proceed.');
+                    return;
+                  }
+                  setSignatureError('');
+                  setStep(step + 1);
+                }}
+                className="bg-blue-600 text-white"
+                disabled={!isSigned}
+              >
+                Next Step
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 7: Review & Submit */}
+        {step === 7 && (
           <div className="space-y-6 text-center">
             <h2 className="text-xl font-bold">Review & Submit</h2>
             <p>Review your project details and submit when ready.</p>
@@ -541,8 +589,7 @@ export function CreateProject() {
               !projectData.ProjectTitle || !projectData.Description ||
               projectData.Skills.length === 0 ||
               !projectData.Budget || !projectData.Deadline ||
-              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate))) ||
-              (budgetDivision === 'fixed' && !projectData.NumberOfFreelancers)
+              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate)))
             }>
               Create Project
             </Button>
@@ -550,29 +597,31 @@ export function CreateProject() {
         )}
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8 pt-6 border-t">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevStep}
-            disabled={step === 1}
-          >
-            Previous
-          </Button>
-          {step < 6 ? (
+        {step !== 6 && (
+          <div className="flex justify-between mt-8 pt-6 border-t">
             <Button 
-              onClick={handleNextStep}
-              icon={ArrowRight}
-              iconPosition="right"
-              disabled={
-                (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
-                (step === 2 && projectData.Skills.length === 0) ||
-                (step === 4 && (!projectData.Budget || !projectData.Deadline))
-              }
+              variant="outline" 
+              onClick={handlePrevStep}
+              disabled={step === 1}
             >
-              Next Step
+              Previous
             </Button>
-          ) : null}
-        </div>
+            {step < 7 ? (
+              <Button 
+                onClick={handleNextStep}
+                icon={ArrowRight}
+                iconPosition="right"
+                disabled={
+                  (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
+                  (step === 2 && projectData.Skills.length === 0) ||
+                  (step === 4 && (!projectData.Budget || !projectData.Deadline))
+                }
+              >
+                Next Step
+              </Button>
+            ) : null}
+          </div>
+        )}
       </Card>
     </div>
   );
