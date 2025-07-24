@@ -126,13 +126,13 @@ namespace ProjectLaunchpad.Functions
             var projectDTOs = projects.Select(p => new ProjectResponseDTO
             {
                 Id = p.Id,
-                Title = p.ProjectTitle,
+                ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
                 Status = p.Status ?? "active",
                 Budget = p.Budget,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
-                Category = p.CategoryOrDomain,
+                CategoryOrDomain = p.CategoryOrDomain,
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
                 AttachedDocumentPath = p.AttachedDocumentPath,
@@ -145,7 +145,7 @@ namespace ProjectLaunchpad.Functions
                     Role = p.Client.User.Role,
                     Gender = p.Client.User.Gender
                 } : null,
-                Skills = p.RequiredSkills?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
+                RequiredSkills = p.RequiredSkills,
                 Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
                 {
                     FirstName = af.Freelancer.User.FirstName,
@@ -238,14 +238,14 @@ namespace ProjectLaunchpad.Functions
             var projectDTOs = projects.Select(p => new ProjectResponseDTO
             {
                 Id = p.Id,
-                Title = p.ProjectTitle,
+                ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
                 Status = p.Status ?? "active",
                 Budget = p.Budget,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
                 // Add these fields if your DTO and frontend expect them:
-                Category = p.CategoryOrDomain,
+                CategoryOrDomain = p.CategoryOrDomain,
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
                 AttachedDocumentPath = p.AttachedDocumentPath,
@@ -258,7 +258,7 @@ namespace ProjectLaunchpad.Functions
                     Role = p.Client.User.Role,
                     Gender = p.Client.User.Gender
                 } : null,
-                Skills = p.RequiredSkills?.Split(',').Select(s => s.Trim()).ToList() ?? new List<string>(),
+                RequiredSkills = p.RequiredSkills,
                 Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
                 {
                     FirstName = af.Freelancer.User.FirstName,

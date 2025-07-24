@@ -38,7 +38,7 @@ namespace ProjectLaunchpad.Functions
                 ProjectId = dto.ProjectId,
                 FreelancerId = dto.FreelancerId,
                 Review = dto.Review,
-                Rating = dto.Rating ?? 0
+                Rating = dto.Rating
             };
 
             await _unitOfWork.Feedbacks.AddFeedbackAsync(feedback);
