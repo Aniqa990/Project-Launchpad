@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProjectLaunchpad.DataAccess")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+61ae25e9166b7be8d4b5f3787943666bfa311bc5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bf35dd879779abac5b99d8323485203a79739e54")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProjectLaunchpad.DataAccess")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProjectLaunchpad.DataAccess")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
