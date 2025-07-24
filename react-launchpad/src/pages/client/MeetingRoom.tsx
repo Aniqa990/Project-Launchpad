@@ -37,6 +37,12 @@ export default function Meetings() {
   const [meetingAgenda, setMeetingAgenda] = useState('');
   const [startingMeeting, setStartingMeeting] = useState(false);
   const [meetingRoomId, setMeetingRoomId] = useState<string | null>(null);
+  const [meetingId, setMeetingId] = useState<number | null>(null); // Store integer meeting ID
+
+  // New: Upload transcript state
+  const [uploadingTranscript, setUploadingTranscript] = useState(false);
+  const [uploadTranscriptSuccess, setUploadTranscriptSuccess] = useState<string | null>(null);
+  const [uploadTranscriptError, setUploadTranscriptError] = useState<string | null>(null);
 
   const ASSEMBLYAI_API_KEY = '2a10d51c006c409681db68820636a14d'; // Replace with your real key for testing
 
@@ -269,6 +275,7 @@ export default function Meetings() {
       };
       const res = await axios.post('http://localhost:7053/api/meetings/start', payload);
       setMeetingRoomId(res.data.roomId);
+      setMeetingId(res.data.meetingId); // Save integer meeting ID
       setShowMeeting(true);
       setMeetingActive(true);
       await handleStartRecording(); // Start recording automatically
@@ -276,6 +283,35 @@ export default function Meetings() {
       setError(err?.response?.data || 'Failed to start meeting.');
     } finally {
       setStartingMeeting(false);
+    }
+  };
+
+  // Upload transcript to backend
+  const handleUploadTranscript = async () => {
+    if (!transcript || !user || !meetingId) {
+      setUploadTranscriptError('Missing transcript, user, or meeting ID.');
+      return;
+    }
+    setUploadingTranscript(true);
+    setUploadTranscriptSuccess(null);
+    setUploadTranscriptError(null);
+    try {
+      // Create a Blob from the transcript text
+      const transcriptBlob = new Blob([transcript], { type: 'text/plain' });
+      const formData = new FormData();
+      formData.append('audio', transcriptBlob, `transcript-${meetingId}-user-${user.id}.txt`);
+      formData.append('userId', String(user.id)); // Ensure userId is a string
+      // POST to backend using integer meetingId
+      const res = await axios.post(
+        `http://localhost:7053/api/meetings/${meetingId}/upload-audio`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      setUploadTranscriptSuccess('Transcript uploaded successfully!');
+    } catch (err: any) {
+      setUploadTranscriptError(err?.response?.data || 'Failed to upload transcript.');
+    } finally {
+      setUploadingTranscript(false);
     }
   };
 
@@ -400,13 +436,24 @@ export default function Meetings() {
               <div className="mt-4">
                 <h3 className="font-semibold mb-2">Transcript</h3>
                 <textarea value={transcript} readOnly className="w-full h-40 mb-2" />
-                <a
-                  href={`data:text/plain;charset=utf-8,${encodeURIComponent(transcript)}`}
-                  download="transcript.txt"
-                  className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                >
-                  Download Transcript
-                </a>
+                <div className="flex flex-wrap gap-4 mb-2">
+                  <a
+                    href={`data:text/plain;charset=utf-8,${encodeURIComponent(transcript)}`}
+                    download="transcript.txt"
+                    className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                  >
+                    Download Transcript
+                  </a>
+                  <button
+                    className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                    onClick={handleUploadTranscript}
+                    disabled={uploadingTranscript}
+                  >
+                    {uploadingTranscript ? 'Uploading...' : 'Upload Transcript to Database'}
+                  </button>
+                </div>
+                {uploadTranscriptSuccess && <div className="text-green-600 mt-2">{uploadTranscriptSuccess}</div>}
+                {uploadTranscriptError && <div className="text-red-600 mt-2">{uploadTranscriptError}</div>}
               </div>
             )}
           </div>
