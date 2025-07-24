@@ -20,6 +20,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import FreelancerSuggestions from './FreelancerSuggestions';
 import SignatureCanvas from 'react-signature-canvas';
 
+// Add these at the top of the file (after imports):
+// Remove Cloudinary env constants and uploadToCloudinary function
+
 export function CreateProject() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -35,6 +38,7 @@ export function CreateProject() {
     CategoryOrDomain: '',
     NumberOfFreelancers: 1,
     Milestones: '',
+    CloudinaryUrl: '', // Add CloudinaryUrl to projectData
   });
   const [skillInput, setSkillInput] = useState('');
   //const [matchingFreelancers, setMatchingFreelancers] = useState();
@@ -54,6 +58,28 @@ export function CreateProject() {
   const sigCanvasRef = useRef<any>(null);
   const [signatureError, setSignatureError] = useState('');
   const [isSigned, setIsSigned] = useState(false);
+  const [uploading, setUploading] = useState(false); // Add uploading state
+
+  // Move Cloudinary env constants inside the component
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+  // Cloudinary upload function
+  async function uploadToCloudinary(file: File) {
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`;
+    const formData = new FormData();
+    formData.append('file', file);
+    if (!CLOUDINARY_UPLOAD_PRESET) {
+      throw new Error('Cloudinary upload preset is not set in the environment variables.');
+    }
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.secure_url;
+  }
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -70,14 +96,22 @@ export function CreateProject() {
     handleInputChange('Skills', projectData.Skills.filter(s => s !== skill));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // In handleFileUpload, just store the file(s) in state as before
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    handleInputChange('Files', [...projectData.Files, ...files]);
+    if (files.length > 0) {
+      setUploading(true);
+      const url = await uploadToCloudinary(files[0]);
+      handleInputChange('Files', files);
+      handleInputChange('CloudinaryUrl', url);
+      setUploading(false);
+    }
   };
 
   const handleRemoveFile = (index: number) => {
     const newFiles = projectData.Files.filter((_, i) => i !== index);
     handleInputChange('Files', newFiles);
+    handleInputChange('CloudinaryUrl', ''); // Clear Cloudinary URL when file is removed
   };
 
   const handleNextStep = () => {
@@ -137,7 +171,7 @@ export function CreateProject() {
               dueDate: m.dueDate
             }))
           : [],
-        attachedDocumentPath: projectData.Files[0]?.name || null,
+        attachedDocumentPath: projectData.CloudinaryUrl || null,
         clientId: user?.id ?? null,
       };
       const response = await createProject(payload);
@@ -351,13 +385,18 @@ export function CreateProject() {
                   className="hidden"
                   id="file-upload"
                 />
-                <label htmlFor="file-upload">
-                  <Button variant="outline" className="cursor-pointer">
+                <label htmlFor="file-upload" className="inline-block">
+                  <span className="px-4 py-2 border border-gray-300 rounded bg-white text-gray-700 cursor-pointer hover:bg-gray-100 transition">
                     Choose Files
-                  </Button>
+                  </span>
                 </label>
+                {uploading && <div className="mt-2 text-blue-600">Uploading...</div>}
+                {projectData.CloudinaryUrl && (
+                  <div className="mt-2 text-green-600">
+                    Uploaded: <a href={projectData.CloudinaryUrl} target="_blank" rel="noopener noreferrer">View File</a>
+                  </div>
+                )}
               </div>
-              
               {projectData.Files.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {projectData.Files.map((file, index) => (
@@ -561,7 +600,13 @@ export function CreateProject() {
               </button>
             </div>
             {signatureError && <div className="text-red-600 text-sm mt-2">{signatureError}</div>}
-            <div className="flex justify-end w-full">
+            <div className="flex justify-between w-full mt-4">
+              <Button
+                variant="outline"
+                onClick={handlePrevStep}
+              >
+                Previous
+              </Button>
               <Button
                 onClick={() => {
                   if (!isSigned) {
