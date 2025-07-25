@@ -1,17 +1,12 @@
 import React, { useState, useRef } from 'react';
 import {updateFreelancerProfile} from '../../apiendpoints';
 import { ParsedResumeData } from '@/types';
-import React, { useState, useRef } from 'react';
-import {updateFreelancerProfile} from '../../apiendpoints';
-import { ParsedResumeData } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,14 +28,9 @@ import {
   Clock,
   Trash2,
   Pencil
-  Trash2,
-  Pencil
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ProjectModal } from '@/components/ui/ProjectModal';
-import { ProjectModal } from '@/components/ui/ProjectModal';
 import { ExperienceModal } from '@/components/ui/ExperienceModal';
-import toast from 'react-hot-toast';
 import toast from 'react-hot-toast';
 
 
