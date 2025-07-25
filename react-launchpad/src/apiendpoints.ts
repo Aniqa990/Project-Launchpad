@@ -39,6 +39,11 @@ export async function validateToken(token?: string) {
   }).then(res => res.data);
 }
 
+export const getFreelancerById = async (id: number): Promise<FreelancerProfile> => {
+  const response = await api.get(`/freelancer/${id}`);
+  return response.data;
+};
+
 export const addFreelancerProfile = async(profile: Partial<FreelancerProfile>) => {
   try{
   const response = await api.post("/freelancer", profile);
@@ -67,12 +72,36 @@ export const getProjectRequests = async(freelancerId: number) => {
   }
 };
 
-export const respondToProjectRequest = async (projectId: number, status: string, freelancerId?: number) => {
+export const sendProjectRequest = async (projectId: number, freelancerId: number) => {
+  try {
+    const response = await api.post('/projects/requests', {
+      ProjectId: projectId,
+      FreelancerId: freelancerId
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to assign freelancer');
+  }
+};
+
+export const updateProjectRequestStatus = async (projectId: number, status: string, freelancerId?: number) => {
   try {
     const response = await api.patch(`/requests/${freelancerId}/${projectId}`, { status });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update request status');
+  }
+};
+
+export const assignFreelancerToProject = async (projectId: number, freelancerId: number) => {
+  try {
+    const response = await api.post('/projects/assign', {
+      ProjectId: projectId,
+      FreelancerId: freelancerId
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to assign freelancer');
   }
 };
 
@@ -82,6 +111,15 @@ export const getFreelancerProjects = async (freelancerId: number) => {
     return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer projects');
+  }
+};
+
+export const getProjectRequestsByProjectId = async (projectId: number) => {
+  try {
+    const response = await api.get(`/projects/${projectId}/requests`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project requests for project');
   }
 };
 
@@ -247,7 +285,7 @@ export const getProjects = async () => {
 
 export const getProjectById = async (id: string | number) => {
   const res = await api.get(`/projects/${id}`);
-  return res.data;
+  return lowercaseFirstLetterKeys(res.data);
 };
 
 // Fetch projects for a specific client
@@ -463,3 +501,7 @@ export async function getUnallocatedResources() {
   const { data } = await api.get('/platform/unallocated-resources');
   return data;
 }
+
+
+
+

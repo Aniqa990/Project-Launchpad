@@ -6,6 +6,7 @@ import { Button } from "./button";
 import { Trash2, Calendar as CalendarIcon, X } from "lucide-react";
 import { Experience } from "@/types";
 import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export function ExperienceModal({ open, onClose, onSave, onDelete, initialData }: {
   open: boolean;

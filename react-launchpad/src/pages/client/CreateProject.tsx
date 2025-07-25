@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Avatar } from '../../components/ui/avatar';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -12,12 +10,13 @@ import {
   Star,
   DollarSign,
   Clock,
-  Send
+  Send,
+  Briefcase
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createProject } from '../../apiendpoints';
+import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
-import FreelancerSuggestions from './FreelancerSuggestions';
+import { Badge } from '../../components/ui/badge';
 
 export function CreateProject() {
   const navigate = useNavigate();
@@ -36,7 +35,6 @@ export function CreateProject() {
     Milestones: '',
   });
   const [skillInput, setSkillInput] = useState('');
-  //const [matchingFreelancers, setMatchingFreelancers] = useState();
   const [selectedFreelancers, setSelectedFreelancers] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   // Milestone fields
@@ -50,6 +48,9 @@ export function CreateProject() {
   const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone' | 'hourly'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [freelancerSuggestions, setFreelancerSuggestions] = useState<any[]>([]);
+  const [detailedFreelancers, setDetailedFreelancers] = useState<any[]>([]);
+  const [sendingRequests, setSendingRequests] = useState(false);
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -138,6 +139,17 @@ export function CreateProject() {
       };
       const response = await createProject(payload);
       console.log('Create project response:', response);
+      const projectSummary = payload.description;
+
+    const suggestRes = await fetch("http://localhost:8000/api/suggest-freelancers/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project_summary: projectSummary })
+    });
+    const suggestData = await suggestRes.json();
+    console.log('Freelancer suggestions:', suggestData);
+    setFreelancerSuggestions(suggestData.suggestions || []);
+
       setCreatedProjectId(
         response?.Id?.toString() ||
         response?.id?.toString() ||
@@ -158,6 +170,55 @@ export function CreateProject() {
         : [...prev, freelancerId]
     );
   };
+
+  const handleSelectFreelancer = (id: string) => {
+    setSelectedFreelancers(prev =>
+      prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSendRequests = async () => {
+    if (!createdProjectId || selectedFreelancers.length === 0) return;
+    setSendingRequests(true);
+    try {
+      await Promise.all(selectedFreelancers.map(fid => sendProjectRequest(Number(createdProjectId), Number(fid))));
+      toast.success(`Requests sent to ${selectedFreelancers.length} freelancer(s)!`);
+    } catch (err) {
+      toast.error('Failed to send requests.');
+    } finally {
+      setSendingRequests(false);
+    }
+  };
+
+  useEffect(() => {
+    async function fetchFreelancers() {
+      if (!freelancerSuggestions.length) return;
+      const details = await Promise.all(
+        freelancerSuggestions.map(async (sugg) => {
+          try {
+            const profile = await getFreelancerById(Number(sugg.freelancer_id));
+            console.log(profile)
+            // Fetch projects for this freelancer
+            const projects = await getFreelancerProjects(Number(sugg.freelancer_id));
+            console.log(projects);
+            const activeProjects = Array.isArray(projects)
+              ? projects.filter((p: any) => p.status === 'active').length
+              : 0;
+            return { ...profile, summary: sugg.summary,   skills: Array.isArray(sugg.skills)
+              ? sugg.skills
+              : (typeof sugg.skills === 'string'
+                  ? JSON.parse(sugg.skills)
+                  : []),
+            activeProjects, };
+          } catch {
+            return null;
+          }
+        })
+      );
+      setDetailedFreelancers(details.filter(Boolean));
+    }
+    if (submitted && freelancerSuggestions.length) fetchFreelancers();
+  }, [submitted, freelancerSuggestions]);
 
   const stepTitles = [
     'Project Details',
@@ -180,7 +241,64 @@ export function CreateProject() {
             Now, discover and invite top freelancers for your project.
           </p>
         </Card>
-        {createdProjectId && <FreelancerSuggestions projectId={createdProjectId} />}
+        {createdProjectId && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold">Suggested Freelancers</h2>
+            <div className="grid gap-6">
+              {detailedFreelancers.map((f, idx) => (
+                console.log(f),
+                <Card key={f.Id || idx} className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-semibold text-gray-900">{f.FirstName} {f.LastName}</h3>
+                        {/* Add availability badge if you have it */}
+                      </div>
+                      <div className="text-gray-700 mb-2">{f.summary}</div>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {f.skills && f.skills.length > 0
+                          ? f.skills.map((skill: string, i: number) => (
+                              <Badge key={i} variant="info" size="sm">{skill}</Badge>
+                            ))
+                          : <span className="text-gray-400">No skills listed</span>
+                        }
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 min-w-[180px]">
+                      <div className="flex items-center text-gray-600">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        <span className="font-medium">${f.HourlyRate}/hr</span>
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                        <span className="font-medium">{f.AvgRating ?? 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Briefcase className="h-4 w-4 mr-1" />
+                        <span className="font-medium">{f.activeProjects ?? 0} active</span>
+                      </div>
+                      <Button
+                        variant={selectedFreelancers.includes(f.Id?.toString()) ? 'primary' : 'outline'}
+                        onClick={() => handleSelectFreelancer(f.Id?.toString())}
+                      >
+                        {selectedFreelancers.includes(f.Id?.toString()) ? 'Selected' : 'Select'}
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            {detailedFreelancers.length > 0 && (
+              <Button
+                className="mt-4"
+                onClick={handleSendRequests}
+                disabled={selectedFreelancers.length === 0 || sendingRequests}
+              >
+                {sendingRequests ? 'Sending...' : 'Send Requests to Selected'}
+              </Button>
+            )}
+          </div>
+        )}
         <div className="flex justify-center space-x-4 mt-8">
           <Button variant="outline" onClick={() => navigate('/client/projects')}>
             View Projects

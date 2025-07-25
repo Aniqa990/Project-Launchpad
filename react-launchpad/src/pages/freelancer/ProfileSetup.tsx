@@ -60,7 +60,6 @@ export function ProfileSetup() {
   const [fullName, setName] = useState(`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim());
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
-  const [location, setLocation] = useState('');
 
   // UI/UX state for modals
   const [showExpModal, setShowExpModal] = useState(false);
@@ -239,9 +238,10 @@ export function ProfileSetup() {
     if (fullName) completed++;
     if (email) completed++;
     if (phone) completed++;
-    if (profileData.summary) completed++;
+    if (hourlyRate > 0) completed++;
+    if (availability) completed++;
+    if (workingHours) completed++;
     if (profileData.skills.length > 0) completed++;
-    if (profileData.experience.length > 0) completed++;
 
     return Math.round((completed / total) * 100);
   };
@@ -254,9 +254,9 @@ export function ProfileSetup() {
   const canProceedToNext = () => {
     switch (step) {
       case 1: return resumeUploaded || showParseResults;
-      case 2: return fullName && email && profileData.skills.length > 0;
-      case 3: return profileData.experience.length > 0;
-      case 4: return profileData.projects.length>0;
+      case 2: return fullName && email && phone && profileData.skills.length && hourlyRate > 0 && availability && workingHours;
+      case 3: return true;
+      case 4: return true;
       default: return true;
     }
   };
@@ -267,11 +267,10 @@ export function ProfileSetup() {
 
   const handleSaveProfile = async () => {
     const profilePayload = {
-      Id: user?.id,
+    Id: user?.id,
     hourlyRate,
     workingHours,
     availability,
-    location,
     summary: profileData.summary,
     skills: JSON.stringify(profileData.skills),
     experience: JSON.stringify(stripIds(profileData.experience)),
@@ -414,29 +413,15 @@ export function ProfileSetup() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
+          <Label htmlFor="phone">Phone Number *</Label>
           <Input
             id="phone"
             type="tel"
+            required
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Enter your phone number"
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              id="location"
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="pl-10"
-              placeholder="City, State/Country"
-            />
-          </div>
         </div>
       </div>
 
@@ -486,12 +471,13 @@ export function ProfileSetup() {
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="hourlyRate">Hourly Rate (USD)</Label>
+          <Label htmlFor="hourlyRate">Hourly Rate (USD) *</Label>
           <div className="relative">
             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="hourlyRate"
               type="number"
+              required
               value={hourlyRate}
               onChange={(e) => setHourlyRate(parseInt(e.target.value))}
               className="pl-10"
@@ -501,25 +487,26 @@ export function ProfileSetup() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="availability">Availability</Label>
+          <Label htmlFor="availability">Availability *</Label>
           <Select value={availability} onValueChange={setAvailability}>
             <SelectTrigger>
               <SelectValue placeholder="Select availability" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="not-available">Not Available</SelectItem>
+              <SelectItem value="Available">Available</SelectItem>
+              <SelectItem value="Unavailable">Unavailable</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="hourlyRate">Working Hours</Label>
+          <Label htmlFor="hourlyRate">Working Hours *</Label>
           <div className="relative">
             <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="workingHours"
               type="text"
+              required
               value={workingHours}
               onChange={(e) => setWorkingHours(e.target.value)}
               className="pl-10"

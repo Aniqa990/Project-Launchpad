@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
 import { 
   Plus, 
   FolderOpen, 
@@ -25,7 +24,6 @@ export function ClientDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Calculate real-time statistics from project data
   const statistics = useMemo(() => {
     if (!projects.length) {
       return {
