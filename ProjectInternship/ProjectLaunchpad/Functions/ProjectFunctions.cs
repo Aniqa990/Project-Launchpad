@@ -2,13 +2,17 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using MySqlX.XDevAPI;
+using MySqlX.XDevAPI;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO;
 using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
+using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
 using ProjectLaunchpad.Models.Models.DTOs.ProjectDTO;
 using ProjectLaunchpad.Models.Models.Enums;
+using ProjectLaunchpad.Models.Models.Enums;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
+using ProjectLaunchpad.Services;
 using ProjectLaunchpad.Services;
 using ProjectLaunchpad.Utility;
 using System;
@@ -49,8 +53,28 @@ namespace ProjectLaunchpad.Functions
         //    return response;
         //}
 
+        //[Function("CreateProjectPosting")]
+        //public async Task<HttpResponseData> CreateProjectPosting(
+        //    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
+        //{
+        //    (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+
+        //    if (!isAuthorized)
+        //        return unauthorizedResponse!;
+
+        //    var project = await req.ReadFromJsonAsync<Project>();
+
+        //    await _unitOfWork.ProjectRepository.AddProjectAsync(project);
+        //    await _unitOfWork.SaveAsync();
+
+        //    var response = req.CreateResponse(HttpStatusCode.Created);
+        //    await response.WriteAsJsonAsync(project);
+        //    return response;
+        //}
+
         [Function("CreateProjectPosting")]
         public async Task<HttpResponseData> CreateProjectPosting(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects")] HttpRequestData req)
         {
             (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
@@ -114,6 +138,7 @@ namespace ProjectLaunchpad.Functions
 
             var response = req.CreateResponse(HttpStatusCode.Created);
             await response.WriteAsJsonAsync(new { message = "Project created successfully", projectId = project.Id });
+            await response.WriteAsJsonAsync(new { message = "Project created successfully", projectId = project.Id });
             return response;
         }
 
@@ -127,11 +152,13 @@ namespace ProjectLaunchpad.Functions
             {
                 Id = p.Id,
                 ProjectTitle = p.ProjectTitle,
+                ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
                 Status = p.Status ?? "active",
                 Budget = p.Budget,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
+                CategoryOrDomain = p.CategoryOrDomain,
                 CategoryOrDomain = p.CategoryOrDomain,
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
@@ -145,6 +172,7 @@ namespace ProjectLaunchpad.Functions
                     Role = p.Client.User.Role,
                     Gender = p.Client.User.Gender
                 } : null,
+                RequiredSkills = p.RequiredSkills,
                 RequiredSkills = p.RequiredSkills,
                 Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
                 {
@@ -168,6 +196,8 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetProjectPostingById")]
         public async Task<HttpResponseData> GetProjectPostingById(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects/{id:int}")] HttpRequestData req,
+    int id)
     [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects/{id:int}")] HttpRequestData req,
     int id)
         {
@@ -311,6 +341,58 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(projectDTOs);
             return response;
         }
+
+
+
+/*        [Function("GetProjectsByClientId")]
+        public async Task<HttpResponseData> GetProjectsByClientId(
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "clients/{clientId}/projects")] HttpRequestData req,
+    int clientId)
+        {
+            var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientAsync(clientId);
+
+            var projectDTOs = projects.Select(p => new ProjectResponseDTO
+            {
+                Id = p.Id,
+                ProjectTitle = p.ProjectTitle,
+                Description = p.Description,
+                Status = p.Status ?? "active",
+                Budget = p.Budget,
+                Deadline = p.Deadline,
+                ClientId = p.ClientId,
+                CategoryOrDomain = p.CategoryOrDomain,
+                PaymentType = p.PaymentType,
+                NumberOfFreelancers = p.NumberOfFreelancers,
+                AttachedDocumentPath = p.AttachedDocumentPath,
+                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                {
+                    FirstName = p.Client.User.FirstName,
+                    LastName = p.Client.User.LastName,
+                    Email = p.Client.User.Email,
+                    PhoneNo = p.Client.User.PhoneNo,
+                    Role = p.Client.User.Role,
+                    Gender = p.Client.User.Gender
+                } : null,
+                RequiredSkills = string.Join(", ", p.RequiredSkills?.Split(',').Select(s => s.Trim()) ?? new List<string>()),
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                {
+                    FirstName = af.Freelancer.User.FirstName,
+                    LastName = af.Freelancer.User.LastName,
+                    Email = af.Freelancer.User.Email,
+                    PhoneNo = af.Freelancer.User.PhoneNo,
+                    Role = af.Freelancer.User.Role,
+                    Gender = af.Freelancer.User.Gender
+                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                Progress = 0 // TODO: Calculate based on milestones if needed
+            }).ToList();
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(projectDTOs);
+            return response;
+        }
+*/
+
+
 
         [Function("UpdateProjectPosting")]
         public async Task<HttpResponseData> UpdateProjectPosting(

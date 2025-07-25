@@ -31,7 +31,7 @@ const HourlyLogViewer: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [projects, setProjects] = useState<{ Id: number; Title: string }[]>([]);
+  const [projects, setProjects] = useState<{ id: number; projectTitle: string; description: string }[]>([]);
 
   // Fetch projects for the freelancer
   useEffect(() => {
@@ -39,7 +39,6 @@ const HourlyLogViewer: React.FC = () => {
       if (!user?.id) return;
       try {
         const data = await getFreelancerProjects(user.id);
-        console.log("Projects fetched for filter:", data);
         setProjects(data);
       } catch (e) {
         setProjects([]);
@@ -213,10 +212,14 @@ const HourlyLogViewer: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
-                  {projects
-                  .filter(project => project.Id !== undefined && project.Id !== null)
-                  .map(project => (
-                    <SelectItem key={project.Id} value={project.Id.toString()}>{project.Title}</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.projectTitle && p.projectTitle !== 'na'
+                        ? p.projectTitle
+                        : (p.description && p.description !== 'na'
+                            ? p.description
+                            : (p.projectTitle === 'na' && p.description === 'na' ? 'na' : `Project #${p.id}`))}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

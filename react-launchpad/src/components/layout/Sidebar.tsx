@@ -36,11 +36,12 @@ export function Sidebar() {
     { icon: Users, label: 'View Project Requests', path: '/client/project-requests' },
     { icon: Clock, label: 'Time Logs', path: '/client/hourly-logs' },
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
-    { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
+    // { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
     { icon: Settings, label: 'Settings', path: '/client/settings' },
-    { icon: MessageSquare, label: 'Messages', path: '/messages' },
-    { icon: Video, label: 'Meetings', path: '/client/meetings' },
+    // { icon: MessageSquare, label: 'Messages', path: '/messages' },
+     { icon: LayoutDashboard, label: 'Meetings', path: '/client/meetings' },
+    // { icon: Video, label: 'Meetings', path: '/client/meetings' },
   ];
 
   const freelancerMenuItems = [
@@ -56,6 +57,7 @@ export function Sidebar() {
     { icon: MessageSquare, label: 'Messages', path: '/chat' },
     { icon: Star, label: 'Feedback', path: '/freelancer/feedback' },
     { icon: Settings, label: 'Settings', path: '/freelancer/settings' },
+    { icon: Link, label: 'Meetings', path: '/freelancer/meetings' },
   ];
 
   const platformMenuItems = [

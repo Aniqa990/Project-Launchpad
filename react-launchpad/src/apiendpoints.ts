@@ -294,6 +294,12 @@ export const getClientProjects = async (clientId: number) => {
   return lowercaseFirstLetterKeys(res.data);
 };
 
+// Fetch projects for a specific client
+export const getClientProjects = async (clientId: number) => {
+  const res = await api.get(`/clients/${clientId}/projects`);
+  return lowercaseFirstLetterKeys(res.data);
+};
+
 export const createProject = async (payload: any) => {
   const res = await api.post('/projects', payload);
   return res.data;
@@ -449,13 +455,41 @@ export const createStripeCheckoutSession = async (params: {
   return response.data;
 };
 
-export const getMilestonesByProjectId = async (projectId: number): Promise<any[]> => {
+export const getMilestonesByProjectId = async (projectId: number) => {
   const response = await api.get(`/milestones/project/${projectId}`);
   return lowercaseFirstLetterKeys(response.data);
 };
 
 export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise<any[]> => {
-  const response = await api.get(`/deliverables/milestone/${milestoneId}`);
+  try {
+    const response = await api.get(`/deliverables/milestone/${milestoneId}`);
+    return response.data;
+  } catch (error: any) {
+    if (error.response && error.response.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+};
+
+// Get projects by client id
+// export const getClientProjects = async (clientId: number) => {
+//   try {
+//     const response = await api.get(`/clients/${clientId}/projects`);
+//     return response.data;
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.message || 'Failed to fetch client projects');
+//   }
+// };
+
+// NOTIFICATIONS
+export const getNotifications = async (userId: number) => {
+  const response = await api.get(`/notifications/${userId}`);
+  return response.data;
+};
+
+export const markNotificationRead = async (notificationId: number) => {
+  const response = await api.put(`/notifications/${notificationId}/read`);
   return response.data;
 };
 

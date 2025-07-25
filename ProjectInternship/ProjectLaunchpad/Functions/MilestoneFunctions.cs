@@ -80,7 +80,7 @@ namespace ProjectLaunchpad.Functions
             // ✅ Update existing milestone with submission details
             milestone.SubmissionDate = dto.SubmissionDate;
             milestone.FreelancerComments = dto.FreelancerComments;
-            milestone.Status = MilestoneStatus.Submitted;
+            milestone.Status = MilestoneStatus.Completed;
 
             await _unitOfWork.MilestoneRepository.UpdateMilestoneAsync(milestone);
             await _unitOfWork.SaveAsync();

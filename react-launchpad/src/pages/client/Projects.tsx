@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { 
@@ -9,7 +11,15 @@ import {
   Eye, 
   User, 
   DollarSign, 
+  FolderOpen, 
+  Eye, 
+  User, 
+  DollarSign, 
   Calendar,
+  Filter,
+  Search,
+  Plus,
+  Pencil
   Filter,
   Search,
   Plus,
@@ -24,8 +34,18 @@ export function ClientProjects() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'completed' | 'cancelled'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState<any>({});
+  const [formErrors, setFormErrors] = useState<any>({});
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState('');
+  const [updateError, setUpdateError] = useState('');
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -58,6 +78,7 @@ export function ClientProjects() {
       }
     };
     fetchProjects();
+  }, [user]);
   }, [user]);
 
   const filteredProjects = projects.filter(project => {
@@ -108,7 +129,18 @@ export function ClientProjects() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
           <p className="text-gray-600 mt-1">Manage and track all your posted projects</p>
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
+          <p className="text-gray-600 mt-1">Manage and track all your posted projects</p>
         </div>
+        <Button onClick={createNewProject} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="w-4 h-4 mr-2" />
+          New Project
+        </Button>
         <Button onClick={createNewProject} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" />
           New Project
@@ -197,11 +229,15 @@ export function ClientProjects() {
             {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search projects..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -209,6 +245,12 @@ export function ClientProjects() {
         </div>
       </Card>
 
+      {/* Projects List */}
+      <Card>
+        <div className="p-6">
+          <span className="text-lg font-semibold">Projects ({filteredProjects.length})</span>
+          <div className="text-gray-500 text-sm mb-4">
+            {statusFilter === 'all' ? 'All your projects' : `Projects with status: ${statusFilter}`}
       {/* Projects List */}
       <Card>
         <div className="p-6">
@@ -282,7 +324,20 @@ export function ClientProjects() {
               <div className="text-center py-8">
                 <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
+            ))}
+            
+            {filteredProjects.length === 0 && (
+              <div className="text-center py-8">
+                <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
                 <p className="text-gray-600">
+                  {statusFilter === 'all' 
+                    ? 'You haven\'t created any projects yet' 
+                    : `No projects with status "${statusFilter}"`
+                  }
+                </p>
+              </div>
+            )}
                   {statusFilter === 'all' 
                     ? 'You haven\'t created any projects yet' 
                     : `No projects with status "${statusFilter}"`
@@ -293,6 +348,8 @@ export function ClientProjects() {
           </div>
         </div>
       </Card>
+      </Card>
     </div>
   );
 }
+

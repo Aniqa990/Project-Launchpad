@@ -32,7 +32,18 @@ namespace ProjectLaunchpad.Repositories.Repositories
         public IPaymentRepository PaymentRepository { get; }
         public ITimeSheetRepository TimeSheet { get; }
         public IFeedbackRepository Feedbacks { get; }
-        public INotificationRepository NotificationRepository { get; }
+
+
+        public IMeetingRepository Meeting { get; private set; }
+        public IMeetingParticipantRepository MeetingParticipant { get; private set; }
+
+        public IMeetingAudioRecordingRepository MeetingAudioRecording { get; private set; }
+
+        public INotificationRepository NotificationRepository { get; private set; }
+
+
+
+        // 
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -51,8 +62,13 @@ namespace ProjectLaunchpad.Repositories.Repositories
             ClientProfiles = new ClientProfileRepository(_db);
             TimeSheet = new TimeSheetRepository(_db);
             Feedbacks = new FeedbackRepository(_db);
-            AdminProfiles = new AdminProfileRepository(_db);
+            Meeting = new MeetingRepository(_db);
+            MeetingParticipant = new MeetingParticipantRepository(_db);
+
+            MeetingAudioRecording = new MeetingAudioRecordingRepository(_db);
             NotificationRepository = new NotificationRepository(_db);
+            ///
+            AdminProfiles = new AdminProfileRepository(_db);
         }
 
         public async Task<int> SaveAsync()

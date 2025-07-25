@@ -10,16 +10,40 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.DataAccess.Repositories
 {
-    public class NotificationRepository: INotificationRepository
+    public class NotificationRepository : INotificationRepository
     {
         private readonly ApplicationDbContext _db;
-        public NotificationRepository(ApplicationDbContext db) => _db = db;
-        public async Task<IEnumerable<Notification>> GetNotificationByUserAsync(int Id)
+
+        public NotificationRepository(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task AddAsync(Notification notification)
+        {
+            await _db.notifications.AddAsync(notification);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<Notification>> GetByUserId(int id)
         {
             return await _db.notifications
-                .Include(n => n.User)
-                .Where(u => u.UserId == Id)
+                .Where(n => n.UserId == id)
+                .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
+        }
+
+        // NEW
+        public async Task<Notification> GetByIdAsync(int notificationId)
+        {
+            return await _db.notifications.FirstOrDefaultAsync(n => n.Id == notificationId);
+        }
+
+        // NEW
+        public async Task UpdateAsync(Notification notification)
+        {
+            _db.notifications.Update(notification);
+            await _db.SaveChangesAsync();
         }
     }
 }

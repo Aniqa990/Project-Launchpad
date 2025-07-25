@@ -1,12 +1,17 @@
 import React, { useState, useRef } from 'react';
 import {updateFreelancerProfile} from '../../apiendpoints';
 import { ParsedResumeData } from '@/types';
+import React, { useState, useRef } from 'react';
+import {updateFreelancerProfile} from '../../apiendpoints';
+import { ParsedResumeData } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { Card } from '@/components/ui/card';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,10 +33,14 @@ import {
   Clock,
   Trash2,
   Pencil
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProjectModal } from '@/components/ui/ProjectModal';
+import { ProjectModal } from '@/components/ui/ProjectModal';
 import { ExperienceModal } from '@/components/ui/ExperienceModal';
+import toast from 'react-hot-toast';
 import toast from 'react-hot-toast';
 
 
@@ -44,6 +53,8 @@ export function ProfileSetup() {
   const [parsing, setParsing] = useState(false);
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [showParseResults, setShowParseResults] = useState(false);
+  const experienceId = useRef(1);
+  const projectId = useRef(1);
   const experienceId = useRef(1);
   const projectId = useRef(1);
 
@@ -207,7 +218,81 @@ export function ProfileSetup() {
       );
       updateProfileField('experience', updated);
     };
+  };
+  
+    // Add state for multiple resumes
+    const [uploadedResumes, setUploadedResumes] = useState<{ name: string; status: 'pending' | 'parsing' | 'success' | 'error'; error?: string }[]>([]);
 
+    // Update handleFileUpload to handle multiple files
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      for (const file of files) {
+        setUploadedResumes(prev => [...prev, { name: file.name, status: 'parsing' }]);
+        setUploading(true);
+        try {
+          await new Promise(resolve => setTimeout(resolve, 500)); // Simulate upload
+          setResumeUploaded(true);
+          setParsing(true);
+          try {
+            const parsedData = await parseResume(file);
+            setProfileData(parsedData); // Optionally merge or replace, as per your logic
+            setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'success' } : r));
+            setShowParseResults(true);
+            toast.success(`Resume ${file.name} parsed successfully!`);
+          } catch (error: any) {
+            setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'error', error: error.message } : r));
+            toast.error(`Failed to parse ${file.name}. Please fill manually.`);
+          }
+          setParsing(false);
+        } finally {
+          setUploading(false);
+        }
+      }
+    };
+  
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+    };
+  
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const fakeEvent = { target: { files: [file] } } as any;
+        handleFileUpload(fakeEvent);
+      }
+    };
+  
+    const updateProfileField = (field: string, value: any) => {
+      setProfileData(prev => ({ ...prev, [field]: value }));
+    };
+  
+    const addSkill = (skill: string) => {
+      if (skill && !profileData.skills.includes(skill)) {
+        updateProfileField('skills', [...profileData.skills, skill]);
+      }
+    };
+  
+    const removeSkill = (skill: string) => {
+      updateProfileField('skills', profileData.skills.filter(s => s !== skill));
+    };
+  
+    // Update add/edit/remove functions for experience and projects to use camelCase fields and assign ids
+    const addExperience = (exp: any) => {
+      exp.id = experienceId.current++;
+      updateProfileField('experience', [...profileData.experience, exp]);
+    };
+
+    const updateExperience = (id: number, newExp: any) => {
+      const updated = profileData.experience.map(exp =>
+        exp.id === id ? { ...newExp } : exp
+      );
+      updateProfileField('experience', updated);
+    };
+
+    const removeExperience = (id: number) => {
+      updateProfileField('experience', profileData.experience.filter(exp => exp.id !== id));
+    };
     const removeExperience = (id: number) => {
       updateProfileField('experience', profileData.experience.filter(exp => exp.id !== id));
     };
@@ -217,9 +302,16 @@ export function ProfileSetup() {
       updateProfileField('projects', [...profileData.projects, proj]);
     };
 
+    const addProject = (proj: any) => {
+      proj.id = projectId.current++;
+      updateProfileField('projects', [...profileData.projects, proj]);
+    };
+
 
   const updateProject = (id: number, newProj: any) => {
+  const updateProject = (id: number, newProj: any) => {
     const updated = profileData.projects.map(p => 
+      p.id === id ? { ...newProj } : p
       p.id === id ? { ...newProj } : p
     );
     updateProfileField('projects', updated);
@@ -227,12 +319,16 @@ export function ProfileSetup() {
 
   const removeProject = (id: number) => {
     updateProfileField('projects', profileData.projects.filter(p => p.id !== id));
+    updateProfileField('projects', profileData.projects.filter(p => p.id !== id));
   };
+
+
 
 
 
   const getCompletionPercentage = () => {
     let completed = 0;
+    let total = 6;
     let total = 6;
 
     if (fullName) completed++;
@@ -260,6 +356,10 @@ export function ProfileSetup() {
       default: return true;
     }
   };
+
+  function stripIds<T extends { id?: any }>(arr: T[]): Omit<T, 'id'>[] {
+    return arr.map(({ id, ...rest }) => rest);
+  }
 
   function stripIds<T extends { id?: any }>(arr: T[]): Omit<T, 'id'>[] {
     return arr.map(({ id, ...rest }) => rest);
@@ -303,7 +403,10 @@ export function ProfileSetup() {
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-2">Upload Your Resume(s)</h2>
         <p className="text-muted-foreground">We'll automatically extract your information to speed up the process. You can upload multiple resumes if you wish.</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Upload Your Resume(s)</h2>
+        <p className="text-muted-foreground">We'll automatically extract your information to speed up the process. You can upload multiple resumes if you wish.</p>
       </div>
+      <div
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 ${
           uploading || parsing ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
@@ -322,12 +425,24 @@ export function ProfileSetup() {
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">Supports PDF and Word documents. You can upload multiple files.</p>
+        <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
+        <div>
+          <p className="text-muted-foreground mb-2">Drag and drop your resume(s) here, or</p>
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Choose File(s)
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">Supports PDF and Word documents. You can upload multiple files.</p>
         <input
           ref={fileInputRef}
           type="file"
           accept=".pdf,.doc,.docx"
           onChange={handleFileUpload}
           className="hidden"
+          multiple
           multiple
         />
         {/* Show uploaded files and their status */}
@@ -353,7 +468,31 @@ export function ProfileSetup() {
             <p className="text-green-700 text-sm">Review and edit the details in the next steps</p>
           </div>
         )}
+        {/* Show uploaded files and their status */}
+        {uploadedResumes.length > 0 && (
+          <div className="mt-6 text-left">
+            <h4 className="font-semibold mb-2">Uploaded Files:</h4>
+            <ul className="space-y-2">
+              {uploadedResumes.map((file, idx) => (
+                <li key={file.name + idx} className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span>{file.name}</span>
+                  {file.status === 'parsing' && <Loader className="w-4 h-4 text-primary animate-spin" />}
+                  {file.status === 'success' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                  {file.status === 'error' && <AlertCircle className="w-4 h-4 text-red-600" />}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {showParseResults && (
+          <div className="bg-green-50 p-4 rounded-lg mt-4">
+            <p className="text-green-800 font-medium">✨ Information extracted and auto-filled!</p>
+            <p className="text-green-700 text-sm">Review and edit the details in the next steps</p>
+          </div>
+        )}
       </div>
+      {!resumeUploaded && (
       {!resumeUploaded && (
         <div className="text-center">
           <Button variant="ghost" onClick={() => setStep(2)}>
@@ -381,10 +520,13 @@ export function ProfileSetup() {
           </Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="fullName"
               type="text"
               value={fullName}
+              onChange={(e) => setName( e.target.value)}
+              className={`pl-10 ${isFieldIncomplete(fullName) ? 'border-destructive bg-destructive/5' : ''}`}
               onChange={(e) => setName( e.target.value)}
               className={`pl-10 ${isFieldIncomplete(fullName) ? 'border-destructive bg-destructive/5' : ''}`}
               placeholder="Enter your full name"
@@ -401,11 +543,13 @@ export function ProfileSetup() {
           </Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className={`pl-10 ${isFieldIncomplete(email) ? 'border-destructive bg-destructive/5' : ''}`}
               className={`pl-10 ${isFieldIncomplete(email) ? 'border-destructive bg-destructive/5' : ''}`}
               placeholder="Enter your email"
             />
@@ -447,17 +591,23 @@ export function ProfileSetup() {
           {profileData.skills.map(skill => (
             <Badge key={skill} variant="info">
               {skill}
+            <Badge key={skill} variant="info">
+              {skill}
               <button
+                onClick={() => removeSkill(skill)}
+                className="ml-1 text-muted-foreground hover:text-destructive"
                 onClick={() => removeSkill(skill)}
                 className="ml-1 text-muted-foreground hover:text-destructive"
               >
                 <X className="w-3 h-3" />
               </button>
             </Badge>
+            </Badge>
           ))}
         </div>
         <Input
           placeholder="Type a skill and press Enter"
+          className={isFieldIncomplete(profileData.skills) ? 'border-destructive bg-destructive/5' : ''}
           className={isFieldIncomplete(profileData.skills) ? 'border-destructive bg-destructive/5' : ''}
           onKeyPress={(e) => {
             if (e.key === 'Enter') {
@@ -474,12 +624,14 @@ export function ProfileSetup() {
           <Label htmlFor="hourlyRate">Hourly Rate (USD) *</Label>
           <div className="relative">
             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="hourlyRate"
               type="number"
               required
               value={hourlyRate}
               onChange={(e) => setHourlyRate(parseInt(e.target.value))}
+              className="pl-10"
               className="pl-10"
               placeholder="75"
             />
@@ -489,6 +641,7 @@ export function ProfileSetup() {
         <div className="space-y-2">
           <Label htmlFor="availability">Availability *</Label>
           <Select value={availability} onValueChange={setAvailability}>
+            <SelectTrigger>
             <SelectTrigger>
               <SelectValue placeholder="Select availability" />
             </SelectTrigger>
@@ -503,12 +656,15 @@ export function ProfileSetup() {
           <Label htmlFor="hourlyRate">Working Hours *</Label>
           <div className="relative">
             <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="workingHours"
               type="text"
               required
               value={workingHours}
               onChange={(e) => setWorkingHours(e.target.value)}
+              className="pl-10"
+              placeholder="75"
               className="pl-10"
               placeholder="75"
             />
@@ -519,6 +675,7 @@ export function ProfileSetup() {
   );
 
 
+
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -526,27 +683,36 @@ export function ProfileSetup() {
         <p className="text-muted-foreground">Add your professional experience</p>
       </div>
 
+
       <div className="space-y-6">
         {profileData.experience.map((exp, index) => (
           <Card key={exp.id} className="relative mb-4">
+          <Card key={exp.id} className="relative mb-4">
             <button
               className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
+              onClick={() => removeExperience(exp.id)}
               onClick={() => removeExperience(exp.id)}
               title="Remove Experience"
             >
               <Trash2 className="w-5 h-5" />
             </button>
             <button
+            <button
               className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
               onClick={() => openEditExperienceModal(exp)}
               title="Edit Experience"
             >
+            >
               <Pencil className="w-5 h-5" />
+            </button>
+            <div className="mb-2 text-xl font-bold text-gray-900">{exp.title}</div>
             </button>
             <div className="mb-2 text-xl font-bold text-gray-900">{exp.title}</div>
             <div className="mb-2 text-lg font-semibold text-gray-700">
               {exp.company} | {exp.startDate} - {exp.endDate}
+              {exp.company} | {exp.startDate} - {exp.endDate}
             </div>
+            <div className="text-gray-700 whitespace-pre-line">{exp.description}</div>
             <div className="text-gray-700 whitespace-pre-line">{exp.description}</div>
           </Card>
         ))}
@@ -558,6 +724,7 @@ export function ProfileSetup() {
           open={showExpModal}
           onClose={() => setShowExpModal(false)}
           onSave={exp => {
+            if (exp.id) updateExperience(exp.id, exp);
             if (exp.id) updateExperience(exp.id, exp);
             else addExperience(exp);
             setShowExpModal(false);
@@ -580,18 +747,28 @@ export function ProfileSetup() {
         {profileData.projects.map((p, index) => (
           <Card key={p.id} className="relative mb-4">
             <button
+          <Card key={p.id} className="relative mb-4">
+            <button
               className="absolute top-4 right-12 text-gray-400 hover:text-red-600"
+              onClick={() => removeProject(p.id)}
               onClick={() => removeProject(p.id)}
               title="Remove Project"
             >
+            >
               <Trash2 className="w-5 h-5" />
+            </button>
+            <button
             </button>
             <button
               className="absolute top-4 right-4 text-gray-400 hover:text-blue-600"
               onClick={() => openEditProjectModal(p)}
               title="Edit Project"
             >
+            >
               <Pencil className="w-5 h-5" />
+            </button>
+            <div className="mb-2 text-xl font-bold text-gray-900">{p.title}</div>
+            <div className="text-gray-700 whitespace-pre-line">{p.description}</div>
             </button>
             <div className="mb-2 text-xl font-bold text-gray-900">{p.title}</div>
             <div className="text-gray-700 whitespace-pre-line">{p.description}</div>
@@ -606,6 +783,7 @@ export function ProfileSetup() {
           open={showProjModal}
           onClose={() => setShowProjModal(false)}
           onSave={proj => {
+            if (proj.id) updateProject(proj.id, proj);
             if (proj.id) updateProject(proj.id, proj);
             else addProject(proj);
             setShowProjModal(false);
