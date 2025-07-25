@@ -5,29 +5,37 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { User, Phone, Camera, Save, Briefcase, DollarSign, Clock, Edit2, Eye, EyeOff, Lock } from 'lucide-react';
-import { getProfileSetupData, updateProfileSetupData, getCurrentUserFreelancerProfile, deleteFreelancerProfile } from '../../apiendpoints';
+import { getFreelancerById, updateFreelancerProfile } from '../../apiendpoints';
 import { ProfileSetupData } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { Modal } from '../../components/ui/Modal';
+import { ParsedResumeData } from '@/types';
+import { FreelancerProfile } from '../../types';
 
 export function FreelancerSettings() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
+  const [profileData, setProfileData] = useState<FreelancerProfile>({
+    summary: '',
+    skills: [],
+    experience: [],
+    projects: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
   const [dangerModal, setDangerModal] = useState({ open: false });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
   const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -40,63 +48,74 @@ export function FreelancerSettings() {
     return `${start} - ${end}`;
   };
 
+  // Fetch parsed JSON from backend (resume_db)
   useEffect(() => {
     async function fetchProfile() {
+      setLoading(true);
+      setError(null);
       if (!user?.id) {
         setError('User not authenticated');
         setLoading(false);
         return;
       }
-      setLoading(true);
-      setError(null);
       try {
-        const [profileData, freelancerProfile] = await Promise.all([
-          getProfileSetupData(),
-          getCurrentUserFreelancerProfile(user.id)
-        ]);
-        setProfile({
-          ...freelancerProfile,
-          ...profileData,
-          Skills: profileData.Skills ?? [],
-          Projects: profileData.Projects ?? [],
-          Experience: profileData.Experience ?? [],
-        });
+        const data = await getFreelancerById(user?.id ?? 0);
+        setProfileData(data); // profile should be of type FreelancerProfile or User
       } catch (err: any) {
         setError(err.message || 'Failed to load profile');
+        setProfileData({
+          summary: '',
+          skills: [],
+          experience: [],
+          projects: [],
+        });
       } finally {
         setLoading(false);
       }
     }
     fetchProfile();
-  }, [user?.id]);
+  }, [user]);
 
-  const handleProfileChange = (field: string, value: any) => {
-    setProfile((prev: any) => prev ? { ...prev, [field]: value } : prev);
+  // Handlers for editing profileData
+  const handleProfileFieldChange = (field: string, value: any) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSkillChange = (skills: string[]) => {
+    setProfileData(prev => ({ ...prev, skills }));
+  };
+
+  const handleExperienceChange = (idx: number, field: string, value: any) => {
+    setProfileData(prev => {
+      const newExp = [...prev.experience];
+      newExp[idx] = { ...newExp[idx], [field]: value };
+      return { ...prev, experience: newExp };
+    });
+  };
+
+  const handleProjectChange = (idx: number, field: string, value: any) => {
+    setProfileData(prev => {
+      const newProjects = [...prev.projects];
+      newProjects[idx] = { ...newProjects[idx], [field]: value };
+      return { ...prev, projects: newProjects };
+    });
   };
 
 const handleSave = async () => {
-  if (!profile) return;
   setLoading(true);
   setError(null);
   try {
-    await updateProfileSetupData({
-      firstName: profile.FirstName,
-      lastName: profile.LastName,
-      phone: profile.PhoneNo,
-      hourlyRate: profile.HourlyRate,
-      availability: profile.Availability,
-      workingHours: profile.WorkingHours,
-      profilePicture: profile.ProfilePicture,
-      profileData: {
-        Summary: profile.Summary,
-        Skills: profile.Skills,
-        Projects: profile.Projects,
-        Experience: profile.Experience,
-      },
+      await fetch('http://localhost:8000/api/update-parsed-json/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: user?.id,
+          parsed_json: profileData
+        })
     });
+    await updateFreelancerProfile(profileData, user?.id ?? 0);
     setIsEditing(false);
     setSuccessMessage('Profile updated successfully!');
-    console.log(profile);
     setTimeout(() => setSuccessMessage(null), 3000);
   } catch (err: any) {
     setError(err.message || 'Failed to update profile');
@@ -105,6 +124,55 @@ const handleSave = async () => {
   }
 };
 
+const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  setResumeUploading(true);
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('freelancer_id', String(user?.id ?? 0));
+  try {
+    const response = await fetch('http://localhost:8000/api/parse-resume/', {
+      method: 'POST',
+      body: formData,
+    });
+    const parsed = await response.json();
+    if (!response.ok) {
+      throw new Error(parsed.error || 'Resume parsing failed.');
+    }
+    // Extract skills, experience, projects as in ProfileSetup
+    const rawSkillsObj: Record<string, string> = parsed.skills || {};
+    const extractedSkills: string[] = Object.values(rawSkillsObj)
+      .flatMap(group => group.split(',').map(skill => skill.trim()))
+      .filter(skill => skill.length > 0);
+    const experiences = (parsed.experience || []).map((exp: any, idx: number) => ({
+      id: idx + 1,
+      company: exp.company ?? '',
+      title: exp.title ?? '',
+      startDate: exp.startDate ?? '',
+      endDate: exp.endDate ?? '',
+      description: exp.description ?? ''
+    }));
+    const projects = (parsed.projects || []).map((proj: any, idx: number) => ({
+      id: idx + 1,
+      title: proj.title ?? '',
+      description: proj.description ?? '',
+      tools: Array.isArray(proj.tools) ? proj.tools : [],
+    }));
+    setProfileData({
+      ...profileData,
+      summary: parsed.summary || '',
+      skills: extractedSkills,
+      experience: experiences,
+      projects: projects,
+    });
+    toast.success('Resume parsed and profile updated!');
+  } catch (err: any) {
+    toast.error(err.message || 'Failed to parse resume.');
+  } finally {
+    setResumeUploading(false);
+  }
+};
 
 
   const handleCancel = () => {
@@ -121,28 +189,28 @@ const handleSave = async () => {
       toast.error('Passwords do not match');
       return;
     }
-    if (!profile) return;
+    if (!profileData) return;
     try {
       // Only include password fields if newPassword is present
       const payload: any = {
-        firstName: profile.FirstName,
-        lastName: profile.LastName,
-        phone: profile.PhoneNo,
-        hourlyRate: profile.HourlyRate,
-        availability: profile.Availability,
-        workingHours: profile.WorkingHours,
+        firstName: profileData.FirstName,
+        lastName: profileData.LastName,
+        phone: profileData.PhoneNo,
+        hourlyRate: profileData.HourlyRate,
+        availability: profileData.Availability,
+        workingHours: profileData.WorkingHours,
         profileData: {
-          Summary: profile.Summary,
-          Skills: profile.Skills,
-          Projects: profile.Projects,
-          Experience: profile.Experience,
+          Summary: profileData.Summary,
+          Skills: profileData.Skills,
+          Projects: profileData.Projects,
+          Experience: profileData.Experience,
         },
       };
       if (formData.newPassword) {
         payload.password = formData.currentPassword;
         payload.newPassword = formData.newPassword;
       }
-      await updateProfileSetupData(payload);
+      await updateFreelancerProfile(profileData, user?.id ?? 0);
       toast.success('Password updated successfully!');
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err: any) {
@@ -157,7 +225,7 @@ const handleSave = async () => {
 
   const confirmDangerAction = async () => {
     setDangerModal({ open: false });
-    await deleteFreelancerProfile(profile?.id ?? 0);
+    await deleteFreelancerProfile(profileData?.id ?? 0);
     toast.success('Account deleted!');
     navigate('/');
   };
@@ -185,7 +253,7 @@ const handleSave = async () => {
       });
       const data = await res.json();
       if (data.secure_url) {
-        setProfile((prev: any) => prev ? { ...prev, profilePicture: data.secure_url } : prev);
+        setProfileData((prev: any) => prev ? { ...prev, profilePicture: data.secure_url } : prev);
         setIsEditing(true);
         toast.success('Image uploaded!');
       } else {
@@ -225,7 +293,7 @@ const handleSave = async () => {
     );
   }
 
-  if (!profile) return null;
+  if (!profileData) return null;
 
   return (
     <div className="space-y-6">
@@ -253,7 +321,7 @@ const handleSave = async () => {
       <Card>
         <div className="flex items-center space-x-6">
           <img 
-            src={`/assets/${profile.ProfilePicture}` } 
+            src={profileData.profilePicture || '/assets/default-profile.png'}
             alt="Profile"
             className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
           />
@@ -270,6 +338,23 @@ const handleSave = async () => {
               onChange={handleImageUpload}
             />
             <p className="text-sm text-gray-500 mt-2">JPG, PNG or GIF. Max size 5MB.</p>
+            {/* Resume Upload Button */}
+            <Button
+              onClick={() => resumeInputRef.current?.click()}
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              disabled={resumeUploading}
+            >
+              {resumeUploading ? 'Uploading...' : 'Upload Resume'}
+            </Button>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              ref={resumeInputRef}
+              style={{ display: 'none' }}
+              onChange={handleResumeUpload}
+            />
           </div>
         </div>
       </Card>
@@ -305,8 +390,8 @@ const handleSave = async () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
             <Input
               type="text"
-              value={profile.FirstName}
-              onChange={e => handleProfileChange('FirstName', e.target.value)}
+              value={profileData.FirstName}
+              onChange={e => handleProfileFieldChange('FirstName', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -314,8 +399,8 @@ const handleSave = async () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
             <Input
               type="text"
-              value={profile.LastName}
-              onChange={e => handleProfileChange('LastName', e.target.value)}
+              value={profileData.LastName}
+              onChange={e => handleProfileFieldChange('LastName', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -325,8 +410,8 @@ const handleSave = async () => {
               <Phone className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <Input
                 type="tel"
-                value={profile.PhoneNo}
-                onChange={e => handleProfileChange('PhoneNo', e.target.value)}
+                value={profileData.PhoneNo}
+                onChange={e => handleProfileFieldChange('PhoneNo', e.target.value)}
                 disabled={!isEditing}
                 className="pl-10"
               />
@@ -345,8 +430,8 @@ const handleSave = async () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Summary</label>
             <Textarea
-              value={profile.Summary}
-              onChange={e => handleProfileChange('Summary', e.target.value)}
+              value={profileData.Summary}
+              onChange={e => handleProfileFieldChange('Summary', e.target.value)}
               disabled={!isEditing}
               rows={3}
             />
@@ -355,8 +440,8 @@ const handleSave = async () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
             <Input
               type="text"
-              value={(profile.Skills ?? []).map((s: { SkillName: string }) => s.SkillName).join(', ')}
-              onChange={e => handleProfileChange('Skills', e.target.value.split(',').map((s: string) => ({ SkillName: s.trim(), Id: 0, Source: 'manual' })))}
+              value={(profileData.Skills ?? []).map((s: { SkillName: string }) => s.SkillName).join(', ')}
+              onChange={e => handleSkillChange(e.target.value.split(',').map((s: string) => ({ SkillName: s.trim(), Id: 0, Source: 'manual' })))}
               disabled={!isEditing}
               placeholder="e.g. Python, React, SQL"
             />
@@ -367,8 +452,8 @@ const handleSave = async () => {
               <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <Input
                 type="number"
-                value={profile.HourlyRate}
-                onChange={e => handleProfileChange('HourlyRate', Number(e.target.value))}
+                value={profileData.HourlyRate}
+                onChange={e => handleProfileFieldChange('HourlyRate', Number(e.target.value))}
                 disabled={!isEditing}
                 className="pl-10"
               />
@@ -378,8 +463,8 @@ const handleSave = async () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
             <Input
               type="text"
-              value={profile.Availability}
-              onChange={e => handleProfileChange('Availability', e.target.value)}
+              value={profileData.Availability}
+              onChange={e => handleProfileFieldChange('Availability', e.target.value)}
               disabled={!isEditing}
             />
           </div>
@@ -389,8 +474,8 @@ const handleSave = async () => {
               <Clock className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               <Input
                 type="text"
-                value={profile.WorkingHours}
-                onChange={e => handleProfileChange('WorkingHours', e.target.value)}
+                value={profileData.WorkingHours}
+                onChange={e => handleProfileFieldChange('WorkingHours', e.target.value)}
                 disabled={!isEditing}
                 className="pl-10"
               />
@@ -406,19 +491,15 @@ const handleSave = async () => {
           <span className="font-semibold">Projects</span>
         </div>
         <div className="space-y-4">
-          {(profile.Projects ?? []).length === 0 && <div className="text-gray-500">No projects added yet.</div>}
-          {(profile.Projects ?? []).map((p: any, idx: number) => (
+          {(profileData.Projects ?? []).length === 0 && <div className="text-gray-500">No projects added yet.</div>}
+          {(profileData.Projects ?? []).map((p: any, idx: number) => (
             <div key={p.Id || idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
               <div className="flex items-center mb-2">
                 <Briefcase className="w-4 h-4 text-blue-500 mr-2" />
                 <Input
                   type="text"
                   value={p.Title}
-                  onChange={e => {
-                    const newProjects = [...(profile.Projects ?? [])];
-                    newProjects[idx].Title = e.target.value;
-                    setProfile({ ...profile, Projects: newProjects });
-                  }}
+                  onChange={e => handleProjectChange(idx, 'Title', e.target.value)}
                   disabled={!isEditing}
                   className="font-semibold text-lg bg-transparent border-none p-0 focus:ring-0"
                   placeholder="Project Title"
@@ -426,11 +507,7 @@ const handleSave = async () => {
               </div>
               <Textarea
                 value={p.Description}
-                onChange={e => {
-                  const newProjects = [...(profile.Projects ?? [])];
-                  newProjects[idx].Description = e.target.value;
-                  setProfile({ ...profile, Projects: newProjects });
-                }}
+                onChange={e => handleProjectChange(idx, 'Description', e.target.value)}
                 disabled={!isEditing}
                 className="bg-transparent border-none p-0 focus:ring-0"
                 rows={2}
@@ -448,19 +525,15 @@ const handleSave = async () => {
           <span className="font-semibold">Experience</span>
         </div>
         <div className="space-y-4">
-          {(profile.Experience ?? []).length === 0 && <div className="text-gray-500">No experience added yet.</div>}
-          {(profile.Experience ?? []).map((exp: any, idx: number) => (
+          {(profileData.Experience ?? []).length === 0 && <div className="text-gray-500">No experience added yet.</div>}
+          {(profileData.Experience ?? []).map((exp: any, idx: number) => (
             <div key={exp.Id || idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
               <div className="flex items-center mb-2">
                 <Briefcase className="w-4 h-4 text-green-500 mr-2" />
                 <Input
                   type="text"
                   value={exp.Title}
-                  onChange={e => {
-                    const newExp = [...(profile.Experience ?? [])];
-                    newExp[idx].Title = e.target.value;
-                    setProfile({ ...profile, Experience: newExp });
-                  }}
+                  onChange={e => handleExperienceChange(idx, 'Title', e.target.value)}
                   disabled={!isEditing}
                   className="font-semibold text-lg bg-transparent border-none p-0 focus:ring-0"
                   placeholder="Job Title"
@@ -470,11 +543,7 @@ const handleSave = async () => {
                 <Input
                   type="text"
                   value={exp.Company}
-                  onChange={e => {
-                    const newExp = [...(profile.Experience ?? [])];
-                    newExp[idx].Company = e.target.value;
-                    setProfile({ ...profile, Experience: newExp });
-                  }}
+                  onChange={e => handleExperienceChange(idx, 'Company', e.target.value)}
                   disabled={!isEditing}
                   className="bg-transparent border-none p-0 focus:ring-0"
                   placeholder="Company Name"
@@ -484,11 +553,7 @@ const handleSave = async () => {
                     <Input
                       type="date"
                       value={exp.StartDate}
-                      onChange={e => {
-                        const newExp = [...(profile.Experience ?? [])];
-                        newExp[idx].StartDate = e.target.value;
-                        setProfile({ ...profile, Experience: newExp });
-                      }}
+                      onChange={e => handleExperienceChange(idx, 'StartDate', e.target.value)}
                       disabled={!isEditing}
                       className="bg-transparent border-none p-0 focus:ring-0"
                       placeholder="Start Date"
@@ -496,11 +561,7 @@ const handleSave = async () => {
                     <Input
                       type="date"
                       value={exp.EndDate}
-                      onChange={e => {
-                        const newExp = [...(profile.Experience ?? [])];
-                        newExp[idx].EndDate = e.target.value;
-                        setProfile({ ...profile, Experience: newExp });
-                      }}
+                      onChange={e => handleExperienceChange(idx, 'EndDate', e.target.value)}
                       disabled={!isEditing}
                       className="bg-transparent border-none p-0 focus:ring-0"
                       placeholder="End Date"
@@ -514,11 +575,7 @@ const handleSave = async () => {
               </div>
               <Textarea
                 value={exp.Description}
-                onChange={e => {
-                  const newExp = [...(profile.Experience ?? [])];
-                  newExp[idx].Description = e.target.value;
-                  setProfile({ ...profile, Experience: newExp });
-                }}
+                onChange={e => handleExperienceChange(idx, 'Description', e.target.value)}
                 disabled={!isEditing}
                 className="bg-transparent border-none p-0 focus:ring-0"
                 rows={2}

@@ -37,8 +37,8 @@ export function Feedback() {
 
   const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => ({
     rating,
-    count: feedback.filter((item: FeedbackType) => item.Rating === rating).length,
-    percentage: feedback.length > 0 ? (feedback.filter((item: FeedbackType) => item.Rating === rating).length / feedback.length) * 100 : 0
+    count: feedback.filter((item: FeedbackType) => Math.round(item.Rating) === rating).length,
+    percentage: feedback.length > 0 ? (feedback.filter((item: FeedbackType) => Math.round(item.Rating) === rating).length / feedback.length) * 100 : 0
   }));
 
   const renderStars = (rating: number, size: 'sm' | 'md' | 'lg' = 'md') => {

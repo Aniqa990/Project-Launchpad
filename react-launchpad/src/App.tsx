@@ -11,6 +11,8 @@ import { ClientDashboard } from './pages/client/Dashboard';
 import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
 import { ClientPayments } from './pages/client/Payments';
+import { ClientProjectRequests } from './pages/client/Requests';
+import {FreelancerSuggestions} from './pages/client/FreelancerSuggestions';
 import { ClientMessages } from './pages/client/Messages';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
@@ -121,6 +123,8 @@ function AppRoutes() {
         <Route path="dashboard" element={<ClientDashboard />} />
         <Route path="create-project" element={<CreateProject />} />
         <Route path="projects" element={<ClientProjects />} />
+        <Route path="project-requests" element={<ClientProjectRequests />} />
+        <Route path="freelancer-suggestions" element={<FreelancerSuggestions />} />
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
         <Route path="messages" element={<ClientMessages />} />

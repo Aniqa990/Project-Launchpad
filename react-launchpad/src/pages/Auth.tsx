@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Eye, EyeOff, Mail, Lock, User, CheckCircle, Phone, MessageCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { Avatar } from '../components/ui/avatar';
+import { Button } from '../components/ui/button';
+
 interface AuthProps {
   mode: "login" | "signup";
 }
@@ -20,14 +23,20 @@ export function Auth({ mode }: AuthProps) {
     phoneNo: "",
     gender: "",
     role: "freelancer" as "client" | "freelancer",
+    profilePicture: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [profilePicUploading, setProfilePicUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { login, signup, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -65,6 +74,10 @@ export function Auth({ mode }: AuthProps) {
         toast.error('Passwords do not match');
         return;
       }
+      if (!formData.phoneNo) {
+        toast.error('Phone number is required');
+        return;
+      }
       setIsLoading(true);
       try {
         await signup(formData);
@@ -84,6 +97,32 @@ export function Auth({ mode }: AuthProps) {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProfilePicUploading(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+    formDataUpload.append('upload_preset', CLOUDINARY_UPLOAD_PRESET ?? 'undefined');
+    try {
+      const res = await fetch(CLOUDINARY_URL ?? 'undefined', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setFormData((prev) => ({ ...prev, profilePicture: data.secure_url }));
+        toast.success('Profile picture uploaded!');
+      } else {
+        toast.error('Failed to upload image');
+      }
+    } catch (err) {
+      toast.error('Image upload error');
+    } finally {
+      setProfilePicUploading(false);
+    }
   };
 
   if (mode === "login") {
@@ -280,9 +319,34 @@ export function Auth({ mode }: AuthProps) {
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">Basic Information</h1>
                   <p className="text-gray-600">Tell us about yourself</p>
                 </div>
+                {/* Profile Picture Upload */}
+                <div className="flex items-center justify-center mb-6">
+                  <div className="flex items-center space-x-4">
+                    <Avatar
+                      src={formData.profilePicture}
+                      alt={formData.firstName || 'Profile'}
+                      size="lg"
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      ref={fileInputRef}
+                      onChange={handleProfilePicUpload}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={profilePicUploading}
+                    >
+                      {profilePicUploading ? 'Uploading...' : (formData.profilePicture ? 'Change Picture' : 'Add Profile Picture')}
+                    </Button>
+                  </div>
+                </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -298,7 +362,7 @@ export function Auth({ mode }: AuthProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -314,7 +378,7 @@ export function Auth({ mode }: AuthProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -330,7 +394,7 @@ export function Auth({ mode }: AuthProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
                   <PhoneInput
                     country={'pk'}
                     value={formData.phoneNo}
@@ -351,7 +415,7 @@ export function Auth({ mode }: AuthProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
                   <select
                     name="gender"
                     required

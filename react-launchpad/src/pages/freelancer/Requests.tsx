@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {getProjectRequests, respondToProjectRequest} from '@/apiendpoints';
+import {getProjectRequests, updateProjectRequestStatus, assignFreelancerToProject} from '@/apiendpoints';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +11,6 @@ import {
   Calendar,
   DollarSign,
   Clock,
-  MapPin,
-  Star,
   Check,
   X,
   Eye
@@ -43,10 +41,13 @@ export function FreelancerRequests() {
 
   const handleAcceptRequest = async (projectId: number) => {
     try {
-      await respondToProjectRequest(projectId, 'accepted', user?.id);
+      await updateProjectRequestStatus(projectId, 'accepted', user?.id);
       setRequests((prev) => prev.map((req) =>
         req.projectId === projectId ? { ...req, status: 'accepted' } : req
       ));
+      if (user?.id) {
+        await assignFreelancerToProject(projectId, user?.id);
+      }
       toast.success('Project request accepted!');
     } catch (err: any) {
       toast.error(err.message);
@@ -57,8 +58,8 @@ export function FreelancerRequests() {
 
   const handleRejectRequest = async (projectId: number) => {
     try {
-      await respondToProjectRequest(projectId, 'rejected', user?.id);
-      setRequests((prev) => prev.map((req) =>
+      await updateProjectRequestStatus(projectId, 'rejected', user?.id);
+      setRequests((prev)=> prev.map((req) =>
         req.projectId === projectId ? { ...req, status: 'rejected' } : req
       ));
       toast.success('Project request declined');
@@ -86,7 +87,7 @@ export function FreelancerRequests() {
             <Avatar src={request.clientProfile} size="sm" />
             <div>
               <p className="font-medium text-gray-900">{request.clientName}</p>
-              <p className="text-sm text-gray-500">wants to hire you as</p>
+              <p className="text-sm text-gray-500">wants to hire you</p>
             </div>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.projectCategory}</h3>

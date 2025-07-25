@@ -33,7 +33,7 @@ export function Sidebar() {
     { icon: Folder, label: 'My Projects', path: '/client/projects' },
     { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
     { icon: Kanban, label: 'View Tasks', path: '/client/kanban' },
-    { icon: Users, label: 'Find Freelancers', path: '/client/freelancer-suggestions' },
+    { icon: Users, label: 'View Project Requests', path: '/client/project-requests' },
     { icon: Clock, label: 'Time Logs', path: '/client/hourly-logs' },
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
     { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },

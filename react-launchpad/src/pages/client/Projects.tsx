@@ -16,24 +16,12 @@ import {
   Pencil
 } from 'lucide-react';
 import { getClientProjects, getProjectById, updateProject } from '../../apiendpoints';
-
-interface Project {
-  Id: number;
-  ProjectTitle: string;
-  Description: string;
-  CategoryOrDomain: string;
-  Status: string;
-  FreelancerAssigned?: string;
-  FreelancerAvatar?: string;
-  Budget: number;
-  Deadline: string;
-  CompletedDate?: string;
-}
+import { Project } from '@/types';
 
 export function ClientProjects() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Open' | 'Active' | 'Completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'completed' | 'cancelled'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +44,7 @@ export function ClientProjects() {
         let data = [];
         if (user && user.id) {
           data = await getClientProjects(user.id);
+          console.log(data);
         } else {
           setProjects([]);
           setLoading(false);
@@ -72,37 +61,31 @@ export function ClientProjects() {
   }, [user]);
 
   const filteredProjects = projects.filter(project => {
-    const matchesStatus = statusFilter === 'all' || project.Status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesSearch = searchTerm === '' || 
-      project.ProjectTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.CategoryOrDomain.toLowerCase().includes(searchTerm.toLowerCase());
+      (project.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (project.categoryOrDomain?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
     return matchesStatus && matchesSearch;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Open': return 'bg-yellow-100 text-yellow-800';
-      case 'Active': return 'bg-blue-100 text-blue-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // getStatusColor is not needed, use Badge variant prop
 
   const getStatusCounts = () => {
     return {
       all: projects.length,
-      Open: projects.filter(p => p.Status === 'Open').length,
-      Active: projects.filter(p => p.Status === 'Active').length,
-      Completed: projects.filter(p => p.Status === 'Completed').length
+      draft: projects.filter(p => p.status === 'draft').length,
+      active: projects.filter(p => p.status === 'active').length,
+      completed: projects.filter(p => p.status === 'completed').length,
+      cancelled: projects.filter(p => p.status === 'cancelled').length
     };
   };
 
   const statusCounts = getStatusCounts();
 
-  // Remove modal logic and use navigation for viewDetails
-  const viewDetails = (projectId: number) => {
-    navigate(`/workspace/${projectId}`);
-  };
+  // // Remove modal logic and use navigation for viewDetails
+  // const viewDetails = (projectId: number) => {
+  //   navigate(`/workspace/${projectId}`);
+  // };
 
   // Remove editProject function
 
@@ -135,59 +118,59 @@ export function ClientProjects() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Projects</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{statusCounts.all}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Projects</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{statusCounts.all}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <FolderOpen className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <FolderOpen className="w-6 h-6 text-white" />
-            </div>
-          </div>
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Open</p>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{statusCounts.Open}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Open</p>
+              <p className="text-2xl font-bold text-yellow-600 mt-1">{statusCounts.draft}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-white" />
-            </div>
-          </div>
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{statusCounts.Active}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{statusCounts.active}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <User className="w-6 h-6 text-white" />
-            </div>
-          </div>
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">{statusCounts.Completed}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Completed</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">{statusCounts.completed}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-white" />
-            </div>
-          </div>
         </Card>
       </div>
 
       {/* Filters */}
       <Card>
         <div className="flex items-center justify-between p-6 pb-0">
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center space-x-2">
+              <Filter className="w-5 h-5 text-gray-600" />
             <span className="text-lg font-semibold">Filters</span>
           </div>
         </div>
@@ -195,7 +178,7 @@ export function ClientProjects() {
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Status Filter Tabs */}
             <div className="flex space-x-2">
-              {(['all', 'Open', 'Active', 'Completed'] as const).map((status) => (
+              {(['all', 'draft', 'active', 'completed', 'cancelled'] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
@@ -235,56 +218,49 @@ export function ClientProjects() {
           </div>
           <div className="space-y-4">
             {filteredProjects.map((project) => (
-              <div key={project.Id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+              <div key={project.id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="font-semibold text-gray-900">{project.ProjectTitle}</h4>
+                      <h4 className="font-semibold text-gray-900">{project.projectTitle}</h4>
                       <Badge variant={
-                        project.Status === 'Open' ? 'warning' :
-                        project.Status === 'Active' ? 'info' :
-                        project.Status === 'Completed' ? 'success' : 'default'
+                        project.status === 'draft' ? 'warning' :
+                        project.status === 'active' ? 'info' :
+                        project.status === 'completed' ? 'success' :
+                        project.status === 'cancelled' ? 'destructive' : 'default'
                       }>
-                        {project.Status}
+                        {project.status}
                       </Badge>
                     </div>
                     
-                    <p className="text-sm text-gray-600 mb-3">{project.Description}</p>
+                    <p className="text-sm text-gray-600 mb-3">{project.description}</p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="font-medium text-gray-700">Category:</span>
-                        <p className="text-gray-600">{project.CategoryOrDomain}</p>
+                        <p className="text-gray-600">{project.categoryOrDomain}</p>
                       </div>
                       
                       <div>
                         <span className="font-medium text-gray-700">Budget:</span>
-                        <p className="text-gray-600">${project.Budget?.toLocaleString()}</p>
+                        <p className="text-gray-600">${project.budget?.toLocaleString()}</p>
                       </div>
                       
                       <div>
                         <span className="font-medium text-gray-700">Deadline:</span>
-                        <p className="text-gray-600">{new Date(project.Deadline).toLocaleDateString()}</p>
+                        <p className="text-gray-600">{project.deadline ? new Date(project.deadline).toLocaleDateString() : ''}</p>
                       </div>
                       
-                      {project.FreelancerAssigned ? (
                         <div>
-                          <span className="font-medium text-gray-700">Freelancer:</span>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <img 
-                              src={project.FreelancerAvatar} 
-                              alt={project.FreelancerAssigned}
-                              className="w-6 h-6 rounded-full object-cover"
-                            />
-                            <span className="text-gray-600">{project.FreelancerAssigned}</span>
-                          </div>
+                        <span className="font-medium text-gray-700">Freelancers: </span>
+                        {Array.isArray(project.team) && project.team.length > 0 ? (
+                          <span className="text-gray-600">
+                            {project.team.map(member => member.firstName + (member.lastName ? ' ' + member.lastName : '')).join(', ')}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 italic">Not assigned</span>
+                        )}
                         </div>
-                      ) : (
-                        <div>
-                          <span className="font-medium text-gray-700">Freelancer:</span>
-                          <p className="text-gray-500 italic">Not assigned</p>
-                        </div>
-                      )}
                     </div>
                   </div>
                   
@@ -292,7 +268,7 @@ export function ClientProjects() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => viewDetails(project.Id)}
+                      // onClick={() => viewDetails(project.id)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       View Details

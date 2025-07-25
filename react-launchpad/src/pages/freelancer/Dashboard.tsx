@@ -102,9 +102,9 @@ export function FreelancerDashboard() {
       setRequests(requestsData);
 
       // Calculate stats
-      const activeProjects = transformedProjects.filter((p: Project) => p.status === 'active').length;
-      const pendingRequests = transformedRequests.filter((r: ProjectRequest) => r.status === 'pending').length;
-      const monthlyEarnings = transformedProjects
+      const activeProjects = projects.filter((p: Project) => p.status === 'active').length;
+      const pendingRequests = requests.filter((r: ProjectRequest) => r.status === 'pending').length;
+      const monthlyEarnings = projects
         .filter((p: Project) => p.status === 'completed')
         .reduce((sum: number, p: Project) => sum + (p.budget || 0), 0);
       const rating = 4.5;
