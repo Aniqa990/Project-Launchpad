@@ -63,21 +63,21 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task<IEnumerable<Milestone>> GetPendingMilestonesAsync()
         {
             return await _db.milestones
-                .Where(m => m.Status == MilestoneStatus.Pending)
+                .Where(m => m.Status == MilestoneStatus.NotSelected)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Milestone>> GetSubmittedMilestonesAsync()
         {
             return await _db.milestones
-                .Where(m => m.Status == MilestoneStatus.Submitted)
+                .Where(m => m.Status == MilestoneStatus.Completed)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Milestone>> GetUnderReviewMilestonesAsync()
         {
             return await _db.milestones
-                .Where(m => m.Status == MilestoneStatus.UnderReview).ToListAsync();
+                .Where(m => m.Status == MilestoneStatus.InProgress).ToListAsync();
         }
 
         //public async Task<IEnumerable<Milestone>> GetMilestonesByHandoverStatusAsync(string status)
@@ -90,7 +90,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task<IEnumerable<MilestoneWithPaymentDTO>> GetMilestonesByHandoverStatusAsync(string status)
         {
             var result = await (from m in _db.milestones
-                                where m.HandoverStatus == status && m.Status == MilestoneStatus.Submitted
+                                where m.HandoverStatus == status && m.Status == MilestoneStatus.Completed
                                 join p in _db.payments on m.Id equals p.MilestoneId into mp
                                 from payment in mp.DefaultIfEmpty()
                                 where payment.PaymentStatus == "paid"
@@ -164,5 +164,14 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 await _db.SaveChangesAsync();
             }
         }
+
+        //public async Task<IEnumerable<Milestone>> GetMilestonesByHandoverStatusAsync(string status)
+        //{
+        //    return await _db.milestones
+        //        .Where(m => m.HandoverStatus == status)
+        //        .ToListAsync();
+        //}
+
+      
     }
 }

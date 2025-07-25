@@ -14,12 +14,12 @@ import { ClientPayments } from './pages/client/Payments';
 import { ClientProjectRequests } from './pages/client/Requests';
 import {FreelancerSuggestions} from './pages/client/FreelancerSuggestions';
 import { ClientMessages } from './pages/client/Messages';
+import MilestoneTracker from './pages/client/MilestoneTracker';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
 import { Feedback } from './pages/freelancer/Feedback';
 import { KanbanBoard } from './components/workspace/KanbanBoard';
-import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { PlatformDashboard } from './pages/platform/Dashboard';
 import { MilestonePayments } from './pages/platform/Payments';
@@ -29,11 +29,13 @@ import { PlatformSettings } from './pages/platform/Settings';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
-import Meetings from './pages/client/Meetings';
+import Meetings from './pages/client/MeetingRoom';
 import FreelancerTimesheets from './pages/freelancer/Timesheets';
 
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
+import MeetingRoom from './pages/client/MeetingRoom';
+import FreelancerMeetingRoom from './pages/freelancer/MeetingRoom';
 
 // class GlobalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
 //   constructor(props: any) {
@@ -127,10 +129,11 @@ function AppRoutes() {
         <Route path="freelancer-suggestions" element={<FreelancerSuggestions />} />
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
+        <Route path="milestones" element={<MilestoneTracker />} />
         <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
-        <Route path="meetings" element={<Meetings />} />
+        <Route path="meetings" element={<MeetingRoom />} />
       </Route>
       
       <Route path="/freelancer/*" element={
@@ -147,6 +150,7 @@ function AppRoutes() {
         <Route path="timesheets" element={<FreelancerTimesheets />} />
         <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
+        <Route path="meetings" element={<FreelancerMeetingRoom />} />
       </Route>
 
       <Route path="/admin/*" element={

@@ -67,23 +67,26 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
+
         [Function("CreateStripeCheckoutSession")]
         public async Task<HttpResponseData> CreateStripeCheckoutSession(
     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "payments/create-checkout-session")] HttpRequestData req)
         {
+            var response = req.CreateResponse();
+
             try
             {
                 var dto = await req.ReadFromJsonAsync<CreatePaymentDto>();
-                if (dto == null || dto.Amount <= 0)
+                if (dto == null || dto.Amount <= 0 || dto.ClientId == 0 || dto.FreelancerId == 0 || dto.ProjectId == 0 || dto.MilestoneId == 0)
                 {
-                    var bad = req.CreateResponse(HttpStatusCode.BadRequest);
-                    await bad.WriteStringAsync("Invalid Payment Data");
-                    return bad;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    await response.WriteStringAsync("Invalid or missing payment data.");
+                    return response;
                 }
 
                 StripeConfiguration.ApiKey = config["Stripe:SecretKey"];
 
-                // Save payment in DB with status Pending
+                // Save initial payment record in database
                 var newPayment = new Payment
                 {
                     ClientId = dto.ClientId,
@@ -100,6 +103,7 @@ namespace ProjectLaunchpad.Functions
                 await _unitOfWork.PaymentRepository.AddPaymentAsync(newPayment);
                 await _unitOfWork.SaveAsync();
 
+                // Create Stripe Checkout Session
                 var options = new SessionCreateOptions
                 {
                     PaymentMethodTypes = new List<string> { "card" },
@@ -112,41 +116,44 @@ namespace ProjectLaunchpad.Functions
                         Currency = "usd",
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = $"Payment for Project #{dto.ProjectId}",
+                            Name = $"Milestone Payment - Project #{dto.ProjectId}",
                         },
-                        UnitAmount = (long)(dto.Amount * 100),
+                        UnitAmount = (long)(dto.Amount * 100), // amount in cents
                     },
                     Quantity = 1,
                 }
             },
                     Mode = "payment",
                     SuccessUrl = $"http://localhost:5173/payment-success?paymentId={newPayment.Id}",
-                    CancelUrl = "http://localhost:5173/payment-cancelled",
+                    CancelUrl = $"http://localhost:5173/payment-cancelled",
                     Metadata = new Dictionary<string, string>
             {
-                { "paymentId", newPayment.Id.ToString() }
+                { "paymentId", newPayment.Id.ToString() },
+                { "projectId", dto.ProjectId.ToString() },
+                { "milestoneId", dto.MilestoneId.ToString() }
             }
                 };
 
                 var sessionService = new SessionService();
                 var session = await sessionService.CreateAsync(options);
 
-                // Save Stripe session ID as transaction ref
+                // Update payment with Stripe session ID
                 newPayment.TransactionReference = session.Id;
                 await _unitOfWork.PaymentRepository.UpdateAsync(newPayment);
                 await _unitOfWork.SaveAsync();
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.StatusCode = HttpStatusCode.OK;
                 await response.WriteAsJsonAsync(new { url = session.Url });
                 return response;
             }
             catch (Exception ex)
             {
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync($"Error: {ex.Message}");
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                await response.WriteStringAsync($"Stripe error: {ex.Message}");
                 return response;
             }
         }
+
 
 
 

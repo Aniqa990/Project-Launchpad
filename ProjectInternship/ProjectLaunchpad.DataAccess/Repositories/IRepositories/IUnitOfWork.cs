@@ -30,7 +30,14 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
         ITimeSheetRepository TimeSheet { get; }
         IProjectRequestRepository ProjectRequests { get; }
         IFeedbackRepository Feedbacks { get; }
+
+        IMeetingRepository Meeting { get; }
+        IMeetingParticipantRepository MeetingParticipant { get; }
+
+        IMeetingAudioRecordingRepository MeetingAudioRecording { get; }
+
         INotificationRepository NotificationRepository { get; }
+
         Task<int> SaveAsync();
 
     }

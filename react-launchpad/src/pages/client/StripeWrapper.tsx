@@ -11,4 +11,4 @@ const StripeWrapper = ({ children }: { children: React.ReactNode }) => {
   return <Elements stripe={stripePromise}>{children}</Elements>;
 };
 
-export default StripeWrapper;
+export default StripeWrapper; 

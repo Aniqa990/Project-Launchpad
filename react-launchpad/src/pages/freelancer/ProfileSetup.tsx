@@ -266,31 +266,46 @@ export function ProfileSetup() {
   }
 
   const handleSaveProfile = async () => {
-    const profilePayload = {
-    Id: user?.id,
-    hourlyRate,
-    workingHours,
-    availability,
-    summary: profileData.summary,
-    skills: JSON.stringify(profileData.skills),
-    experience: JSON.stringify(stripIds(profileData.experience)),
-    projects: JSON.stringify(stripIds(profileData.projects)),
+    const parsedJson = {
+      name: fullName,
+      email,
+      phone,
+      summary: profileData.summary,
+      skills: profileData.skills,
+      projects: profileData.projects.map(p => ({
+        title: p.title,
+        description: p.description
+      })),
+      experience: profileData.experience.map(e => ({
+        title: e.title,
+        company: e.company,
+        startDate: e.startDate,
+        endDate: e.endDate,
+        description: e.description
+      }))
     };
   
-    console.log(JSON.stringify(profileData.skills))
-    console.log(JSON.stringify(profileData.experience))
-    console.log(JSON.stringify(profileData.projects))
+    const profilePayload = {
+      Id: user?.id,
+      hourlyRate,
+      workingHours,
+      availability,
+      summary: profileData.summary,
+      skills: JSON.stringify(profileData.skills),
+      experience: JSON.stringify(stripIds(profileData.experience)),
+      projects: JSON.stringify(stripIds(profileData.projects)),
+    };
   
     try {
-    await updateFreelancerProfile(profilePayload, user?.id ?? 0);
-    await fetch("http://localhost:8000/api/update-parsed-json/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        freelancer_id: user?.id,
-        parsed_json: profilePayload
-      })
-    });
+      await fetch("http://localhost:8000/api/update-parsed-json/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          freelancer_id: user?.id,
+          parsed_json: parsedJson
+        })
+      });
+      await updateFreelancerProfile(profilePayload, user?.id ?? 0);
       toast.success('Profile saved successfully!');
       navigate('/freelancer/dashboard');
     } catch (error: any) {

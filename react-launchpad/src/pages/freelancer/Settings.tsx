@@ -105,15 +105,49 @@ const handleSave = async () => {
   setLoading(true);
   setError(null);
   try {
-      await fetch('http://localhost:8000/api/update-parsed-json/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          freelancer_id: user?.id,
-          parsed_json: profileData
-        })
+    // 1. Build parsedJson for Python DB
+    const parsedJson = {
+      name: `${profileData.FirstName} ${profileData.LastName}`.trim(),
+      email: profileData.Email,
+      phone: profileData.PhoneNo,
+      summary: profileData.Summary,
+      skills: Array.isArray(profileData.Skills)
+        ? profileData.Skills.map((s: any) => typeof s === 'string' ? s : s.SkillName || s)
+        : [],
+      projects: Array.isArray(profileData.Projects)
+        ? profileData.Projects.map((p: any) => ({
+            title: p.Title || p.title || '',
+            description: p.Description || p.description || ''
+          }))
+        : [],
+      experience: Array.isArray(profileData.Experience)
+        ? profileData.Experience.map((e: any) => ({
+            title: e.Title || e.title || '',
+            company: e.Company || e.company || '',
+            startDate: e.StartDate || e.startDate || '',
+            endDate: e.EndDate || e.endDate || '',
+            description: e.Description || e.description || ''
+          }))
+        : [],
+    };
+    // 2. Build profilePayload for C# backend
+    const profilePayload = {
+      ...profileData,
+      Skills: JSON.stringify(profileData.Skills),
+      Experience: JSON.stringify(profileData.Experience),
+      Projects: JSON.stringify(profileData.Projects),
+    };
+    // 3. Update Python DB
+    await fetch('http://localhost:8000/api/update-parsed-json/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        freelancer_id: profileData.Id,
+        parsed_json: parsedJson
+      })
     });
-    await updateFreelancerProfile(profileData, user?.id ?? 0);
+    // 4. Update C# backend
+    await updateFreelancerProfile(profilePayload, profileData.Id);
     setIsEditing(false);
     setSuccessMessage('Profile updated successfully!');
     setTimeout(() => setSuccessMessage(null), 3000);

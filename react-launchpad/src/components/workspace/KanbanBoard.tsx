@@ -16,7 +16,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask } from '../../apiendpoints';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
@@ -485,7 +485,7 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId }:
 
 export function KanbanBoard() {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<{ Id: number; Title: string }[]>([]);
+  const [projects, setProjects] = useState<{ id: number; projectTitle: string; description: string }[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
@@ -523,12 +523,10 @@ export function KanbanBoard() {
       setLoadingProjects(true);
       setMessage('');
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:7053/api/freelancer/projects', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setProjects(res.data);
-        if (res.data.length === 0) {
+        if (!user?.id) return;
+        const projectsData = await getFreelancerProjects(user.id);
+        setProjects(projectsData);
+        if (projectsData.length === 0) {
           setMessage('No projects assigned to you yet.');
         }
       } catch (e) {
@@ -681,7 +679,7 @@ export function KanbanBoard() {
   const handleAddTask = async (form: any) => {
     setFormLoading(true);
     try {
-      await createTask({ ...form, ProjectId: selectedProjectId }); // Capital P
+      await createTask({ ...form, ProjectId: selectedProjectId });
       await fetchProjectTasks();
       setShowAddTaskModal(false);
     } catch (e) {
@@ -832,7 +830,13 @@ export function KanbanBoard() {
             >
               <option value="">-- Select a project --</option>
               {projects.map(p => (
-                <option key={p.Id} value={p.Id}>{p.Title}</option>
+                <option key={p.id} value={p.id}>
+                  {p.projectTitle && p.projectTitle !== 'na'
+                    ? p.projectTitle
+                    : (p.description && p.description !== 'na'
+                        ? p.description
+                        : (p.projectTitle === 'na' && p.description === 'na' ? 'na' : `Project #${p.id}`))}
+                </option>
               ))}
             </select>
           )}

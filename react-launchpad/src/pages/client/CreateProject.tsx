@@ -752,7 +752,8 @@ export function CreateProject() {
               !projectData.ProjectTitle || !projectData.Description ||
               projectData.Skills.length === 0 ||
               !projectData.Budget || !projectData.Deadline ||
-              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate)))
+              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate))) ||
+              (budgetDivision === 'fixed' && !projectData.NumberOfFreelancers)
             }>
               Create Project
             </Button>

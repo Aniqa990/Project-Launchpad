@@ -82,7 +82,7 @@ namespace ProjectLaunchpad.Functions
                 RequiredSkills = projectDto.RequiredSkills,
                 Budget = projectDto.Budget,
                 NumberOfFreelancers = projectDto.NumberOfFreelancers,
-                Status = "draft",
+                Status = "open",
                 AttachedDocumentPath = projectDto.AttachedDocumentPath,
                 ClientId = clientId
             };
@@ -102,7 +102,7 @@ namespace ProjectLaunchpad.Functions
                         Description = m.Description,
                         DueDate = m.DueDate,
                         Amount = m.Amount,
-                        Status = MilestoneStatus.Pending,
+                        Status = MilestoneStatus.InProgress,
                         ProjectId = project.Id
                     };
 
@@ -387,7 +387,7 @@ namespace ProjectLaunchpad.Functions
                 Id = p.Id,
                 ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
-                Status = p.Status ?? "active",
+                Status = p.Status ?? "completed",
                 Budget = p.Budget,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
@@ -395,7 +395,6 @@ namespace ProjectLaunchpad.Functions
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
                 AttachedDocumentPath = p.AttachedDocumentPath,
-                // Add other fields as needed
             }).ToList();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
