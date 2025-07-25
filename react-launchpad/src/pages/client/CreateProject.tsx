@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -17,6 +17,10 @@ import toast from 'react-hot-toast';
 import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
 import { Badge } from '../../components/ui/badge';
+import SignatureCanvas from 'react-signature-canvas';
+
+// Add these at the top of the file (after imports):
+// Remove Cloudinary env constants and uploadToCloudinary function
 
 export function CreateProject() {
   const navigate = useNavigate();
@@ -33,6 +37,7 @@ export function CreateProject() {
     CategoryOrDomain: '',
     NumberOfFreelancers: 1,
     Milestones: '',
+    CloudinaryUrl: '', // Add CloudinaryUrl to projectData
   });
   const [skillInput, setSkillInput] = useState('');
   const [selectedFreelancers, setSelectedFreelancers] = useState<string[]>([]);
@@ -51,6 +56,31 @@ export function CreateProject() {
   const [freelancerSuggestions, setFreelancerSuggestions] = useState<any[]>([]);
   const [detailedFreelancers, setDetailedFreelancers] = useState<any[]>([]);
   const [sendingRequests, setSendingRequests] = useState(false);
+  const sigCanvasRef = useRef<any>(null);
+  const [signatureError, setSignatureError] = useState('');
+  const [isSigned, setIsSigned] = useState(false);
+  const [uploading, setUploading] = useState(false); // Add uploading state
+
+  // Move Cloudinary env constants inside the component
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+  // Cloudinary upload function
+  async function uploadToCloudinary(file: File) {
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`;
+    const formData = new FormData();
+    formData.append('file', file);
+    if (!CLOUDINARY_UPLOAD_PRESET) {
+      throw new Error('Cloudinary upload preset is not set in the environment variables.');
+    }
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    return data.secure_url;
+  }
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -67,14 +97,22 @@ export function CreateProject() {
     handleInputChange('Skills', projectData.Skills.filter(s => s !== skill));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // In handleFileUpload, just store the file(s) in state as before
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    handleInputChange('Files', [...projectData.Files, ...files]);
+    if (files.length > 0) {
+      setUploading(true);
+      const url = await uploadToCloudinary(files[0]);
+      handleInputChange('Files', files);
+      handleInputChange('CloudinaryUrl', url);
+      setUploading(false);
+    }
   };
 
   const handleRemoveFile = (index: number) => {
     const newFiles = projectData.Files.filter((_, i) => i !== index);
     handleInputChange('Files', newFiles);
+    handleInputChange('CloudinaryUrl', ''); // Clear Cloudinary URL when file is removed
   };
 
   const handleNextStep = () => {
@@ -134,7 +172,7 @@ export function CreateProject() {
               dueDate: m.dueDate
             }))
           : [],
-        attachedDocumentPath: projectData.Files[0]?.name || null,
+        attachedDocumentPath: projectData.CloudinaryUrl || null,
         clientId: user?.id ?? null,
       };
       const response = await createProject(payload);
@@ -226,6 +264,7 @@ export function CreateProject() {
     'Files & Resources',
     'Budget & Timeline',
     'Milestones',
+    'Terms and Condition Agreement', // <-- new step
     'Review & Submit',
   ];
 
@@ -464,13 +503,18 @@ export function CreateProject() {
                   className="hidden"
                   id="file-upload"
                 />
-                <label htmlFor="file-upload">
-                  <Button variant="outline" className="cursor-pointer">
+                <label htmlFor="file-upload" className="inline-block">
+                  <span className="px-4 py-2 border border-gray-300 rounded bg-white text-gray-700 cursor-pointer hover:bg-gray-100 transition">
                     Choose Files
-                  </Button>
+                  </span>
                 </label>
+                {uploading && <div className="mt-2 text-blue-600">Uploading...</div>}
+                {projectData.CloudinaryUrl && (
+                  <div className="mt-2 text-green-600">
+                    Uploaded: <a href={projectData.CloudinaryUrl} target="_blank" rel="noopener noreferrer">View File</a>
+                  </div>
+                )}
               </div>
-              
               {projectData.Files.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {projectData.Files.map((file, index) => (
@@ -650,8 +694,57 @@ export function CreateProject() {
           </div>
         )}
 
-        {/* Step 6: Review & Submit */}
+        {/* Step 6: Terms and Condition Agreement */}
         {step === 6 && (
+          <div className="space-y-6 flex flex-col items-center">
+            <h2 className="text-xl font-bold mb-2">Terms and Condition Agreement</h2>
+            <p className="text-gray-600 mb-4">Please sign below to agree to the terms and conditions before creating your project.</p>
+            <SignatureCanvas
+              ref={sigCanvasRef}
+              penColor="black"
+              canvasProps={{ width: 400, height: 200, className: "border rounded shadow" }}
+              onEnd={() => setIsSigned(!sigCanvasRef.current.isEmpty())}
+            />
+            <div className="flex space-x-2 mt-2">
+              <button
+                onClick={() => {
+                  sigCanvasRef.current.clear();
+                  setSignatureError('');
+                  setIsSigned(false);
+                }}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Clear
+              </button>
+            </div>
+            {signatureError && <div className="text-red-600 text-sm mt-2">{signatureError}</div>}
+            <div className="flex justify-between w-full mt-4">
+              <Button
+                variant="outline"
+                onClick={handlePrevStep}
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!isSigned) {
+                    setSignatureError('Signature is required to proceed.');
+                    return;
+                  }
+                  setSignatureError('');
+                  setStep(step + 1);
+                }}
+                className="bg-blue-600 text-white"
+                disabled={!isSigned}
+              >
+                Next Step
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 7: Review & Submit */}
+        {step === 7 && (
           <div className="space-y-6 text-center">
             <h2 className="text-xl font-bold">Review & Submit</h2>
             <p>Review your project details and submit when ready.</p>
@@ -659,8 +752,7 @@ export function CreateProject() {
               !projectData.ProjectTitle || !projectData.Description ||
               projectData.Skills.length === 0 ||
               !projectData.Budget || !projectData.Deadline ||
-              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate))) ||
-              (budgetDivision === 'fixed' && !projectData.NumberOfFreelancers)
+              (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate)))
             }>
               Create Project
             </Button>
@@ -668,29 +760,31 @@ export function CreateProject() {
         )}
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8 pt-6 border-t">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevStep}
-            disabled={step === 1}
-          >
-            Previous
-          </Button>
-          {step < 6 ? (
+        {step !== 6 && (
+          <div className="flex justify-between mt-8 pt-6 border-t">
             <Button 
-              onClick={handleNextStep}
-              icon={ArrowRight}
-              iconPosition="right"
-              disabled={
-                (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
-                (step === 2 && projectData.Skills.length === 0) ||
-                (step === 4 && (!projectData.Budget || !projectData.Deadline))
-              }
+              variant="outline" 
+              onClick={handlePrevStep}
+              disabled={step === 1}
             >
-              Next Step
+              Previous
             </Button>
-          ) : null}
-        </div>
+            {step < 7 ? (
+              <Button 
+                onClick={handleNextStep}
+                icon={ArrowRight}
+                iconPosition="right"
+                disabled={
+                  (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
+                  (step === 2 && projectData.Skills.length === 0) ||
+                  (step === 4 && (!projectData.Budget || !projectData.Deadline))
+                }
+              >
+                Next Step
+              </Button>
+            ) : null}
+          </div>
+        )}
       </Card>
     </div>
   );
