@@ -73,6 +73,7 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "requests/{freelancerId}/{projectId}")] HttpRequestData req, int freelancerId, int projectId)
         {
 
+
             var dto = await req.ReadFromJsonAsync<ProjectRequestResponseDTO>();
             var request = await _unit.ProjectRequests.GetRequestByFreelancerAndProjectAsync(freelancerId, projectId);
 

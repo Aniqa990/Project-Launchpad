@@ -14,8 +14,6 @@ namespace ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO
 
         public DateTime SubmissionDate { get; set; } = DateTime.UtcNow;
 
-        public string? SubmittedFileUrls { get; set; }
-
         public string? FreelancerComments { get; set; }
     }
 }

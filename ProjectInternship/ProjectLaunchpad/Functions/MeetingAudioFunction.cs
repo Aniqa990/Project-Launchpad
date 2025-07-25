@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Repositories.Repositories.IRepositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -88,6 +90,17 @@ namespace ProjectLaunchpad.Functions
             {
                 return new ObjectResult($"Error uploading audio: {ex.Message}") { StatusCode = 500 };
             }
+        }
+
+        [Function("GetAllAudioRecordings")]
+        public async Task<HttpResponseData> GetAllLogs(
+     [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "audio")] HttpRequestData req)
+        {
+            var logs = await _unitOfWork.MeetingAudioRecording.getAll();
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(logs);
+            return response;
         }
     }
 }
