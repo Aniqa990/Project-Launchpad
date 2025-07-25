@@ -3,7 +3,7 @@ import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, 
 import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst";
 
 const api = axios.create({
-  baseURL: "http://localhost:7071/api",
+  baseURL: "http://localhost:7053/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -411,26 +411,32 @@ export const createStripeCheckoutSession = async (params: {
   return response.data;
 };
 
-export const getMilestonesByProjectId = async (projectId: number): Promise<any[]> => {
+export const getMilestonesByProjectId = async (projectId: number) => {
   const response = await api.get(`/milestones/project/${projectId}`);
-  return lowercaseFirstLetterKeys(response.data);
-};
-
-export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise<any[]> => {
-  const response = await api.get(`/deliverables/milestone/${milestoneId}`);
   return response.data;
 };
 
-<<<<<<< HEAD
-// Get projects by client id
-export const getClientProjects = async (clientId: number) => {
+export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise<any[]> => {
   try {
-    const response = await api.get(`/clients/${clientId}/projects`);
+    const response = await api.get(`/deliverables/milestone/${milestoneId}`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch client projects');
+    if (error.response && error.response.status === 404) {
+      return [];
+    }
+    throw error;
   }
 };
+
+// Get projects by client id
+// export const getClientProjects = async (clientId: number) => {
+//   try {
+//     const response = await api.get(`/clients/${clientId}/projects`);
+//     return response.data;
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.message || 'Failed to fetch client projects');
+//   }
+// };
 
 // NOTIFICATIONS
 export const getNotifications = async (userId: number) => {
@@ -442,7 +448,6 @@ export const markNotificationRead = async (notificationId: number) => {
   const response = await api.put(`/notifications/${notificationId}/read`);
   return response.data;
 };
-=======
 export async function deleteFreelancerProfile(userId: number) {
   const { data } = await api.delete(`/freelancer/${userId}`);
   return data;
@@ -485,4 +490,3 @@ export async function getUnallocatedResources() {
   const { data } = await api.get('/platform/unallocated-resources');
   return data;
 }
->>>>>>> origin/dev

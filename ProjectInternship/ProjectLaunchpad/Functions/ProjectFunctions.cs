@@ -216,7 +216,7 @@ namespace ProjectLaunchpad.Functions
         //}
         [Function("GetProjectsByClient")]
         public async Task<HttpResponseData> GetProjectsByClient(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "clients/{clientId}/projects")] HttpRequestData req,
+            [HttpTrigger(AuthorizationLevel.Anonymous,"get", Route = "clients/{clientId}/projects")] HttpRequestData req,
             int clientId)
         {
             var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientIdAsync(clientId);
@@ -278,7 +278,7 @@ namespace ProjectLaunchpad.Functions
 
 
 
-        [Function("GetProjectsByClientId")]
+/*        [Function("GetProjectsByClientId")]
         public async Task<HttpResponseData> GetProjectsByClientId(
     [HttpTrigger(AuthorizationLevel.Function, "get", Route = "clients/{clientId}/projects")] HttpRequestData req,
     int clientId)
@@ -324,7 +324,7 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(projectDTOs);
             return response;
         }
-
+*/
 
 
 

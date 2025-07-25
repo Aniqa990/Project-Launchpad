@@ -381,9 +381,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<DateTime?>("SubmissionDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("SubmittedFileUrls")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -416,7 +413,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Type")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")

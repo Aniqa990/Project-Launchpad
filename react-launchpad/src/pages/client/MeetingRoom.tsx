@@ -48,11 +48,13 @@ export default function Meetings() {
 
   // Fetch projects for client
   useEffect(() => {
+    console.log('Client ID:', clientId); // DEBUG
     if (!clientId) return;
     setLoadingProjects(true);
     setError(null);
     getClientProjects(clientId)
       .then((data) => {
+        console.log('Fetched projects:', data); // DEBUG
         setProjects(data);
       })
       .catch(() => setError('Failed to load projects'))
@@ -331,8 +333,8 @@ export default function Meetings() {
             </SelectTrigger>
             <SelectContent>
               {projects.map((proj) => (
-                <SelectItem key={proj.Id} value={String(proj.Id)}>
-                  {proj.Title}
+                <SelectItem key={proj.Id || proj.id} value={String(proj.Id || proj.id)}>
+                  {proj.ProjectTitle || proj.projectTitle || proj.Title || proj.title || `Project #${proj.Id || proj.id}`}
                 </SelectItem>
               ))}
             </SelectContent>

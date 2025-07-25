@@ -12,8 +12,8 @@ using ProjectLaunchpad.DataAccess.Data;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250721122015_addroleMeetingTables")]
-    partial class addroleMeetingTables
+    [Migration("20250724141443_addinitialCreate")]
+    partial class addinitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,6 +64,16 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("freelancerProfiles");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("adminProfiles");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
@@ -220,6 +230,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Agenda")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("EndedAt")
                         .HasColumnType("datetime2");
 
@@ -237,9 +258,49 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("ClientId");
+
                     b.ToTable("Meetings");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.MeetingAudioRecording", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AudioUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MeetingId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MeetingId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("meetingAudioRecordings");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.MeetingParticipant", b =>
@@ -250,7 +311,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("JoinedAt")
+                    b.Property<DateTime?>("InviteSentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("JoinedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LeftAt")
@@ -258,6 +322,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.Property<int>("MeetingId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("NotificationRead")
+                        .HasColumnType("bit");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -273,6 +340,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MeetingId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("MeetingParticipants");
                 });
@@ -299,6 +368,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<string>("FreelancerComments")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("HandoverStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");
 
@@ -311,9 +384,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Property<DateTime?>("SubmissionDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("SubmittedFileUrls")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -323,6 +393,39 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("milestones");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Read")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("RelatedMeetingId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("notifications");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
@@ -383,6 +486,10 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("AttachedDocumentPath")
                         .HasColumnType("nvarchar(max)");
 
@@ -412,6 +519,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
                     b.Property<string>("ProjectTitle")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RejectionReason")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RequiredSkills")
@@ -705,6 +815,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.AdminProfile", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.ClientProfile", b =>
                 {
                     b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
@@ -792,6 +913,36 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Meeting", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.MeetingAudioRecording", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.Meeting", "Meeting")
+                        .WithMany()
+                        .HasForeignKey("MeetingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "user")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Meeting");
+
+                    b.Navigation("user");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.MeetingParticipant", b =>
                 {
                     b.HasOne("ProjectLaunchpad.Models.Models.Meeting", "Meeting")
@@ -800,7 +951,15 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Meeting");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Milestone", b =>
@@ -812,6 +971,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.Notification", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Payment", b =>
@@ -1022,6 +1192,8 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("ClientProfile");
 
                     b.Navigation("FreelancerProfile");
+
+                    b.Navigation("Notifications");
                 });
 #pragma warning restore 612, 618
         }

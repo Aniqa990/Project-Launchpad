@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class iniy : Migration
+    public partial class addinitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -46,7 +46,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.Id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -63,7 +63,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.Id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -88,7 +88,35 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.Id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Meetings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    MeetingRoomId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Agenda = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ClientId = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RecordingUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StartedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Meetings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Meetings_users_ClientId",
+                        column: x => x.ClientId,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -98,8 +126,11 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Type = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RelatedMeetingId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Read = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -109,7 +140,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.UserId,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -165,7 +196,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.FreelancerId,
                         principalTable: "freelancerProfiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -187,7 +218,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.FreelancerId,
                         principalTable: "freelancerProfiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -208,7 +239,67 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.FreelancerId,
                         principalTable: "freelancerProfiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "meetingAudioRecordings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MeetingId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    AudioUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_meetingAudioRecordings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_meetingAudioRecordings_Meetings_MeetingId",
+                        column: x => x.MeetingId,
+                        principalTable: "Meetings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_meetingAudioRecordings_users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MeetingParticipants",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MeetingId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    InviteSentAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NotificationRead = table.Column<bool>(type: "bit", nullable: false),
+                    JoinedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LeftAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MeetingParticipants", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MeetingParticipants_Meetings_MeetingId",
+                        column: x => x.MeetingId,
+                        principalTable: "Meetings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MeetingParticipants_users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -250,7 +341,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     SubmissionDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    SubmittedFileUrls = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FreelancerComments = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsApproved = table.Column<bool>(type: "bit", nullable: false),
                     HandoverStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -292,7 +382,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.ClientId,
                         principalTable: "clientProfiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_payments_freelancerProfiles_FreelancerId",
                         column: x => x.FreelancerId,
@@ -382,7 +472,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.projectId,
                         principalTable: "projects",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_taskItems_users_AssignedToUserId",
                         column: x => x.AssignedToUserId,
@@ -450,13 +540,13 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.MilestoneId,
                         principalTable: "milestones",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_deliverables_projects_projectId",
                         column: x => x.projectId,
                         principalTable: "projects",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -479,13 +569,13 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.FreelancerId,
                         principalTable: "freelancerProfiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_logs_projects_ProjectId",
                         column: x => x.ProjectId,
                         principalTable: "projects",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_logs_taskItems_TaskId",
                         column: x => x.TaskId,
@@ -514,7 +604,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.TaskItemId,
                         principalTable: "taskItems",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -551,6 +641,31 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 name: "IX_logs_TaskId",
                 table: "logs",
                 column: "TaskId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_meetingAudioRecordings_MeetingId",
+                table: "meetingAudioRecordings",
+                column: "MeetingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_meetingAudioRecordings_UserId",
+                table: "meetingAudioRecordings",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MeetingParticipants_MeetingId",
+                table: "MeetingParticipants",
+                column: "MeetingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MeetingParticipants_UserId",
+                table: "MeetingParticipants",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Meetings_ClientId",
+                table: "Meetings",
+                column: "ClientId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_milestones_ProjectId",
@@ -652,6 +767,12 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                 name: "logs");
 
             migrationBuilder.DropTable(
+                name: "meetingAudioRecordings");
+
+            migrationBuilder.DropTable(
+                name: "MeetingParticipants");
+
+            migrationBuilder.DropTable(
                 name: "notifications");
 
             migrationBuilder.DropTable(
@@ -677,6 +798,9 @@ namespace ProjectLaunchpad.DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "milestones");
+
+            migrationBuilder.DropTable(
+                name: "Meetings");
 
             migrationBuilder.DropTable(
                 name: "taskItems");

@@ -18,7 +18,6 @@ import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
 import { Feedback } from './pages/freelancer/Feedback';
 import { KanbanBoard } from './components/workspace/KanbanBoard';
-import { FreelancerMessages } from './pages/freelancer/Messages';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { PlatformDashboard } from './pages/platform/Dashboard';
 import { MilestonePayments } from './pages/platform/Payments';
@@ -28,7 +27,7 @@ import { PlatformSettings } from './pages/platform/Settings';
 import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
-import Meetings from './pages/client/Meetings';
+import Meetings from './pages/client/MeetingRoom';
 import FreelancerTimesheets from './pages/freelancer/Timesheets';
 
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
@@ -131,7 +130,6 @@ function AppRoutes() {
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
         <Route path="meetings" element={<MeetingRoom />} />
-        <Route path="meetings" element={<Meetings />} />
       </Route>
       
       <Route path="/freelancer/*" element={

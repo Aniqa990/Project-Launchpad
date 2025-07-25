@@ -17,7 +17,7 @@ import {
   Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import InvoicePage from './InvoicePage'; // Restore InvoicePage import
+import { InvoicePage } from './InvoicePage'; // Restore InvoicePage import
 import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId } from '../../apiendpoints';
 import PaymentForm from './PaymentForm'; // Added import for PaymentForm
 // REMOVE: import StripeWrapper from './StripeWrapper';
@@ -35,7 +35,7 @@ export function ClientPayments() {
   const [loading, setLoading] = useState(false);
 
   // Hardcoded clientId for now; replace with auth context if available
-  const clientId = 2;
+  const clientId = 1;
 
   useEffect(() => {
     // Fetch projects for the current client
@@ -80,13 +80,19 @@ export function ClientPayments() {
   // Filtered milestones based on search and status
   const filteredMilestones = milestones.filter((milestone: any) => {
     const matchesSearch = (milestone.Title || milestone.title || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || (milestone.Status || milestone.status) === statusFilter;
+    let matchesStatus = true;
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'pending') matchesStatus = (milestone.Status || milestone.status) === 0;
+      else if (statusFilter === 'in-progress') matchesStatus = (milestone.Status || milestone.status) === 1;
+      else if (statusFilter === 'completed') matchesStatus = (milestone.Status || milestone.status) === 2;
+      else matchesStatus = true;
+    }
     return matchesSearch && matchesStatus;
   });
 
   // Stats
-  const totalPaid = milestones.filter((m: any) => (m.Status || m.status) === 'paid').reduce((sum: number, m: any) => sum + (m.Amount || m.amount || 0), 0);
-  const totalPending = milestones.filter((m: any) => (m.Status || m.status) === 'approved').reduce((sum: number, m: any) => sum + (m.Amount || m.amount || 0), 0);
+  const totalPaid = milestones.filter((m: any) => (m.Status || m.status) === 2).reduce((sum: number, m: any) => sum + (m.Amount || m.amount || 0), 0);
+  const totalPending = milestones.filter((m: any) => (m.Status || m.status) === 1).reduce((sum: number, m: any) => sum + (m.Amount || m.amount || 0), 0);
   const totalBudget = projects.reduce((sum: number, p: any) => sum + (p.Budget || p.budget || 0), 0);
 
   const handleReleasePayment = (milestoneId: string) => {
@@ -95,20 +101,20 @@ export function ClientPayments() {
     setShowPaymentModal(false);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | number) => {
     switch (status) {
-      case 'paid': return 'success';
-      case 'approved': return 'warning';
-      case 'pending': return 'default';
+      case 2: return 'success'; // Completed
+      case 1: return 'warning'; // In Progress
+      case 0: return 'default'; // Not Selected
       default: return 'default';
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | number) => {
     switch (status) {
-      case 'paid': return CheckCircle;
-      case 'approved': return Clock;
-      case 'pending': return AlertCircle;
+      case 2: return CheckCircle; // Completed
+      case 1: return Clock; // In Progress
+      case 0: return AlertCircle; // Not Selected
       default: return Clock;
     }
   };
@@ -216,7 +222,7 @@ export function ClientPayments() {
             <option value="all">All Projects</option>
             {projects.map((project: any) => (
               <option key={project.Id || project.id} value={project.Id || project.id}>
-                {project.Title || project.title}
+                {project.ProjectTitle || project.projectTitle || project.Title || project.title || `Project #${project.Id || project.id}`}
               </option>
             ))}
           </select>
@@ -226,9 +232,9 @@ export function ClientPayments() {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Ready to Pay</option>
-            <option value="paid">Paid</option>
+            <option value="pending">Not Selected</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
       </Card>
@@ -243,13 +249,16 @@ export function ClientPayments() {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <StatusIcon className={`w-5 h-5 ${
-                      (milestone.Status || milestone.status) === 'paid' ? 'text-green-600' :
-                      (milestone.Status || milestone.status) === 'approved' ? 'text-orange-600' :
+                      (milestone.Status || milestone.status) === 2 ? 'text-green-600' :
+                      (milestone.Status || milestone.status) === 1 ? 'text-orange-600' :
                       'text-gray-400'
                     }`} />
                     <h3 className="text-lg font-semibold text-gray-900">{milestone.Title || milestone.title}</h3>
                     <Badge variant={getStatusColor(milestone.Status || milestone.status) as any}>
-                      {milestone.Status || milestone.status}
+                      {milestone.Status === 0 || milestone.status === 0 ? 'Not Selected' :
+                       milestone.Status === 1 || milestone.status === 1 ? 'In Progress' :
+                       milestone.Status === 2 || milestone.status === 2 ? 'Completed' :
+                       milestone.Status || milestone.status}
                     </Badge>
                   </div>
                   <p className="text-gray-600 mb-2">{milestone.Description || milestone.description}</p>
@@ -281,7 +290,7 @@ export function ClientPayments() {
                   <div className="text-2xl font-bold text-gray-900 mb-2">
                     ${milestone.Amount?.toLocaleString() || ''}
                   </div>
-                  {milestone.Status === 2 && (
+                  {(milestone.Status === 2 || milestone.status === 2) && (
                     <Button
                       icon={CreditCard}
                       onClick={() => {
@@ -292,7 +301,7 @@ export function ClientPayments() {
                       Pay Now
                     </Button>
                   )}
-                  {(milestone.Status || milestone.status) === 'approved' && (
+                  {(milestone.Status || milestone.status) === 1 && (
                     <Button
                       icon={CreditCard}
                       onClick={() => {
@@ -303,18 +312,8 @@ export function ClientPayments() {
                       Release Payment
                     </Button>
                   )}
-                  {(milestone.Status || milestone.status) === 'paid' && (
-                    <div className="space-y-2">
-                      <Button variant="outline" size="sm" icon={Download}>
-                        Download Files
-                      </Button>
-                      <Button variant="outline" size="sm" icon={Receipt}>
-                        Receipt
-                      </Button>
-                    </div>
-                  )}
-                  {(milestone.Status || milestone.status) === 'pending' && (
-                    <p className="text-sm text-gray-500">Awaiting completion</p>
+                  {(milestone.Status || milestone.status) === 0 && (
+                    <p className="text-sm text-gray-500">Awaiting selection</p>
                   )}
                 </div>
               </div>
