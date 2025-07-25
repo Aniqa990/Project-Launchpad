@@ -55,6 +55,19 @@ namespace ProjectLaunchpad.Functions
             return response;
         }
 
+        [Function("GetProjectRequestsByProjectId")]
+        public async Task<HttpResponseData> GetProjectRequestsByProjectId(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects/{projectId}/requests")] HttpRequestData req,
+        int projectId)
+            {
+                // Get all requests for this project
+                var requests = await _unit.ProjectRequests.GetRequestsByProjectIdAsync(projectId);
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(requests);
+                return response;
+            }
+
         [Function("UpdateRequestStatus")]
         public async Task<HttpResponseData> UpdateRequestStatus(
             [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "requests/{freelancerId}/{projectId}")] HttpRequestData req, int freelancerId, int projectId)

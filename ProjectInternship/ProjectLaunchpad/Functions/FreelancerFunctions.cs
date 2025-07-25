@@ -278,10 +278,6 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "freelancer/{id:int}")] HttpRequestData req,
             int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
 
             var profile = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
             if (profile is null)

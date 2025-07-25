@@ -28,10 +28,6 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> AssignFreelancersToProject(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "projects/assign")] HttpRequestData req)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
 
             var dto = await req.ReadFromJsonAsync<ProjectAssignmentDTO>();
 

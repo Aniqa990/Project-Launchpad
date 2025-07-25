@@ -15,5 +15,6 @@ namespace ProjectLaunchpad.Models.Models.DTOs.AuthenticationDTO
         public string? Password { get; set; }
         public string? Role { get; set; }       // "Client" / "Freelancer"
         public string? Gender { get; set; }     // Optional
+        public string? ProfilePicture { get; set; }
     }
 }

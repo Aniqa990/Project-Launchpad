@@ -82,7 +82,7 @@ namespace ProjectLaunchpad.Functions
                 RequiredSkills = projectDto.RequiredSkills,
                 Budget = projectDto.Budget,
                 NumberOfFreelancers = projectDto.NumberOfFreelancers,
-                Status = "Open",
+                Status = "draft",
                 AttachedDocumentPath = projectDto.AttachedDocumentPath,
                 ClientId = clientId
             };
@@ -221,8 +221,44 @@ namespace ProjectLaunchpad.Functions
         {
             var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientIdAsync(clientId);
 
+            var projectDTOs = projects.Select(p => new ProjectResponseDTO
+            {
+                Id = p.Id,
+                ProjectTitle = p.ProjectTitle,
+                Description = p.Description,
+                Status = p.Status ?? "active",
+                Budget = p.Budget,
+                Deadline = p.Deadline,
+                ClientId = p.ClientId,
+                // Add these fields if your DTO and frontend expect them:
+                CategoryOrDomain = p.CategoryOrDomain,
+                PaymentType = p.PaymentType,
+                NumberOfFreelancers = p.NumberOfFreelancers,
+                AttachedDocumentPath = p.AttachedDocumentPath,
+                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                {
+                    FirstName = p.Client.User.FirstName,
+                    LastName = p.Client.User.LastName,
+                    Email = p.Client.User.Email,
+                    PhoneNo = p.Client.User.PhoneNo,
+                    Role = p.Client.User.Role,
+                    Gender = p.Client.User.Gender
+                } : null,
+                RequiredSkills = p.RequiredSkills,
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                {
+                    FirstName = af.Freelancer.User.FirstName,
+                    LastName = af.Freelancer.User.LastName,
+                    Email = af.Freelancer.User.Email,
+                    PhoneNo = af.Freelancer.User.PhoneNo,
+                    Role = af.Freelancer.User.Role,
+                    Gender = af.Freelancer.User.Gender
+                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                Progress = 0 // TODO: Calculate based on milestones if needed
+            }).ToList();
+
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(projects);
+            await response.WriteAsJsonAsync(projectDTOs);
             return response;
         }
 

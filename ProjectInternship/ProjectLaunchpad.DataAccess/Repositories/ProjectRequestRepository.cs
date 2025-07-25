@@ -67,6 +67,13 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return await _db.projectRequests.FirstOrDefaultAsync(pr => pr.FreelancerId == freelancerId && pr.ProjectId == projectId);
         }
 
+        public async Task<List<ProjectRequest>> GetRequestsByProjectIdAsync(int projectId)
+        {
+            return await _db.projectRequests
+                .Where(pr => pr.ProjectId == projectId)
+                .ToListAsync();
+        }
+
         public async Task RemoveRequestAsync(int projectId, int freelancerId)
         {
             var request = await _db.projectRequests

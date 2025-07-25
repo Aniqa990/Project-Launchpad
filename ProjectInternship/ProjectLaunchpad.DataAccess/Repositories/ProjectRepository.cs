@@ -130,6 +130,11 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         {
             return await _db.projects
                 .Where(p => p.ClientId == clientId)
+                .Include(p => p.Client)
+                    .ThenInclude(c => c.User)
+                .Include(p => p.AssignedFreelancers)
+                    .ThenInclude(af => af.Freelancer)
+                        .ThenInclude(f => f.User)
                 .ToListAsync();
         }
     }
