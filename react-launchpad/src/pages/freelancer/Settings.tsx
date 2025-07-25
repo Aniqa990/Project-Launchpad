@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -15,7 +13,6 @@ import { Modal } from '../../components/ui/Modal';
 import { ParsedResumeData } from '@/types';
 import { FreelancerProfile } from '../../types';
 
-export function FreelancerSettings() {
 export function FreelancerSettings() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -108,15 +105,49 @@ const handleSave = async () => {
   setLoading(true);
   setError(null);
   try {
-      await fetch('http://localhost:8000/api/update-parsed-json/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          freelancer_id: user?.id,
-          parsed_json: profileData
-        })
+    // 1. Build parsedJson for Python DB
+    const parsedJson = {
+      name: `${profileData.FirstName} ${profileData.LastName}`.trim(),
+      email: profileData.Email,
+      phone: profileData.PhoneNo,
+      summary: profileData.Summary,
+      skills: Array.isArray(profileData.Skills)
+        ? profileData.Skills.map((s: any) => typeof s === 'string' ? s : s.SkillName || s)
+        : [],
+      projects: Array.isArray(profileData.Projects)
+        ? profileData.Projects.map((p: any) => ({
+            title: p.Title || p.title || '',
+            description: p.Description || p.description || ''
+          }))
+        : [],
+      experience: Array.isArray(profileData.Experience)
+        ? profileData.Experience.map((e: any) => ({
+            title: e.Title || e.title || '',
+            company: e.Company || e.company || '',
+            startDate: e.StartDate || e.startDate || '',
+            endDate: e.EndDate || e.endDate || '',
+            description: e.Description || e.description || ''
+          }))
+        : [],
+    };
+    // 2. Build profilePayload for C# backend
+    const profilePayload = {
+      ...profileData,
+      Skills: JSON.stringify(profileData.Skills),
+      Experience: JSON.stringify(profileData.Experience),
+      Projects: JSON.stringify(profileData.Projects),
+    };
+    // 3. Update Python DB
+    await fetch('http://localhost:8000/api/update-parsed-json/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        freelancer_id: profileData.Id,
+        parsed_json: parsedJson
+      })
     });
-    await updateFreelancerProfile(profileData, user?.id ?? 0);
+    // 4. Update C# backend
+    await updateFreelancerProfile(profilePayload, profileData.Id);
     setIsEditing(false);
     setSuccessMessage('Profile updated successfully!');
     setTimeout(() => setSuccessMessage(null), 3000);
@@ -330,17 +361,9 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           />
           <div>
             <Button onClick={() => fileInputRef.current?.click()} variant="outline" disabled={!isEditing}>
-            <Button onClick={() => fileInputRef.current?.click()} variant="outline" disabled={!isEditing}>
               <Camera className="w-4 h-4 mr-2" />
               Change Picture
             </Button>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              onChange={handleImageUpload}
-            />
             <input
               type="file"
               accept="image/*"
@@ -596,79 +619,6 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           ))}
         </div>
       </Card>
-      
-      {/* Account Settings Section */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
-        <div className="space-y-4 max-w-md">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={formData.currentPassword}
-                onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-            <Input
-              type="password"
-              value={formData.newPassword}
-              onChange={(e) => handleInputChange('newPassword', e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-            <Input
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            />
-          </div>
-          <Button onClick={handleSavePassword} icon={Lock}>
-            Update Password
-          </Button>
-        </div>
-      </Card>
-
-      {/* Danger Zone Section */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Danger Zone</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
-            <div>
-              <h4 className="font-medium text-red-900">Delete Account</h4>
-              <p className="text-sm text-red-600">Permanently delete your account and all data</p>
-            </div>
-            <Button variant="danger" size="sm" onClick={() => handleDangerAction()}>Delete</Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Danger Modal */}
-      <Modal isOpen={dangerModal.open} onClose={() => setDangerModal({ open: false })} title="Delete Account">
-        <div className="space-y-4">
-          <p>
-            Are you sure you want to permanently delete your account? This action cannot be undone.
-          </p>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setDangerModal({ open: false })}>Cancel</Button>
-            <Button variant={'danger'} onClick={confirmDangerAction}>
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
-      
       
       {/* Account Settings Section */}
       <Card>

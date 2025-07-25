@@ -421,7 +421,7 @@ function EditSubtaskModal({ isOpen, onClose, onSubmit, loading, subtask }: {
     <EditSubtaskModal
       isOpen={isOpen}
       onClose={onClose}
-      onSubmit={handleSubmit}
+      onSubmit={handleEditSubtask}
       loading={loading}
       subtask={subtask}
     />
@@ -548,7 +548,7 @@ export function KanbanBoard() {
       setLoadingTasks(true);
       setMessage('');
       try {
-        const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
+        const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
         setTasks(res.data);
         if (res.data.length === 0) {
           setMessage('No tasks for this project yet.');

@@ -457,5 +457,34 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(projects);
             return response;
         }
+
+        
+    [Function("GetProjectsWithPendingApproval")]
+    public async Task<HttpResponseData> GetProjectsWithPendingApproval(
+[HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/projects/pending")] HttpRequestData req)
+    {
+        var projects = await _unitOfWork.ProjectRepository.GetProjectsWithPendingApprovalAsync();
+
+        var projectDTOs = projects.Select(p => new ProjectResponseDTO
+        {
+            Id = p.Id,
+            ProjectTitle = p.ProjectTitle,
+            Description = p.Description,
+            Status = p.Status ?? "active",
+            Budget = p.Budget,
+            Deadline = p.Deadline,
+            ClientId = p.ClientId,
+            CategoryOrDomain = p.CategoryOrDomain,
+            PaymentType = p.PaymentType,
+            NumberOfFreelancers = p.NumberOfFreelancers,
+            AttachedDocumentPath = p.AttachedDocumentPath,
+            // Add other fields as needed
+        }).ToList();
+
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        await response.WriteAsJsonAsync(projectDTOs);
+        return response;
+    }
+
     }
 }
