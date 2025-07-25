@@ -298,20 +298,35 @@ export default function Meetings() {
     setUploadTranscriptSuccess(null);
     setUploadTranscriptError(null);
     try {
-      // Create a Blob from the transcript text
+      // 1. Upload transcript to Cloudinary
+      const cloudName = 'depfyzzad';
+      const unsignedPreset = 'projectLaunchpad';
+      const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
       const transcriptBlob = new Blob([transcript], { type: 'text/plain' });
+      const cloudForm = new FormData();
+      cloudForm.append('file', transcriptBlob, `transcript-${meetingId}-user-${user.id}.txt`);
+      cloudForm.append('upload_preset', unsignedPreset);
+      // Optionally, set folder or public_id here
+      const cloudRes = await fetch(url, {
+        method: 'POST',
+        body: cloudForm
+      });
+      const cloudData = await cloudRes.json();
+      if (!cloudData.secure_url) {
+        throw new Error('Failed to upload transcript to Cloudinary');
+      }
+      const transcriptUrl = cloudData.secure_url;
+      // 2. Send Cloudinary URL to backend as audioUrl using FormData
       const formData = new FormData();
-      formData.append('audio', transcriptBlob, `transcript-${meetingId}-user-${user.id}.txt`);
-      formData.append('userId', String(user.id)); // Ensure userId is a string
-      // POST to backend using integer meetingId
-      const res = await axios.post(
+      formData.append('userId', String(user.id));
+      formData.append('audioUrl', transcriptUrl);
+      const backendRes = await axios.post(
         `http://localhost:7053/api/meetings/${meetingId}/upload-audio`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        formData
       );
-      setUploadTranscriptSuccess('Transcript uploaded successfully!');
+      setUploadTranscriptSuccess('Transcript uploaded and saved!');
     } catch (err: any) {
-      setUploadTranscriptError(err?.response?.data || 'Failed to upload transcript.');
+      setUploadTranscriptError(err?.response?.data || err.message || 'Failed to upload transcript.');
     } finally {
       setUploadingTranscript(false);
     }
