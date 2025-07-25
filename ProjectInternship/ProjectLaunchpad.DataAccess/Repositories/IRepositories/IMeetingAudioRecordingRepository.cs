@@ -11,6 +11,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
     {
         Task AddAsync(MeetingAudioRecording entity);
 
+        Task<IEnumerable<MeetingAudioRecordingResponseDto>> getAll();
 
     }
 }
