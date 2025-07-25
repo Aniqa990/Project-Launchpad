@@ -148,8 +148,6 @@ function AppRoutes() {
         <Route path="feedback" element={<Feedback />} />
         <Route path="settings" element={<FreelancerSettings />} />  
         <Route path="timesheets" element={<FreelancerTimesheets />} />
-        <Route path="settings" element={<FreelancerSettings />} />  
-        <Route path="timesheets" element={<FreelancerTimesheets />} />
         <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
         <Route path="meetings" element={<FreelancerMeetingRoom />} />
