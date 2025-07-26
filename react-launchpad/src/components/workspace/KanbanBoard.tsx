@@ -7,16 +7,12 @@ import {
   Plus, 
   Clock, 
   Calendar, 
-  MessageCircle,
-  Paperclip,
-  Edit3,
-  Trash2,
   CheckCircle,
   PlayCircle,
   AlertCircle
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects } from '../../apiendpoints';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectDetails } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
@@ -298,13 +294,16 @@ function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, 
 }
 
 // EditTaskModal component for updating and deleting a task
-function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading }: {
+function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, projectFreelancers, projectDetails, validateTaskDeadline }: {
   isOpen: boolean;
   onClose: () => void;
   task: KanbanTask | null;
   onUpdate: (id: number, form: any) => void;
   onDelete: (id: number) => void;
   loading: boolean;
+  projectFreelancers: any[];
+  projectDetails: any;
+  validateTaskDeadline: (deadline: string) => string;
 }) {
   const [form, setForm] = React.useState<any>(task ? {
     title: task.Title,
@@ -315,6 +314,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading }: {
     assignedToUserId: task.AssignedToUserId,
     status: task.Status,
   } : {});
+  const [deadlineError, setDeadlineError] = React.useState('');
   useEffect(() => {
     if (task) {
       setForm({
@@ -330,10 +330,27 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading }: {
   }, [task]);
   if (!isOpen || !task) return null;
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    
+    // Validate deadline when it changes
+    if (name === 'estimatedDeadline') {
+      const error = validateTaskDeadline(value);
+      setDeadlineError(error);
+    }
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate deadline before submitting
+    if (form.estimatedDeadline) {
+      const error = validateTaskDeadline(form.estimatedDeadline);
+      if (error) {
+        setDeadlineError(error);
+        return;
+      }
+    }
+    
     onUpdate(task.Id, {
       ...form,
       priority: Number(form.priority),
@@ -351,7 +368,24 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading }: {
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-description">Description</label>
           <textarea id="edit-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-estimatedDeadline">Estimated Deadline</label>
-          <input id="edit-estimatedDeadline" name="estimatedDeadline" type="date" value={form.estimatedDeadline} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input 
+            id="edit-estimatedDeadline" 
+            name="estimatedDeadline" 
+            type="date" 
+            value={form.estimatedDeadline} 
+            onChange={handleChange} 
+            className={`w-full border p-2 rounded ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
+            min={new Date().toISOString().split('T')[0]}
+            max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
+          />
+          {deadlineError && (
+            <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
+          )}
+          {projectDetails?.Deadline && (
+            <p className="text-gray-500 text-sm mt-1">
+              Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
+            </p>
+          )}
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-priority">Priority</label>
           <select id="edit-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
             <option value={0}>Low</option>
@@ -359,10 +393,24 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading }: {
             <option value={2}>High</option>
             <option value={3}>Urgent</option>
           </select>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-createdByUserId">Created By User ID</label>
-          <input id="edit-createdByUserId" name="createdByUserId" type="number" value={form.createdByUserId} onChange={handleChange} placeholder="Created By User ID" className="w-full border p-2 rounded" required />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-assignedToUserId">Assigned To User ID</label>
-          <input id="edit-assignedToUserId" name="assignedToUserId" type="number" value={form.assignedToUserId} onChange={handleChange} placeholder="Assigned To User ID" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-createdByUserId">Created By</label>
+          <select id="edit-createdByUserId" name="createdByUserId" value={form.createdByUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
+            <option value="">Select a freelancer</option>
+            {projectFreelancers.map((freelancer) => (
+              <option key={freelancer.Id} value={freelancer.Id}>
+                {freelancer.FirstName} {freelancer.LastName}
+              </option>
+            ))}
+          </select>
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-assignedToUserId">Assigned To</label>
+          <select id="edit-assignedToUserId" name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
+            <option value="">Select a freelancer</option>
+            {projectFreelancers.map((freelancer) => (
+              <option key={freelancer.Id} value={freelancer.Id}>
+                {freelancer.FirstName} {freelancer.LastName}
+              </option>
+            ))}
+          </select>
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-status">Status</label>
           <select id="edit-status" name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
             <option value={0}>To Do</option>
@@ -418,32 +466,77 @@ function EditSubtaskModal({ isOpen, onClose, onSubmit, loading, subtask }: {
     });
   };
   return (
-    <EditSubtaskModal
-      isOpen={isOpen}
-      onClose={onClose}
-      onSubmit={handleSubmit}
-      loading={loading}
-      subtask={subtask}
-    />
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+      <div className="bg-white p-8 rounded shadow-lg w-full max-w-lg">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-title">Title</label>
+          <input id="edit-subtask-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-description">Description</label>
+          <textarea id="edit-subtask-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-dueDate">Due Date</label>
+          <input id="edit-subtask-dueDate" name="dueDate" type="date" value={form.dueDate} onChange={handleChange} className="w-full border p-2 rounded" />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-status">Status</label>
+          <select id="edit-subtask-status" name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
+            <option value={0}>To Do</option>
+            <option value={1}>In Progress</option>
+            <option value={2}>Done</option>
+          </select>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 text-gray-800 rounded">Cancel</button>
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Saving...' : 'Save Changes'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
 // AddTaskModal component
-function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId }: { isOpen: boolean; onClose: () => void; onSubmit: (form: any) => void; loading: boolean; selectedProjectId: number | null }) {
+function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, projectFreelancers, projectDetails, validateTaskDeadline }: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onSubmit: (form: any) => void; 
+  loading: boolean; 
+  selectedProjectId: number | null;
+  projectFreelancers: any[];
+  projectDetails: any;
+  validateTaskDeadline: (deadline: string) => string;
+}) {
   const [form, setForm] = React.useState({
     title: '',
     description: '',
     estimatedDeadline: '',
     priority: 0,
-    createdByUserId: 1,
-    assignedToUserId: 1,
+    createdByUserId: '',
+    assignedToUserId: '',
   });
+  const [deadlineError, setDeadlineError] = React.useState('');
+  
   if (!isOpen) return null;
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    
+    // Validate deadline when it changes
+    if (name === 'estimatedDeadline') {
+      const error = validateTaskDeadline(value);
+      setDeadlineError(error);
+    }
   };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate deadline before submitting
+    if (form.estimatedDeadline) {
+      const error = validateTaskDeadline(form.estimatedDeadline);
+      if (error) {
+        setDeadlineError(error);
+        return;
+      }
+    }
+    
     onSubmit({
       ...form,
       priority: Number(form.priority),
@@ -461,7 +554,24 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId }:
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-description">Description</label>
           <textarea id="add-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-estimatedDeadline">Estimated Deadline</label>
-          <input id="add-estimatedDeadline" name="estimatedDeadline" type="date" value={form.estimatedDeadline} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input 
+            id="add-estimatedDeadline" 
+            name="estimatedDeadline" 
+            type="date" 
+            value={form.estimatedDeadline} 
+            onChange={handleChange} 
+            className={`w-full border p-2 rounded ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
+            min={new Date().toISOString().split('T')[0]}
+            max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
+          />
+          {deadlineError && (
+            <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
+          )}
+          {projectDetails?.Deadline && (
+            <p className="text-gray-500 text-sm mt-1">
+              Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
+            </p>
+          )}
           <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-priority">Priority</label>
           <select id="add-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
             <option value={0}>Low</option>
@@ -469,10 +579,24 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId }:
             <option value={2}>High</option>
             <option value={3}>Urgent</option>
           </select>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-createdByUserId">Created By User ID</label>
-          <input id="add-createdByUserId" name="createdByUserId" type="number" value={form.createdByUserId} onChange={handleChange} placeholder="Created By User ID" className="w-full border p-2 rounded" required />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-assignedToUserId">Assigned To User ID</label>
-          <input id="add-assignedToUserId" name="assignedToUserId" type="number" value={form.assignedToUserId} onChange={handleChange} placeholder="Assigned To User ID" className="w-full border p-2 rounded" required />
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-createdByUserId">Created By</label>
+          <select id="add-createdByUserId" name="createdByUserId" value={form.createdByUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
+            <option value="">Select a freelancer</option>
+            {projectFreelancers.map((freelancer) => (
+              <option key={freelancer.Id} value={freelancer.Id}>
+                {freelancer.FirstName} {freelancer.LastName}
+              </option>
+            ))}
+          </select>
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-assignedToUserId">Assigned To</label>
+          <select id="add-assignedToUserId" name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
+            <option value="">Select a freelancer</option>
+            {projectFreelancers.map((freelancer) => (
+              <option key={freelancer.Id} value={freelancer.Id}>
+                {freelancer.FirstName} {freelancer.LastName}
+              </option>
+            ))}
+          </select>
           <input type="hidden" name="ProjectId" value={selectedProjectId ?? ''} />
           <div className="flex justify-end">
             <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Adding...' : 'Add Task'}</button>
@@ -500,6 +624,10 @@ export function KanbanBoard() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [subtasks, setSubtasks] = useState<KanbanSubtask[]>([]);
   const [selectedSubtask, setSelectedSubtask] = useState<KanbanSubtask | null>(null);
+  const [projectFreelancers, setProjectFreelancers] = useState<any[]>([]);
+  const [loadingProjectFreelancers, setLoadingProjectFreelancers] = useState(false);
+  const [projectDetails, setProjectDetails] = useState<any>(null);
+  const [loadingProjectDetails, setLoadingProjectDetails] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -524,10 +652,21 @@ export function KanbanBoard() {
       setMessage('');
       try {
         if (!user?.id) return;
-        const projectsData = await getFreelancerProjects(user.id);
+        
+        let projectsData;
+        if (user?.role === 'freelancer') {
+          projectsData = await getFreelancerProjects(user.id);
+        } else if (user?.role === 'client') {
+          projectsData = await getClientProjects(user.id);
+        } else {
+          return;
+        }
+        
         setProjects(projectsData);
         if (projectsData.length === 0) {
-          setMessage('No projects assigned to you yet.');
+          setMessage(user?.role === 'freelancer' 
+            ? 'No projects assigned to you yet.' 
+            : 'No projects created yet.');
         }
       } catch (e) {
         setMessage('Could not fetch your projects.');
@@ -535,13 +674,17 @@ export function KanbanBoard() {
         setLoadingProjects(false);
       }
     }
-    if (user?.role === 'freelancer') fetchProjects();
+    
+    if (user?.role === 'freelancer' || user?.role === 'client') {
+      fetchProjects();
+    }
   }, [user]);
 
   // 1. Only show tasks if a project is selected
   useEffect(() => {
     if (!selectedProjectId) {
       setTasks([]);
+      setProjectFreelancers([]);
       return;
     }
     async function fetchTasks() {
@@ -561,6 +704,72 @@ export function KanbanBoard() {
     }
     fetchTasks();
   }, [selectedProjectId]);
+
+  // Fetch project freelancers when project is selected
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setProjectFreelancers([]);
+      return;
+    }
+    async function fetchProjectFreelancers() {
+      setLoadingProjectFreelancers(true);
+      try {
+        const freelancersData = await getFreelancerProjects(selectedProjectId!);
+        setProjectFreelancers(freelancersData);
+      } catch (e) {
+        console.error('Could not fetch project freelancers:', e);
+        setProjectFreelancers([]);
+      } finally {
+        setLoadingProjectFreelancers(false);
+      }
+    }
+    fetchProjectFreelancers();
+  }, [selectedProjectId]);
+
+  // Fetch project details when project is selected
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setProjectDetails(null);
+      return;
+    }
+    async function fetchProjectDetails() {
+      setLoadingProjectDetails(true);
+      try {
+        const projectData = await getProjectDetails(selectedProjectId!);
+        setProjectDetails(projectData);
+      } catch (e) {
+        console.error('Could not fetch project details:', e);
+        setProjectDetails(null);
+      } finally {
+        setLoadingProjectDetails(false);
+      }
+    }
+    fetchProjectDetails();
+  }, [selectedProjectId]);
+
+  // Validation function to check if task deadline is within project deadline
+  const validateTaskDeadline = (taskDeadline: string): string => {
+    if (!taskDeadline || !projectDetails?.Deadline) {
+      return '';
+    }
+    
+    const taskDeadlineDate = new Date(taskDeadline);
+    const projectDeadlineDate = new Date(projectDetails.Deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Check if task deadline is in the past
+    if (taskDeadlineDate < today) {
+      return 'Task deadline cannot be in the past';
+    }
+    
+    // Check if task deadline exceeds project deadline
+    if (taskDeadlineDate > projectDeadlineDate) {
+      return `Task deadline cannot exceed project deadline (${new Date(projectDetails.Deadline).toLocaleDateString()})`;
+    }
+    
+    return '';
+  };
 
   // 2. After drag, add, or update, re-fetch only the selected project's tasks
   const fetchProjectTasks = async () => {
@@ -809,15 +1018,24 @@ export function KanbanBoard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Project Tasks</h1>
-          <p className="text-gray-600 mt-1">View and track project tasks (Read-only)</p>
+          <p className="text-gray-600 mt-1">
+            {user?.role === 'freelancer' 
+              ? 'View and track project tasks' 
+              : 'Monitor and track project progress'
+            }
+          </p>
         </div>
-        <Button icon={Plus} onClick={handleCreateTaskButton} className="ml-4" variant="primary">
-          Create Task
-        </Button>
+        {user?.role === 'freelancer' && (
+          <Button icon={Plus} onClick={handleCreateTaskButton} className="ml-4" variant="primary">
+            Create Task
+          </Button>
+        )}
       </div>
-      {user?.role === 'freelancer' && (
+      {(user?.role === 'freelancer' || user?.role === 'client') && (
         <div className="mb-4">
-          <label className="block mb-2 font-medium">Select Project:</label>
+          <label className="block mb-2 font-medium">
+            {user?.role === 'freelancer' ? 'Select Project:' : 'Select Your Project:'}
+          </label>
           {loadingProjects ? (
             <div>Loading projects...</div>
           ) : projects.length === 0 ? (
@@ -842,6 +1060,51 @@ export function KanbanBoard() {
           )}
         </div>
       )}
+      
+      {/* Filters Section */}
+      {selectedProjectId && (
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Status:</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="border rounded px-3 py-1 text-sm"
+              >
+                <option value="all">All Status</option>
+                <option value="To Do">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Done">Done</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-700">Freelancer:</label>
+              <select
+                value={selectedFreelancer}
+                onChange={(e) => setSelectedFreelancer(e.target.value)}
+                className="border rounded px-3 py-1 text-sm"
+              >
+                <option value="all">All Freelancers</option>
+                {uniqueFreelancers.map((freelancer) => (
+                  <option key={freelancer} value={freelancer}>
+                    {freelancer}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <button
+              onClick={clearFilters}
+              className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Only show Kanban board if a project is selected */}
       {selectedProjectId ? (
         loadingTasks ? (
@@ -920,7 +1183,12 @@ export function KanbanBoard() {
         <div className="text-center py-12">
           <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
-          <p className="text-gray-600">Tasks will appear here when freelancers create them.</p>
+          <p className="text-gray-600">
+            {user?.role === 'freelancer' 
+              ? 'Tasks will appear here when you create them.' 
+              : 'Tasks will appear here when freelancers create them.'
+            }
+          </p>
         </div>
       )}
       {/* Task Detail Modal */}
@@ -932,6 +1200,9 @@ export function KanbanBoard() {
           onUpdate={handleEditTask}
           onDelete={handleDeleteTask}
           loading={formLoading}
+          projectFreelancers={projectFreelancers}
+          projectDetails={projectDetails}
+          validateTaskDeadline={validateTaskDeadline}
         />
       ) : null}
       {/* Add Task Modal */}
@@ -941,15 +1212,20 @@ export function KanbanBoard() {
         onSubmit={handleAddTask}
         loading={formLoading}
         selectedProjectId={selectedProjectId}
+        projectFreelancers={projectFreelancers}
+        projectDetails={projectDetails}
+        validateTaskDeadline={validateTaskDeadline}
       />
       {/* Edit Subtask Modal */}
-      <EditSubtaskModal
-        isOpen={!!selectedSubtask}
-        onClose={() => setSelectedSubtask(null)}
-        onSubmit={handleEditSubtask}
-        loading={formLoading}
-        subtask={selectedSubtask}
-      />
+      {selectedSubtask && (
+        <EditSubtaskModal
+          isOpen={!!selectedSubtask}
+          onClose={() => setSelectedSubtask(null)}
+          onSubmit={handleEditSubtask}
+          loading={formLoading}
+          subtask={selectedSubtask}
+        />
+      )}
     </div>
   );
 }

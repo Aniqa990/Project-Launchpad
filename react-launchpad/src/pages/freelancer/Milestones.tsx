@@ -104,7 +104,7 @@ export function Milestones() {
     // Map integer status to string for display
     let display = { label: 'Unknown', color: 'bg-gray-100 text-gray-800', icon: Clock };
     if (status === 0 || status === 'not-started' || status === 'NotSelected') {
-      display = { label: 'Not Selected', color: 'bg-gray-100 text-gray-800', icon: Clock };
+      display = { label: 'Not Started', color: 'bg-gray-100 text-gray-800', icon: Clock };
     } else if (status === 1 || status === 'in-progress' || status === 'InProgress') {
       display = { label: 'In Progress', color: 'bg-blue-100 text-blue-800', icon: Clock };
     } else if (status === 2 || status === 'completed' || status === 'Completed') {

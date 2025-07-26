@@ -70,7 +70,7 @@ export default function Meetings() {
     }
     setLoadingFreelancers(true);
     setError(null);
-    axios.get(`http://localhost:7053/api/projects/${selectedProjectId}/freelancers`)
+    axios.get(`http://localhost:7071/api/projects/${selectedProjectId}/freelancers`)
       .then((res) => {
         setFreelancers(res.data);
       })
@@ -275,7 +275,7 @@ export default function Meetings() {
         createdBy: user.id,
         participants,
       };
-      const res = await axios.post('http://localhost:7053/api/meetings/start', payload);
+      const res = await axios.post('http://localhost:7071/api/meetings/start', payload);
       setMeetingRoomId(res.data.roomId);
       setMeetingId(res.data.meetingId); // Save integer meeting ID
       setShowMeeting(true);
@@ -321,7 +321,7 @@ export default function Meetings() {
       formData.append('userId', String(user.id));
       formData.append('audioUrl', transcriptUrl);
       const backendRes = await axios.post(
-        `http://localhost:7053/api/meetings/${meetingId}/upload-audio`,
+        `http://localhost:7071/api/meetings/${meetingId}/upload-audio`,
         formData
       );
       setUploadTranscriptSuccess('Transcript uploaded and saved!');

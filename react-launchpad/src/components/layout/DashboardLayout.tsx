@@ -13,7 +13,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex">
+      <div className="flex" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div 
@@ -23,14 +23,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
         
         {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        <div className={`fixed top-16 bottom-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:top-0 lg:bottom-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
           <Sidebar />
         </div>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 lg:ml-0">
+        <main className="flex-1 min-w-0 overflow-auto">
           {/* Mobile menu button */}
           <div className="lg:hidden p-4 border-b border-gray-200 bg-white">
             <button

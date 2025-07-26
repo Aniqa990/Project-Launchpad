@@ -181,7 +181,7 @@ export interface Project {
   id: number;
   projectTitle?: string;
   description?: string;
-  status?: 'draft' | 'active' | 'completed' | 'cancelled';
+  status?: 'open' | 'active' | 'closed';
   budget?: number;
   deadline?: string;
   clientId?: string;
