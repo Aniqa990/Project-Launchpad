@@ -317,10 +317,6 @@ namespace ProjectLaunchpad.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "projects/{id:int}")] HttpRequestData req,
             int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
-
-            if (!isAuthorized)
-                return unauthorizedResponse!;
 
             var updatedProject = await req.ReadFromJsonAsync<Project>();
             updatedProject.Id = id;
