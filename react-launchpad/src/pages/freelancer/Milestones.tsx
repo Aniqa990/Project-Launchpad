@@ -5,9 +5,8 @@ import { Badge } from '../../components/ui/badge';
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { Calendar, DollarSign, Upload, MessageSquare, Send, CheckCircle, XCircle, Clock, Filter, Paperclip, X, Target } from 'lucide-react';
-import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable } from '../../apiendpoints';
+import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable, updateMilestone } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
 
 export function Milestones() {
   const { user, token } = useAuth();
@@ -144,10 +143,11 @@ export function Milestones() {
     const comment = comments[milestoneId] || '';
     // For simplicity, just join file names as a string
     await createDeliverable({
-      uploadFiles: files.map(f => f.name).join(','),
-      milestoneId: Number(milestoneId),
-      comment,
-      status: 'Submitted'
+      UploadFiles: files.map(f => f.name).join(','),
+      MilestoneId: Number(milestoneId),
+      ProjectId: Number(milestoneId),
+      Comment: comment,
+      Status: 'Submitted'
     });
     setExpandedMilestone(null);
     setUploadedFiles(prev => ({ ...prev, [milestoneId]: [] }));
@@ -166,10 +166,7 @@ export function Milestones() {
     }
     setStatusEdits(prev => ({ ...prev, [milestoneId]: newStatus }));
     try {
-      if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      }
-      await axios.put(`http://localhost:7053/api/updatemilestone/${milestoneId}`, {
+      await updateMilestone(Number(milestoneId), {
         ...milestone,
         Status: statusMap[newStatus as 'not-started' | 'in-progress' | 'completed']
       });
@@ -193,11 +190,7 @@ export function Milestones() {
   // Update milestone status API
   const updateMilestoneStatus = async (milestone: any, status: 'not-started' | 'in-progress' | 'completed') => {
     try {
-      if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        console.log('Using token for updateMilestoneStatus:', token);
-      }
-      await axios.put(`http://localhost:7053/api/updatemilestone/${milestone.Id}`, {
+      await updateMilestone(milestone.Id, {
         ...milestone,
         Status: statusMap[status] // send integer value for enum
       });
@@ -237,11 +230,8 @@ export function Milestones() {
       return;
     }
     try {
-      if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      }
       // 1. Create deliverable
-      await axios.post('http://localhost:7053/api/deliverables', {
+      await createDeliverable({
         UploadFiles: files.map(f => f.name).join(','),
         MilestoneId: milestoneId,
         ProjectId: projectId,
@@ -249,7 +239,7 @@ export function Milestones() {
         Status: 'submitted'
       });
       // 2. Update milestone status to completed
-      await axios.put(`http://localhost:7053/api/updatemilestone/${milestoneId}`, {
+      await updateMilestone(Number(milestoneId), {
         ...milestone,
         Status: statusMap['completed']
       });

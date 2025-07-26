@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getLogsByFreelancerId, getClientProjects, getProjectFreelancers } from '../../apiendpoints';
+import { getLogsByFreelancerId, getClientProjects, getFreelancerProjects } from '../../apiendpoints';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
@@ -34,7 +34,7 @@ interface Freelancer {
   Email: string;
 }
 
-const ClientHourlyLogViewer: React.FC = () => {
+export const ClientHourlyLogViewer: React.FC = () => {
   const { user } = useAuth();
   const [logs, setLogs] = useState<HourlyLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ const ClientHourlyLogViewer: React.FC = () => {
       
       setLoadingFreelancers(true);
       try {
-        const data = await getProjectFreelancers(Number(selectedProject));
+        const data = await getFreelancerProjects(Number(selectedProject));
         setProjectFreelancers(data);
       } catch (e) {
         setProjectFreelancers([]);
@@ -383,5 +383,3 @@ const ClientHourlyLogViewer: React.FC = () => {
     </div>
   );
 };
-
-export default ClientHourlyLogViewer; 

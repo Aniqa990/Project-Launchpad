@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import JaaSMeeting from '../client/JaaSMeeting';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
+import { getNotifications, getMeetingDetails, uploadMeetingAudio } from '../../apiendpoints';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../components/ui/select';
 import { Button } from '../../components/ui/button';
 
@@ -47,11 +47,11 @@ export default function Meetings() {
   // Fetch notifications for freelancer
   useEffect(() => {
     if (!user?.id) return;
-    axios.get(`http://localhost:7071/api/notifications/${user.id}`)
-      .then(res => {
-        setNotifications(res.data);
-        if (res.data && res.data.length > 0) {
-          setSelectedNotificationId(String(res.data[0].id));
+    getNotifications(user.id)
+      .then(data => {
+        setNotifications(data);
+        if (data && data.length > 0) {
+          setSelectedNotificationId(String(data[0].id));
         }
       })
       .catch(() => setError('Failed to load notifications.'));
@@ -65,10 +65,10 @@ export default function Meetings() {
     }
     const notif = notifications.find((n: any) => String(n.id) === selectedNotificationId);
     if (notif && notif.relatedMeetingId) {
-      axios.get(`http://localhost:7071/api/meetings/${notif.relatedMeetingId}/details`)
-        .then(res => {
-          setMeeting(res.data);
-          setMeetingId(res.data.meetingId || res.data.Id || res.data.id);
+      getMeetingDetails(notif.relatedMeetingId)
+        .then(data => {
+          setMeeting(data);
+          setMeetingId(data.meetingId || data.Id || data.id);
         })
         .catch(() => setError('Failed to load meeting details.'));
     } else {
@@ -271,10 +271,7 @@ export default function Meetings() {
       const formData = new FormData();
       formData.append('userId', String(user.id));
       formData.append('audioUrl', transcriptUrl);
-      const backendRes = await axios.post(
-        `http://localhost:7071/api/meetings/${meetingId}/upload-audio`,
-        formData
-      );
+      const backendRes = await uploadMeetingAudio(meetingId, formData);
       setUploadTranscriptSuccess('Transcript uploaded and saved!');
     } catch (err: any) {
       setUploadTranscriptError(err?.response?.data || err.message || 'Failed to upload transcript.');

@@ -7,15 +7,18 @@ import {
   Plus, 
   Clock, 
   Calendar, 
+  MessageCircle,
+  Paperclip,
+  Edit3,
+  Trash2,
   CheckCircle,
   PlayCircle,
   AlertCircle
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectDetails } from '../../apiendpoints';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectFreelancers, getProjectDetails, getTasksByProjectId } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -691,9 +694,9 @@ export function KanbanBoard() {
       setLoadingTasks(true);
       setMessage('');
       try {
-        const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
-        setTasks(res.data);
-        if (res.data.length === 0) {
+        const data = await getTasksByProjectId(selectedProjectId!);
+        setTasks(data);
+        if (data.length === 0) {
           setMessage('No tasks for this project yet.');
         }
       } catch (e) {
@@ -714,7 +717,7 @@ export function KanbanBoard() {
     async function fetchProjectFreelancers() {
       setLoadingProjectFreelancers(true);
       try {
-        const freelancersData = await getFreelancerProjects(selectedProjectId!);
+        const freelancersData = await getProjectFreelancers(selectedProjectId!);
         setProjectFreelancers(freelancersData);
       } catch (e) {
         console.error('Could not fetch project freelancers:', e);
@@ -777,9 +780,9 @@ export function KanbanBoard() {
     setLoadingTasks(true);
     setMessage('');
     try {
-      const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
-      setTasks(res.data);
-      if (res.data.length === 0) {
+      const data = await getTasksByProjectId(selectedProjectId!);
+      setTasks(data);
+      if (data.length === 0) {
         setMessage('No tasks for this project yet.');
       }
     } catch (e) {

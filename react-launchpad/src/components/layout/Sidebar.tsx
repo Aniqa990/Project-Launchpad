@@ -31,7 +31,7 @@ export function Sidebar() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client/dashboard' },
     { icon: Plus, label: 'Create Project', path: '/client/create-project' },
     { icon: Folder, label: 'My Projects', path: '/client/projects' },
-    { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
+    // { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
     { icon: Kanban, label: 'View Tasks', path: '/client/kanban' },
     { icon: Users, label: 'View Project Requests', path: '/client/project-requests' },
     { icon: Clock, label: 'Time Logs', path: '/client/hourly-logs' },
