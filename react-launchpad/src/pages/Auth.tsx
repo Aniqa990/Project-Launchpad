@@ -12,6 +12,81 @@ interface AuthProps {
   mode: "login" | "signup";
 }
 
+// Password validation function
+const validatePassword = (password: string) => {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push("At least 8 characters");
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push("At least one uppercase letter");
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push("At least one lowercase letter");
+  }
+  if (!/\d/.test(password)) {
+    errors.push("At least one number");
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    errors.push("At least one special character");
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+// Email validation function
+const validateEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Phone number validation function
+const validatePhoneNumber = (phoneNo: string) => {
+  // Remove all non-digit characters
+  const digitsOnly = phoneNo.replace(/\D/g, '');
+  
+  // For Pakistan (+92), the total length should be 12 digits (92 + 10 local digits)
+  // Or if it's just the local number without country code, it should be 10 digits
+  if (digitsOnly.length === 12 && digitsOnly.startsWith('92')) {
+    // Full number with country code: 92XXXXXXXXXX
+    const localNumber = digitsOnly.substring(2); // Remove 92
+    if (localNumber.length === 10) {
+      return {
+        isValid: true,
+        error: ""
+      };
+    }
+  } else if (digitsOnly.length === 10) {
+    // Just local number: XXXXXXXXXX
+    return {
+      isValid: true,
+      error: ""
+    };
+  }
+  
+  // If we reach here, the number is invalid
+  if (digitsOnly.length < 10) {
+    return {
+      isValid: false,
+      error: "Phone number must be at least 10 digits"
+    };
+  } else if (digitsOnly.length > 12) {
+    return {
+      isValid: false,
+      error: "Phone number is too long"
+    };
+  } else {
+    return {
+      isValid: false,
+      error: "Please enter a valid 10-digit phone number"
+    };
+  }
+};
+
 export function Auth({ mode }: AuthProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -32,6 +107,17 @@ export function Auth({ mode }: AuthProps) {
   const [profilePicUploading, setProfilePicUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [passwordValidation, setPasswordValidation] = useState({
+    isValid: false,
+    errors: [] as string[]
+  });
+  const [phoneValidation, setPhoneValidation] = useState({
+    isValid: false,
+    error: ""
+  });
+  const [showPasswordValidation, setShowPasswordValidation] = useState(false);
+
+
   const { login, signup, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
@@ -49,11 +135,39 @@ export function Auth({ mode }: AuthProps) {
   }, [isAuthenticated, user, navigate, mode]);
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
+    if (step === 1) {
+      // Step 1: Role selection - always valid
+      setStep(step + 1);
+    } else if (step === 2) {
+      // Step 2: Basic information - validate required fields, email, and phone
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.gender) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+      
+      if (!validateEmail(formData.email)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
+      
+      if (!phoneValidation.isValid) {
+        toast.error("Please enter a valid phone number");
+        return;
+      }
+      
+      setStep(step + 1);
+    }
   };
+
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
+  };
+
+  // Email validation function
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,15 +183,26 @@ export function Auth({ mode }: AuthProps) {
         setLoading(false);
       }
     } else {
-      // For signup, validate passwords and submit directly after step 3
+      // For signup, validate all fields
+      const passwordValidationResult = validatePassword(formData.password);
+      const phoneValidationResult = validatePhoneNumber(formData.phoneNo);
+      
+      if (!passwordValidationResult.isValid) {
+        toast.error("Please fix password requirements");
+        setShowPasswordValidation(true);
+        return;
+      }
+      
+      if (!phoneValidationResult.isValid) {
+        toast.error(phoneValidationResult.error);
+        return;
+      }
+      
       if (formData.password !== formData.confirmPassword) {
         toast.error('Passwords do not match');
         return;
       }
-      if (!formData.phoneNo) {
-        toast.error('Phone number is required');
-        return;
-      }
+      
       setIsLoading(true);
       try {
         await signup(formData);
@@ -90,13 +215,29 @@ export function Auth({ mode }: AuthProps) {
     }
   };
 
-  const handleChange = (
+   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
+    
+    // Validate password in real-time
+    if (name === 'password') {
+      const validation = validatePassword(value);
+      setPasswordValidation(validation);
+      if (value.length > 0) {
+        setShowPasswordValidation(true);
+      }
+    }
+  };
+
+  const handlePhoneChange = (phoneNo: string) => {
+    setFormData(prev => ({ ...prev, phoneNo }));
+    const validation = validatePhoneNumber(phoneNo);
+    setPhoneValidation(validation);
   };
 
   const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -387,7 +528,11 @@ export function Auth({ mode }: AuthProps) {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                        formData.email && !validateEmail(formData.email) 
+                          ? 'border-red-300 focus:ring-red-500' 
+                          : 'border-gray-300'
+                      }`}
                       placeholder="Enter your email"
                     />
                   </div>
@@ -398,12 +543,15 @@ export function Auth({ mode }: AuthProps) {
                   <PhoneInput
                     country={'pk'}
                     value={formData.phoneNo}
-                    onChange={(phoneNo) => setFormData(prev => ({ ...prev, phoneNo }))}
+                    onChange={handlePhoneChange}
+                    enableAreaCodes={true}
+                    disableCountryCode={false}
+                    countryCodeEditable={false}
                     inputStyle={{
                       width: '100%',
                       paddingLeft: '48px',
                       borderRadius: '0.75rem',
-                      border: '1px solid #D1D5DB',
+                      border: phoneValidation.error ? '1px solid #EF4444' : '1px solid #D1D5DB',
                       height: '48px'
                     }}
                     buttonStyle={{
@@ -412,6 +560,18 @@ export function Auth({ mode }: AuthProps) {
                     }}
                     inputClass="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
+                  {phoneValidation.error && (
+                    <p className="text-red-500 text-sm mt-1 flex items-center">
+                      <span className="mr-1">⚠</span>
+                      {phoneValidation.error}
+                    </p>
+                  )}
+                  {formData.phoneNo && phoneValidation.isValid && (
+                    <p className="text-green-500 text-sm mt-1 flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Valid phone number
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -468,7 +628,13 @@ export function Auth({ mode }: AuthProps) {
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                        showPasswordValidation 
+                          ? passwordValidation.isValid 
+                            ? 'border-green-500' 
+                            : 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
                       placeholder="Create a password"
                     />
                     <button
@@ -479,6 +645,27 @@ export function Auth({ mode }: AuthProps) {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  
+                  {/* Password validation feedback */}
+                  {showPasswordValidation && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Password requirements:</p>
+                      <ul className="space-y-1">
+                        {passwordValidation.errors.map((error, index) => (
+                          <li key={index} className="text-sm text-red-500 flex items-center">
+                            <span className="mr-2">✗</span>
+                            {error}
+                          </li>
+                        ))}
+                        {passwordValidation.isValid && (
+                          <li className="text-sm text-green-500 flex items-center">
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Password meets all requirements
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div>

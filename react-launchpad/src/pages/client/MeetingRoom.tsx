@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import JaaSMeeting from './JaaSMeeting';
 import { useAuth } from '../../contexts/AuthContext';
-import { getClientProjects } from '../../apiendpoints';
-import axios from 'axios';
+import { getClientProjects, getProjectFreelancers, startMeeting, uploadMeetingAudio } from '../../apiendpoints';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../components/ui/select';
 import { Button } from '../../components/ui/button';
 import type { FreelancerProfile } from '../../types';
@@ -70,9 +69,9 @@ export default function Meetings() {
     }
     setLoadingFreelancers(true);
     setError(null);
-    axios.get(`http://localhost:7053/api/projects/${selectedProjectId}/freelancers`)
-      .then((res) => {
-        setFreelancers(res.data);
+    getProjectFreelancers(Number(selectedProjectId))
+      .then((data) => {
+        setFreelancers(data);
       })
       .catch(() => setError('Failed to load freelancers'))
       .finally(() => setLoadingFreelancers(false));
@@ -250,7 +249,7 @@ export default function Meetings() {
   };
 
   const handleStartMeeting = async () => {
-    if (!selectedProjectId || !user) return;
+    if (!selectedProjectId || !user || !user.id) return;
     setStartingMeeting(true);
     setError(null);
     try {
@@ -275,9 +274,9 @@ export default function Meetings() {
         createdBy: user.id,
         participants,
       };
-      const res = await axios.post('http://localhost:7053/api/meetings/start', payload);
-      setMeetingRoomId(res.data.roomId);
-      setMeetingId(res.data.meetingId); // Save integer meeting ID
+      const res = await startMeeting(payload);
+      setMeetingRoomId(res.roomId);
+      setMeetingId(res.meetingId); // Save integer meeting ID
       setShowMeeting(true);
       setMeetingActive(true);
       await handleStartRecording(); // Start recording automatically
@@ -320,10 +319,7 @@ export default function Meetings() {
       const formData = new FormData();
       formData.append('userId', String(user.id));
       formData.append('audioUrl', transcriptUrl);
-      const backendRes = await axios.post(
-        `http://localhost:7053/api/meetings/${meetingId}/upload-audio`,
-        formData
-      );
+      const backendRes = await uploadMeetingAudio(meetingId, formData);
       setUploadTranscriptSuccess('Transcript uploaded and saved!');
     } catch (err: any) {
       setUploadTranscriptError(err?.response?.data || err.message || 'Failed to upload transcript.');

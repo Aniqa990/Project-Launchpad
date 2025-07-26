@@ -21,7 +21,7 @@ import { Project } from '@/types';
 export function ClientProjects() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'completed' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'active' | 'closed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,10 +73,9 @@ export function ClientProjects() {
   const getStatusCounts = () => {
     return {
       all: projects.length,
-      draft: projects.filter(p => p.status === 'draft').length,
+      open: projects.filter(p => p.status === 'open').length,
       active: projects.filter(p => p.status === 'active').length,
-      completed: projects.filter(p => p.status === 'completed').length,
-      cancelled: projects.filter(p => p.status === 'cancelled').length
+      closed: projects.filter(p => p.status === 'closed').length,
     };
   };
 
@@ -133,7 +132,7 @@ export function ClientProjects() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Open</p>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{statusCounts.draft}</p>
+              <p className="text-2xl font-bold text-yellow-600 mt-1">{statusCounts.open}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-white" />
@@ -156,8 +155,8 @@ export function ClientProjects() {
         <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">{statusCounts.completed}</p>
+                <p className="text-sm font-medium text-gray-600">closed</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">{statusCounts.closed}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-white" />
@@ -178,7 +177,7 @@ export function ClientProjects() {
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Status Filter Tabs */}
             <div className="flex space-x-2">
-              {(['all', 'draft', 'active', 'completed', 'cancelled'] as const).map((status) => (
+              {(['all', 'open', 'active', 'closed'] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
@@ -224,10 +223,10 @@ export function ClientProjects() {
                     <div className="flex items-center space-x-3 mb-2">
                       <h4 className="font-semibold text-gray-900">{project.projectTitle}</h4>
                       <Badge variant={
-                        project.status === 'draft' ? 'warning' :
+                        project.status === 'open' ? 'warning' :
                         project.status === 'active' ? 'info' :
-                        project.status === 'completed' ? 'success' :
-                        project.status === 'cancelled' ? 'destructive' : 'default'
+                        project.status === 'closed' ? 'success' :
+                        project.status === '' ? 'destructive' : 'default'
                       }>
                         {project.status}
                       </Badge>
@@ -264,16 +263,6 @@ export function ClientProjects() {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col gap-2 ml-4">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      // onClick={() => viewDetails(project.id)}
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      View Details
-                    </Button>
-                  </div>
                 </div>
               </div>
             ))}

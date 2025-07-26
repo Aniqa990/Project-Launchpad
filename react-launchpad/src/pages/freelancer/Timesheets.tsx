@@ -44,12 +44,13 @@ const FreelancerTimesheets: React.FC = () => {
       try {
         if (typeof user?.id !== 'number') return;
         const data = await getFreelancerProjects(user.id);
+        console.log(data);
         setProjects(
           data.map((p: any) => ({
-            id: p.Id,
-            title: p.Title,
-            status: p.Status,
-            hourlyRate: p.HourlyRate || 0,
+            id: p.id,
+            title: p.title,
+            status: p.status,
+            hourlyRate: p.hourlyRate || 0,
           }))
         );
       } catch {

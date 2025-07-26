@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { CheckSquare, X, Clock, MessageSquare, User, Calendar, Filter, Search } from 'lucide-react';
-import { getTimesheets, approveTimesheet, rejectTimesheet } from '../../apiendpoints';
+import { getTimesheets, approveTimesheet, rejectTimesheet, getProjectById } from '../../apiendpoints';
 
 interface TimesheetEntry {
   id: string;
@@ -24,6 +24,19 @@ interface TimesheetEntry {
     date: string;
   }[];
   submittedAt: string;
+}
+
+interface Project {
+  Id: number;
+  ProjectTitle: string;
+  Description: string;
+  Status: string;
+  Budget: number;
+  Deadline: string;
+  CategoryOrDomain: string;
+  PaymentType: string;
+  NumberOfFreelancers: number;
+  RequiredSkills: string;
 }
 
 // Helper to get week ending date (Sunday) for a given date string
@@ -50,11 +63,13 @@ function groupTimesheets(flat: any[]): TimesheetEntry[] {
   const grouped: { [key: string]: TimesheetEntry } = {};
   flat.forEach(entry => {
     const weekEnding = getWeekEnding(entry.DateOfWork);
-    const key = `${entry.FreelancerName}|${entry.ProjectName}|${weekEnding}`;
+    // Use FreelancerId if FreelancerName is not available
+    const freelancerName = entry.FreelancerName || `Freelancer ${entry.FreelancerId}`;
+    const key = `${freelancerName}|${entry.ProjectName}|${weekEnding}`;
     if (!grouped[key]) {
       grouped[key] = {
         id: key,
-        freelancerName: entry.FreelancerName,
+        freelancerName: freelancerName,
         freelancerAvatar: '', 
         projectName: entry.ProjectName,
         weekEnding,
@@ -94,28 +109,61 @@ const TimesheetApproval: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [timesheets, setTimesheets] = useState<TimesheetEntry[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    getTimesheets()
-      .then((data) => {
-        setTimesheets(groupTimesheets(data));
+    
+    const fetchData = async () => {
+      try {
+        // If projectId is provided, fetch the specific project first
+        if (projectId) {
+          const projectData = await getProjectById(projectId);
+          console.log(projectData);
+          setProject(projectData);
+        }
+        
+        // Fetch all timesheets
+        const timesheetData = await getTimesheets();
+        
+        // Filter timesheets by projectId if it's provided in the URL
+        let filteredData = timesheetData;
+        if (projectId) {
+          filteredData = timesheetData.filter((timesheet: any) => timesheet.ProjectId === parseInt(projectId));
+        }
+        
+        setTimesheets(groupTimesheets(filteredData));
         setError(null);
-      })
-      .catch(() => {
-        setError('Failed to fetch timesheets.');
-      })
-      .finally(() => {
+      } catch (err) {
+        setError('Failed to fetch data.');
+        console.error('Error fetching data:', err);
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+    
+    fetchData();
+  }, [projectId]);
 
-  const projects = ['E-commerce Website', 'Mobile App Backend', 'Marketing Dashboard'];
+  // Get unique projects from the actual timesheet data
+  const projects = [...new Set(timesheets.map(t => t.projectName))];
+  
+  // If we have a specific project, only show that project in the dropdown
+  const availableProjects = projectId && project ? [project.ProjectTitle] : projects;
+
+  // Set the selected project to the specific project when projectId is provided
+  useEffect(() => {
+    if (projectId && project && timesheets.length > 0) {
+      // Set the selected project to the project title from the fetched project data
+      setSelectedProject(project.ProjectTitle);
+    }
+  }, [projectId, project, timesheets]);
 
   const filteredTimesheets = timesheets.filter(timesheet => {
+    // If projectId is provided in URL, only show timesheets for that project
     const matchesProject = selectedProject === 'all' || timesheet.projectName === selectedProject;
     const matchesFreelancer = selectedFreelancer === 'all' || timesheet.freelancerName === selectedFreelancer;
     const matchesStatus = selectedStatus === 'all' || timesheet.status.toLowerCase() === selectedStatus;
@@ -181,7 +229,29 @@ const TimesheetApproval: React.FC = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Timesheet Approval</h1>
-        <p className="text-gray-600 mt-1">Review and approve freelancer timesheets</p>
+        <p className="text-gray-600 mt-1">
+          {project 
+            ? `Review and approve freelancer timesheets for: ${project.ProjectTitle}`
+            : projectId 
+            ? `Review and approve freelancer timesheets for Project ID: ${projectId}`
+            : 'Review and approve freelancer timesheets'
+          }
+        </p>
+        {project && (
+          <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-gray-700">Category:</span> {project.CategoryOrDomain}
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Payment Type:</span> {project.PaymentType}
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Budget:</span> ${project.Budget?.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -264,10 +334,17 @@ const TimesheetApproval: React.FC = () => {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="border rounded px-2 py-1">
-              <option value="all">All Projects</option>
-              {projects.map(project => (
-                <option key={project} value={project}>{project}</option>
+            <select 
+              value={selectedProject} 
+              onChange={e => setSelectedProject(e.target.value)} 
+              className="border rounded px-2 py-1"
+              disabled={!!projectId}
+            >
+              <option value="all">
+                {projectId ? (project?.ProjectTitle || 'Loading...') : 'All Projects'}
+              </option>
+              {availableProjects.map(projectName => (
+                <option key={projectName} value={projectName}>{projectName}</option>
               ))}
             </select>
 
@@ -308,7 +385,9 @@ const TimesheetApproval: React.FC = () => {
       <div className="space-y-6">
         {loading && (
           <div className="text-center py-12">
-            <p className="text-gray-600">Loading timesheets...</p>
+            <p className="text-gray-600">
+              {projectId ? 'Loading project and timesheets...' : 'Loading timesheets...'}
+            </p>
           </div>
         )}
         {error && (
@@ -329,11 +408,9 @@ const TimesheetApproval: React.FC = () => {
             <div className="border-b border-gray-100 p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center space-x-4">
-                  <img 
-                    src={timesheet.freelancerAvatar} 
-                    alt={timesheet.freelancerName}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
+                    {timesheet.freelancerName.charAt(0).toUpperCase()}
+                  </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{timesheet.freelancerName}</h3>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-sm text-gray-600">
@@ -373,140 +450,31 @@ const TimesheetApproval: React.FC = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-semibold text-gray-900">Task Breakdown</h4>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedTimesheet(selectedTimesheet === timesheet.id ? null : timesheet.id)}
-                >
-                  {selectedTimesheet === timesheet.id ? 'Hide Details' : 'View Details'}
-                </Button>
-              </div>
-
-              {/* Task Summary */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {timesheet.tasks.slice(0, 3).map((task) => (
-                  <Card key={task.id} className="p-4 bg-gray-50">
-                    <div className="flex justify-between items-start mb-2">
-                      <h5 className="font-medium text-gray-900 text-sm">{task.name}</h5>
-                      <span className="text-sm font-semibold text-gray-700">{formatHours(task.hours)}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 line-clamp-2">{task.description}</p>
-                    <p className="text-xs text-gray-500 mt-1">{new Date(task.date).toLocaleDateString()}</p>
-                  </Card>
-                ))}
-                {timesheet.tasks.length > 3 && (
-                  <Card className="p-4 bg-gray-50 flex items-center justify-center">
-                    <span className="text-sm text-gray-600">+{timesheet.tasks.length - 3} more tasks</span>
-                  </Card>
-                )}
               </div>
 
               {/* Detailed Task List */}
-              {selectedTimesheet === timesheet.id && (
-                <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
-                  {/* Desktop Table */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Task</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {timesheet.tasks.map((task) => (
-                          <tr key={task.id}>
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{task.name}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{new Date(task.date).toLocaleDateString()}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900">{formatHours(task.hours)}</td>
-                            <td className="px-4 py-3 text-sm text-gray-600">{task.description}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile Cards */}
-                  <div className="sm:hidden divide-y divide-gray-200">
+              <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Task</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
                     {timesheet.tasks.map((task) => (
-                      <div key={task.id} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium text-gray-900">{task.name}</h5>
-                          <span className="text-sm font-semibold text-gray-700">{formatHours(task.hours)}</span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{task.description}</p>
-                        <p className="text-xs text-gray-500">{new Date(task.date).toLocaleDateString()}</p>
-                      </div>
+                      <tr key={task.id}>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{task.name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{new Date(task.date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{formatHours(task.hours)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{task.description}</td>
+                      </tr>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              {timesheet.status === 'Pending' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Comments (optional)
-                    </label>
-                    <textarea
-                      value={comments[timesheet.id] || ''}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComments(prev => ({ ...prev, [timesheet.id]: e.target.value }))}
-                      rows={3}
-                      placeholder="Add any comments or feedback..."
-                      className="border rounded px-2 py-1 w-full"
-                    />
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button
-                      onClick={() => handleApprove(timesheet.id)}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      disabled={actionLoading === timesheet.id + '-approve' || actionLoading === timesheet.id + '-reject'}
-                    >
-                      {actionLoading === timesheet.id + '-approve' ? (
-                        <span className="animate-spin mr-2">⏳</span>
-                      ) : (
-                        <CheckSquare className="w-4 h-4 mr-2" />
-                      )}
-                      Approve Timesheet
-                    </Button>
-                    <Button
-                      onClick={() => handleReject(timesheet.id)}
-                      variant="outline"
-                      className="flex-1 border-red-300 text-red-700 hover:bg-red-50"
-                      disabled={actionLoading === timesheet.id + '-approve' || actionLoading === timesheet.id + '-reject'}
-                    >
-                      {actionLoading === timesheet.id + '-reject' ? (
-                        <span className="animate-spin mr-2">⏳</span>
-                      ) : (
-                        <X className="w-4 h-4 mr-2" />
-                      )}
-                      Reject Timesheet
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {timesheet.status === 'Approved' && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <CheckSquare className="w-5 h-5 text-green-600 mr-2" />
-                    <span className="text-green-800 font-medium">Timesheet approved on {new Date(timesheet.submittedAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              )}
-
-              {timesheet.status === 'Rejected' && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <X className="w-5 h-5 text-red-600 mr-2" />
-                    <span className="text-red-800 font-medium">Timesheet rejected</span>
-                  </div>
-                </div>
-              )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </Card>
         ))}

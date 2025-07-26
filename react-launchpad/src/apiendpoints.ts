@@ -215,7 +215,6 @@ export const updateMilestone = async (id: number, update: {
   dueDate: string;
   amount: number;
   freelancerComments?: string;
-  submittedFileUrls?: string;
   submissionDate?: string;
   status?: number;
 }): Promise<any> => {
@@ -230,10 +229,11 @@ export const getDeliverables = async (): Promise<Deliverable[]> => {
 };
 
 export const createDeliverable = async (deliverable: {
-  uploadFiles: string;
-  milestoneId: number;
-  comment: string;
-  status: string;
+  UploadFiles: string;
+  MilestoneId: number;
+  ProjectId: number;
+  Comment: string;
+  Status: string;
 }): Promise<any> => {
   const response = await api.post('/deliverables', deliverable);
   return response.data;
@@ -529,6 +529,88 @@ export async function getUnallocatedResources() {
   const { data } = await api.get('/platform/unallocated-resources');
   return data;
 }
+
+// Get logs by freelancer ID
+export const getLogsByFreelancerId = async (freelancerId: number): Promise<any[]> => {
+  try {
+    const response = await api.get(`/logs/freelancer/${freelancerId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch logs by freelancer');
+  }
+};
+
+// Get tasks by project ID
+export const getTasksByProjectId = async (projectId: number): Promise<KanbanTask[]> => {
+  try {
+    const response = await api.get(`/tasks/project/${projectId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch tasks by project');
+  }
+};
+
+// Tally return type from database to see if it matches any existing interface
+export const getProjectFreelancers = async (projectId: number): Promise<any[]> => {
+  try {
+    const response = await api.get(`/projects/${projectId}/freelancers`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project freelancers');
+  }
+};
+
+// Get project details
+export const getProjectDetails = async (projectId: number): Promise<any> => {
+  try {
+    const response = await api.get(`/projects/${projectId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project details');
+  }
+};
+
+// Get meeting details
+export const getMeetingDetails = async (meetingId: number): Promise<any> => {
+  try {
+    const response = await api.get(`/meetings/${meetingId}/details`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch meeting details');
+  }
+};
+
+// Start meeting
+export const startMeeting = async (meetingData: {
+  projectId: number;
+  title: string;
+  description: string;
+  agenda: string;
+  createdBy: number;
+  participants: any[];
+}): Promise<any> => {
+  try {
+    const response = await api.post('/meetings/start', meetingData);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to start meeting');
+  }
+};
+
+// Upload meeting audio
+export const uploadMeetingAudio = async (meetingId: number, formData: FormData): Promise<any> => {
+  try {
+    const response = await api.post(`/meetings/${meetingId}/upload-audio`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to upload meeting audio');
+  }
+};
+ 
 
 
 

@@ -12,6 +12,7 @@ import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
 import { ClientPayments } from './pages/client/Payments';
 import { ClientProjectRequests } from './pages/client/Requests';
+import { ClientHourlyLogViewer } from './pages/client/HourlyLog';
 import {FreelancerSuggestions} from './pages/client/FreelancerSuggestions';
 import { ClientMessages } from './pages/client/Messages';
 import MilestoneTracker from './pages/client/MilestoneTracker';
@@ -134,6 +135,7 @@ function AppRoutes() {
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
         <Route path="meetings" element={<MeetingRoom />} />
+        <Route path="hourly-logs" element={<ClientHourlyLogViewer />} />
       </Route>
       
       <Route path="/freelancer/*" element={
