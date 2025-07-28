@@ -15,7 +15,6 @@ import { ClientProjectRequests } from './pages/client/Requests';
 import { ClientHourlyLogViewer } from './pages/client/HourlyLog';
 import {FreelancerSuggestions} from './pages/client/FreelancerSuggestions';
 import { ClientMessages } from './pages/client/Messages';
-import MilestoneTracker from './pages/client/MilestoneTracker';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
@@ -130,7 +129,6 @@ const AppRoutes = () => {
         <Route path="freelancer-suggestions" element={<FreelancerSuggestions />} />
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
-        <Route path="milestones" element={<MilestoneTracker />} />
         <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />

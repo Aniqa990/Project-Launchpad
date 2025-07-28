@@ -74,6 +74,7 @@ export const getProjectRequests = async(freelancerId: number) => {
 
 export const sendProjectRequest = async (projectId: number, freelancerId: number) => {
   try {
+    console.log('Sending project request:', { ProjectId: projectId, FreelancerId: freelancerId });
     const response = await api.post('/projects/requests', {
       ProjectId: projectId,
       FreelancerId: freelancerId
@@ -84,9 +85,9 @@ export const sendProjectRequest = async (projectId: number, freelancerId: number
   }
 };
 
-export const updateProjectRequestStatus = async (projectId: number, status: string, freelancerId?: number) => {
+export const updateProjectRequestStatus = async (ProjectId: number, Status: string, FreelancerId?: number) => {
   try {
-    const response = await api.patch(`/requests/${freelancerId}/${projectId}`, { status });
+    const response = await api.patch(`/requests/${FreelancerId}/${ProjectId}`, { Status });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update request status');

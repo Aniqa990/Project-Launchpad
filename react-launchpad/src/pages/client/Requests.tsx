@@ -30,18 +30,20 @@ export function ClientProjectRequests() {
           console.log(projectRequests);
           if (Array.isArray(projectRequests) && projectRequests.length > 0) {
             for (const req of projectRequests) {
-              if (req.Status === 'pending' || req.Status === 'rejected') {
-                try {
-                  const freelancer = await getFreelancerById(Number(req.FreelancerId));
-                  console.log(freelancer);
-                  allRequests.push({
-                    ...req,
-                    projectTitle: project.projectTitle,
-                    projectDescription: project.description,
-                    freelancerName: `${freelancer.firstName} ${freelancer.lastName}`,
-                    freelancerEmail: freelancer.email,
-                  });
-                } catch {}
+              if (req.status === 'pending' || req.status === 'rejected') {
+                                  try {
+                    const freelancer = await getFreelancerById(Number(req.freelancerId));
+                    console.log(freelancer);
+                    allRequests.push({
+                      ...req,
+                      projectTitle: project.projectTitle,
+                      projectDescription: project.description,
+                      freelancerName: `${freelancer.firstName} ${freelancer.lastName}`,
+                      freelancerEmail: freelancer.email,
+                    });
+                  } catch (error) {
+                    console.error('Error fetching freelancer details for ID:', req.freelancerId, error);
+                  }
               }
             }
           }
@@ -67,8 +69,8 @@ export function ClientProjectRequests() {
     }
   };
 
-  const pendingRequests = requests.filter((req) => req.Status === 'pending');
-  const rejectedRequests = requests.filter((req) => req.Status === 'rejected');
+  const pendingRequests = requests.filter((req) => req.status === 'pending');
+  const rejectedRequests = requests.filter((req) => req.status === 'rejected');
 
   const handleReplaceFreelancerRequest = async (projectId: number, freelancerId: number) => {
     setReplacingRequestId(projectId);
@@ -125,8 +127,8 @@ export function ClientProjectRequests() {
             Pending Requests ({pendingRequests.length})
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pendingRequests.map((request) => (
-              <Card key={request.ProjectId + '-' + request.FreelancerId} className="transition-shadow hover:shadow-md cursor-pointer">
+                         {pendingRequests.map((request) => (
+               <Card key={request.projectId + '-' + request.freelancerId} className="transition-shadow hover:shadow-md cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-3">
@@ -137,8 +139,8 @@ export function ClientProjectRequests() {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Hired for: <span className="text-blue-600">{request.projectTitle}</span></h3>
                   </div>
-                  <Badge variant={getStatusColor(request.Status) as any}>
-                    {request.Status}
+                  <Badge variant={getStatusColor(request.status) as any}>
+                    {request.status}
                   </Badge>
                 </div>
                 <div className="text-gray-700 mb-2">{request.projectDescription}</div>
@@ -154,8 +156,8 @@ export function ClientProjectRequests() {
             Rejected Requests ({rejectedRequests.length})
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rejectedRequests.map((request) => (
-              <Card key={request.ProjectId + '-' + request.FreelancerId} className="transition-shadow hover:shadow-md cursor-pointer">
+                         {rejectedRequests.map((request) => (
+               <Card key={request.projectId + '-' + request.freelancerId} className="transition-shadow hover:shadow-md cursor-pointer">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-3">
@@ -166,18 +168,18 @@ export function ClientProjectRequests() {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Hired for: <span className="text-blue-600">{request.projectTitle}</span></h3>
                   </div>
-                  <Badge variant={getStatusColor(request.Status) as any}>
-                    {request.Status}
+                  <Badge variant={getStatusColor(request.status) as any}>
+                    {request.status}
                   </Badge>
                 </div>
                 <div className="text-gray-700 mb-2">{request.projectDescription}</div>
                 <div className="flex justify-end mt-4">
                   <Button
                     variant="primary"
-                    disabled={replacingRequestId === request.ProjectId}
-                    onClick={() => handleReplaceFreelancerRequest(request.ProjectId, request.FreelancerId)}
+                    disabled={replacingRequestId === request.projectId}
+                    onClick={() => handleReplaceFreelancerRequest(request.projectId, request.freelancerId)}
                   >
-                    {replacingRequestId === request.ProjectId ? 'Processing...' : 'Select Another Freelancer'}
+                    {replacingRequestId === request.projectId ? 'Processing...' : 'Select Another Freelancer'}
                   </Button>
                 </div>
               </Card>

@@ -25,7 +25,7 @@ import PaymentForm from './PaymentForm'; // Added import for PaymentForm
 export function ClientPayments() {
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'paid'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'notStarted' |'inProgress' | 'completed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [payingMilestone, setPayingMilestone] = useState<any>(null);
@@ -82,8 +82,8 @@ export function ClientPayments() {
     const matchesSearch = (milestone.Title || milestone.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     let matchesStatus = true;
     if (statusFilter !== 'all') {
-      if (statusFilter === 'pending') matchesStatus = (milestone.Status || milestone.status) === 0;
-      else if (statusFilter === 'in-progress') matchesStatus = (milestone.Status || milestone.status) === 1;
+      if (statusFilter === 'notStarted') matchesStatus = (milestone.Status || milestone.status) === 0;
+      else if (statusFilter === 'inProgress') matchesStatus = (milestone.Status || milestone.status) === 1;
       else if (statusFilter === 'completed') matchesStatus = (milestone.Status || milestone.status) === 2;
       else matchesStatus = true;
     }

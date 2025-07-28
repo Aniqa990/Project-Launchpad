@@ -126,7 +126,7 @@ export interface Milestone {
   isApproved?: boolean;
   handoverStatus?: string;
   projectId: number;
-  status: 'pending' | 'submitted' | string;
+  status: 'notStarted' | 'inProgress' | 'completed';
   deliverables: string[];
 }
 

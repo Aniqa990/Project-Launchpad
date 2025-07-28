@@ -42,7 +42,7 @@ export function CreateProject() {
     CloudinaryUrl: '', // Add CloudinaryUrl to projectData
   });
   const [skillInput, setSkillInput] = useState('');
-  const [selectedFreelancers, setSelectedFreelancers] = useState<string[]>([]);
+  const [selectedFreelancers, setSelectedFreelancers] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   // Milestone fields
   const [milestoneInput, setMilestoneInput] = useState({
@@ -316,7 +316,7 @@ export function CreateProject() {
     }
   };
 
-  const toggleFreelancerSelection = (freelancerId: string) => {
+  const toggleFreelancerSelection = (freelancerId: number) => {
     setSelectedFreelancers(prev => 
       prev.includes(freelancerId) 
         ? prev.filter(id => id !== freelancerId)
@@ -324,7 +324,7 @@ export function CreateProject() {
     );
   };
 
-  const handleSelectFreelancer = (id: string) => {
+  const handleSelectFreelancer = (id: number) => {
     setSelectedFreelancers(prev =>
       prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
     );
@@ -332,11 +332,22 @@ export function CreateProject() {
 
   const handleSendRequests = async () => {
     if (!createdProjectId || selectedFreelancers.length === 0) return;
+    
+    // Filter out any invalid IDs (0 or undefined)
+    const validFreelancerIds = selectedFreelancers.filter(id => id && id > 0);
+    
+    if (validFreelancerIds.length === 0) {
+      toast.error('No valid freelancers selected.');
+      return;
+    }
+    
     setSendingRequests(true);
     try {
-      await Promise.all(selectedFreelancers.map(fid => sendProjectRequest(Number(createdProjectId), Number(fid))));
-      toast.success(`Requests sent to ${selectedFreelancers.length} freelancer(s)!`);
+      console.log('Sending requests for project:', createdProjectId, 'to freelancers:', validFreelancerIds);
+      await Promise.all(validFreelancerIds.map(fid => sendProjectRequest(Number(createdProjectId), fid)));
+      toast.success(`Requests sent to ${validFreelancerIds.length} freelancer(s)!`);
     } catch (err) {
+      console.error('Error sending requests:', err);
       toast.error('Failed to send requests.');
     } finally {
       setSendingRequests(false);
@@ -399,13 +410,14 @@ export function CreateProject() {
           <div className="space-y-6">
             <h2 className="text-xl font-bold">Suggested Freelancers</h2>
             <div className="grid gap-6">
-              {detailedFreelancers.map((f, idx) => (
-                console.log(f),
-                <Card key={f.Id || idx} className="p-6">
+              {detailedFreelancers.map((f, idx) => {
+              console.log('Freelancer data:', f);
+              return (
+                <Card key={f.id || idx} className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">{f.FirstName} {f.LastName}</h3>
+                        <h3 className="text-xl font-semibold text-gray-900">{f.firstName} {f.lastName}</h3>
                         {/* Add availability badge if you have it */}
                       </div>
                       <div className="text-gray-700 mb-2">{f.summary}</div>
@@ -421,26 +433,28 @@ export function CreateProject() {
                     <div className="flex flex-col gap-2 min-w-[180px]">
                       <div className="flex items-center text-gray-600">
                         <DollarSign className="h-4 w-4 mr-1" />
-                        <span className="font-medium">${f.HourlyRate}/hr</span>
+                        <span className="font-medium">${f.hourlyRate}/hr</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                        <span className="font-medium">{f.AvgRating ?? 'N/A'}</span>
+                        <span className="font-medium">{f.avgRating ?? 'N/A'}</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Briefcase className="h-4 w-4 mr-1" />
                         <span className="font-medium">{f.activeProjects ?? 0} active</span>
                       </div>
                       <Button
-                        variant={selectedFreelancers.includes(f.Id?.toString()) ? 'primary' : 'outline'}
-                        onClick={() => handleSelectFreelancer(f.Id?.toString())}
+                        variant={selectedFreelancers.includes(f.id || 0) ? 'primary' : 'outline'}
+                        onClick={() => f.id && handleSelectFreelancer(f.id)}
+                        disabled={!f.id}
                       >
-                        {selectedFreelancers.includes(f.Id?.toString()) ? 'Selected' : 'Select'}
+                        {selectedFreelancers.includes(f.id || 0) ? 'Selected' : 'Select'}
                       </Button>
                     </div>
                   </div>
                 </Card>
-              ))}
+              );
+            })}
             </div>
             {detailedFreelancers.length > 0 && (
               <Button
@@ -792,6 +806,7 @@ export function CreateProject() {
                 <input
                   type="date"
                   value={milestoneInput.dueDate}
+                  onChange={e => setMilestoneInput({ ...milestoneInput, dueDate: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline) !== '' ? 'border-red-500' : 'border-gray-300'
                   }`}

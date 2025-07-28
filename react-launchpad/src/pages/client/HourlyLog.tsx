@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getLogsByFreelancerId, getClientProjects, getFreelancerProjects } from '../../apiendpoints';
+import { getLogsByFreelancerId, getClientProjects, getProjectFreelancers } from '../../apiendpoints';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
@@ -28,10 +28,10 @@ interface Project {
 }
 
 interface Freelancer {
-  Id: number;
-  FirstName: string;
-  LastName: string;
-  Email: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
 export const ClientHourlyLogViewer: React.FC = () => {
@@ -72,7 +72,7 @@ export const ClientHourlyLogViewer: React.FC = () => {
       
       setLoadingFreelancers(true);
       try {
-        const data = await getFreelancerProjects(Number(selectedProject));
+        const data = await getProjectFreelancers(Number(selectedProject));
         setProjectFreelancers(data);
       } catch (e) {
         setProjectFreelancers([]);
@@ -269,8 +269,8 @@ export const ClientHourlyLogViewer: React.FC = () => {
               <SelectContent>
                 <SelectItem value="all">All Freelancers</SelectItem>
                 {projectFreelancers.map((freelancer) => (
-                  <SelectItem key={freelancer.Id} value={freelancer.Id.toString()}>
-                    {freelancer.FirstName} {freelancer.LastName}
+                  <SelectItem key={freelancer.id} value={freelancer.id.toString()}>
+                    {freelancer.firstName} {freelancer.lastName}
                   </SelectItem>
                 ))}
               </SelectContent>
