@@ -63,7 +63,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task<IEnumerable<Milestone>> GetPendingMilestonesAsync()
         {
             return await _db.milestones
-                .Where(m => m.Status == MilestoneStatus.NotSelected)
+                .Where(m => m.Status == MilestoneStatus.NotStarted)
                 .ToListAsync();
         }
 

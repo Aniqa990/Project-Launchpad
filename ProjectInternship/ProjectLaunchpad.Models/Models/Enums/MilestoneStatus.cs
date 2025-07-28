@@ -9,7 +9,7 @@ namespace ProjectLaunchpad.Models.Models.Enums
     public enum MilestoneStatus
     {
         // milestone status
-        NotSelected,
+        NotStarted,
         InProgress,
         Completed
     }
