@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import DashboardLayout from '../../components/Layout/DashboardLayout';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
-import { Textarea } from '../../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { CheckSquare, Clock, DollarSign, Calendar, Eye, Download, MessageSquare, Filter, FileText, User, X, AlertCircle } from 'lucide-react';
 import { getProjects, getMilestonesByProjectId } from '../../apiendpoints';
 
 interface Milestone {

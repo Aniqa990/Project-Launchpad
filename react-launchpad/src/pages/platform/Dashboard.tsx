@@ -54,7 +54,7 @@ export function PlatformDashboard() {
   }, []);
 
   const activeProjects = projects.filter(p => p.status === 'active').slice(0, 3);
-  const completedProjects = projects.filter(p => p.status === 'completed').slice(0, 3);
+  const completedProjects = projects.filter(p => p.status === 'closed').slice(0, 3);
 
 const resourceData = [
     { label: 'Allocated Jobs', value: allocated, color: '#8B5CF6' },

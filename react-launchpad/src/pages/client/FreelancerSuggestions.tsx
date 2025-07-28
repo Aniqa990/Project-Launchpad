@@ -117,11 +117,11 @@ export const FreelancerSuggestions: React.FC = () => {
   };
 
   const filteredFreelancers = freelancers.filter(freelancer => {
-    const matchesMinRate = !filters.minRate || freelancer.HourlyRate >= parseInt(filters.minRate);
-    const matchesMaxRate = !filters.maxRate || freelancer.HourlyRate <= parseInt(filters.maxRate);
-    const matchesRating = filters.minRating === 'all' || (freelancer.AvgRating ?? 0) >= parseFloat(filters.minRating);
+    const matchesMinRate = !filters.minRate || freelancer.hourlyRate >= parseInt(filters.minRate);
+    const matchesMaxRate = !filters.maxRate || freelancer.hourlyRate <= parseInt(filters.maxRate);
+    const matchesRating = filters.minRating === 'all' || (freelancer.avgRating ?? 0) >= parseFloat(filters.minRating);
     const matchesSearch = !filters.search ||
-      (`${freelancer.FirstName} ${freelancer.LastName}`.toLowerCase().includes(filters.search.toLowerCase())) ||
+      (`${freelancer.firstName} ${freelancer.lastName}`.toLowerCase().includes(filters.search.toLowerCase())) ||
       (freelancer.summary?.toLowerCase().includes(filters.search.toLowerCase())) ||
       (freelancer.skills && freelancer.skills.some((skill: string) => skill.toLowerCase().includes(filters.search.toLowerCase())));
     return matchesMinRate && matchesMaxRate && matchesRating && matchesSearch;
@@ -249,13 +249,13 @@ export const FreelancerSuggestions: React.FC = () => {
         {/* Freelancer Cards */}
         <div className="grid gap-6">
         {filteredFreelancers.map((freelancer) => {
-          const isExpanded = expandedSkillsId === freelancer.Id?.toString();
-          const skillsToShow = freelancer.skills ? (isExpanded ? freelancer.skills : freelancer.skills.slice(0, 5)) : [];
+          const isExpanded = expandedSkillsId === freelancer.id?.toString();
+          const skillsToShow = Array.isArray(freelancer.skills) ? (isExpanded ? freelancer.skills : freelancer.skills.slice(0, 5)) : [];
           return (
             <Card
-              key={freelancer.Id}
+              key={freelancer.id}
               className={`transition-all duration-200 hover:shadow-md ${
-                selectedFreelancers.includes(freelancer.Id?.toString()) 
+                selectedFreelancers.includes(freelancer.id?.toString()) 
                   ? 'border-blue-500 bg-blue-50' 
                   : 'border-gray-200'
               }`}
@@ -264,31 +264,31 @@ export const FreelancerSuggestions: React.FC = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-4 flex-1">
                     <img
-                      src={freelancer.ProfilePicture}
-                      alt={`${freelancer.FirstName} ${freelancer.LastName}`}
+                      src={freelancer.profilePicture}
+                      alt={`${freelancer.firstName} ${freelancer.lastName}`}
                       className="w-16 h-16 rounded-full object-cover"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">{freelancer.FirstName} {freelancer.LastName}</h3>
-                        {freelancer.Availability && (
+                        <h3 className="text-xl font-semibold text-gray-900">{freelancer.firstName} {freelancer.lastName}</h3>
+                        {freelancer.availability && (
                           <span
                             className={
                               `ml-2 px-2 py-0.5 rounded-full text-xs font-medium ` +
-                              (freelancer.Availability.toLowerCase() === 'available'
+                              (freelancer.availability.toLowerCase() === 'available'
                                 ? 'bg-green-100 text-green-800'
-                                : freelancer.Availability.toLowerCase() === 'unavailable'
+                                : freelancer.availability.toLowerCase() === 'unavailable'
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-gray-100 text-gray-800')
                             }
                           >
-                            {freelancer.Availability}
+                            {freelancer.availability}
                           </span>
                         )}
                       </div>
                       <p className="text-gray-600 font-medium mb-1">{freelancer.summary}</p>
                       <div className="flex flex-wrap gap-2 mb-4 items-center">
-                        {skillsToShow && skillsToShow.map((skill: string, index: number) => (
+                        {Array.isArray(skillsToShow) && skillsToShow.map((skill: string, index: number) => (
                           <Badge key={index} variant="outline" size="sm">
                             {skill}
                           </Badge>
@@ -298,7 +298,7 @@ export const FreelancerSuggestions: React.FC = () => {
                             variant="outline"
                             size="sm"
                             className="px-1 py-0 h-auto text-xs"
-                            onClick={() => setExpandedSkillsId(freelancer.Id?.toString())}
+                            onClick={() => setExpandedSkillsId(freelancer.id?.toString())}
                           >
                             +{freelancer.skills.length - 5} more
                           </Button>
@@ -317,11 +317,11 @@ export const FreelancerSuggestions: React.FC = () => {
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center text-gray-600">
                           <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                          {freelancer.AvgRating ?? 'N/A'}
+                          {freelancer.avgRating ?? 'N/A'}
                         </div>
                         <div className="flex items-center text-gray-600">
                           <DollarSign className="h-4 w-4 mr-1" />
-                          ${freelancer.HourlyRate}/hr
+                          ${freelancer.hourlyRate}/hr
                         </div>
                         <div className="flex items-center text-gray-600">
                           <Briefcase className="h-4 w-4 mr-1" />
@@ -334,11 +334,11 @@ export const FreelancerSuggestions: React.FC = () => {
                 <div className="flex justify-end mt-4">
                           <Button
                     size="sm"
-                    variant={selectedFreelancers.includes(freelancer.Id?.toString()) ? 'primary' : 'outline'}
+                    variant={selectedFreelancers.includes(freelancer.id?.toString()) ? 'primary' : 'outline'}
                     className="mt-2"
-                    onClick={() => handleSelectFreelancer(freelancer.Id?.toString())}
+                    onClick={() => handleSelectFreelancer(freelancer.id?.toString())}
                   >
-                    {selectedFreelancers.includes(freelancer.Id?.toString()) ? 'Selected' : 'Select'}
+                    {selectedFreelancers.includes(freelancer.id?.toString()) ? 'Selected' : 'Select'}
                           </Button>
                 </div>
               </div>

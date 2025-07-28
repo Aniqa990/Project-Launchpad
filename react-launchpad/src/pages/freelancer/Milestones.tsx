@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -7,10 +7,11 @@ import { Modal } from '../../components/ui/Modal';
 import { Calendar, DollarSign, Upload, MessageSquare, Send, CheckCircle, XCircle, Clock, Filter, Paperclip, X, Target } from 'lucide-react';
 import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable, updateMilestone } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
+import { Project } from '../../types';
 
 export function Milestones() {
   const { user, token } = useAuth();
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState('All');
   const [milestones, setMilestones] = useState<any[]>([]);
   const [milestonesLoading, setMilestonesLoading] = useState(false);
@@ -24,6 +25,7 @@ export function Milestones() {
   const [commentInputs, setCommentInputs] = useState<{[key: string]: string}>({});
   const [uploadLoading, setUploadLoading] = useState<{[key: string]: boolean}>({});
   const [uploadError, setUploadError] = useState<{[key: string]: string}>({});
+  const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
   // Status mapping for MilestoneStatus enum
   const statusMap: Record<'not-started' | 'in-progress' | 'completed', number> = {
@@ -75,8 +77,8 @@ export function Milestones() {
             setMilestones(data);
             // Fetch deliverables for each milestone
             for (const milestone of data) {
-              const delivs = await getDeliverablesByMilestoneId(milestone.Id);
-              setDeliverables(prev => ({ ...prev, [milestone.Id]: delivs }));
+              const delivs = await getDeliverablesByMilestoneId(milestone.id);
+              setDeliverables(prev => ({ ...prev, [milestone.id]: delivs }));
             }
           }
         }
@@ -178,8 +180,8 @@ export function Milestones() {
         const data = await getMilestonesByProjectId(project.id);
         setMilestones(data);
         for (const m of data) {
-          const delivs = await getDeliverablesByMilestoneId(m.id || m.Id);
-          setDeliverables(prev => ({ ...prev, [m.id || m.Id]: delivs }));
+          const delivs = await getDeliverablesByMilestoneId(m.id);
+          setDeliverables(prev => ({ ...prev, [m.id]: delivs }));
         }
       }
     } catch (err) {
@@ -200,8 +202,8 @@ export function Milestones() {
         const data = await getMilestonesByProjectId(project.id);
         setMilestones(data);
         for (const m of data) {
-          const delivs = await getDeliverablesByMilestoneId(m.Id);
-          setDeliverables(prev => ({ ...prev, [m.Id]: delivs }));
+          const delivs = await getDeliverablesByMilestoneId(m.id);
+          setDeliverables(prev => ({ ...prev, [m.id]: delivs }));
         }
       }
     } catch (err) {
@@ -211,10 +213,28 @@ export function Milestones() {
 
   // Handle file input
   const handleFileInput = (milestoneId: string, files: FileList) => {
-    setFileInputs(prev => ({ ...prev, [milestoneId]: Array.from(files) }));
+    console.log('Files selected:', files.length, Array.from(files).map(f => f.name));
+    setFileInputs(prev => {
+      const existingFiles = prev[milestoneId] || [];
+      const newFiles = Array.from(files);
+      // Combine existing and new files, avoiding duplicates
+      const allFiles = [...existingFiles, ...newFiles];
+      const uniqueFiles = allFiles.filter((file, index, self) => 
+        index === self.findIndex(f => f.name === file.name && f.size === file.size)
+      );
+      console.log('Combined files:', uniqueFiles.length, uniqueFiles.map(f => f.name));
+      return { ...prev, [milestoneId]: uniqueFiles };
+    });
   };
   const handleCommentInput = (milestoneId: string, comment: string) => {
     setCommentInputs(prev => ({ ...prev, [milestoneId]: comment }));
+  };
+
+  // Clear file input
+  const clearFileInput = (milestoneId: string) => {
+    if (fileInputRefs.current[milestoneId]) {
+      fileInputRefs.current[milestoneId]!.value = '';
+    }
   };
 
   // Handle deliverable upload
@@ -247,6 +267,7 @@ export function Milestones() {
       setFileInputs(prev => ({ ...prev, [milestoneId]: [] }));
       setCommentInputs(prev => ({ ...prev, [milestoneId]: '' }));
       setStatusEdits(prev => ({ ...prev, [milestoneId]: 'completed' }));
+      clearFileInput(milestoneId);
       // 4. Refresh milestones
       const selectedParts = selectedProject.split('___');
       const selectedId = selectedParts.length > 1 ? Number(selectedParts[1]) : undefined;
@@ -255,8 +276,8 @@ export function Milestones() {
         const data = await getMilestonesByProjectId(project.id);
         setMilestones(data);
         for (const m of data) {
-          const delivs = await getDeliverablesByMilestoneId(m.id || m.Id);
-          setDeliverables(prev => ({ ...prev, [m.id || m.Id]: delivs }));
+          const delivs = await getDeliverablesByMilestoneId(m.id);
+          setDeliverables(prev => ({ ...prev, [m.id]: delivs }));
         }
       }
     } catch (err) {
@@ -316,7 +337,7 @@ export function Milestones() {
       {/* Milestones Grid */}
       <div className="space-y-4">
         {filteredMilestones.map((milestone) => {
-          const milestoneKey = milestone.id || milestone.Id || Math.random();
+          const milestoneKey = milestone.id || milestone.Id || `milestone-${milestone.title || milestone.Title}`;
           const currentStatus = statusEdits[milestoneKey] || getDropdownStatusValue(milestone.status || milestone.Status);
           // Ensure dropdown value is always a valid string
           const dropdownValue: 'not-started' | 'in-progress' | 'completed' =
@@ -363,16 +384,54 @@ export function Milestones() {
                   <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
-                      <input
-                        type="file"
-                        multiple
-                        onChange={e => e.target.files && handleFileInput(milestoneKey, e.target.files)}
-                      />
+                      <div className="relative">
+                        <input
+                          ref={el => {
+                            fileInputRefs.current[milestoneKey] = el;
+                          }}
+                          type="file"
+                          multiple
+                          onChange={e => {
+                            console.log('File input change event:', e.target.files);
+                            if (e.target.files && e.target.files.length > 0) {
+                              handleFileInput(milestoneKey, e.target.files);
+                            }
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          id={`file-input-${milestoneKey}`}
+                          key={`file-input-${milestoneKey}`}
+                          accept="*/*"
+                        />
+                        <label
+                          htmlFor={`file-input-${milestoneKey}`}
+                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                        >
+                          <Paperclip className="w-4 h-4 mr-2" />
+                          Choose Files (Multiple)
+                        </label>
+                      </div>
                       {fileInputs[milestoneKey]?.length > 0 && (
                         <div className="mt-2 space-y-2">
+                          <div className="text-xs text-gray-500 mb-2">
+                            {fileInputs[milestoneKey].length} file{fileInputs[milestoneKey].length !== 1 ? 's' : ''} selected
+                          </div>
                           {fileInputs[milestoneKey].map((file, idx) => (
                             <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                              <span className="text-sm text-gray-700">{file.name}</span>
+                              <span className="text-sm text-gray-700 flex-1 truncate">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newFiles = fileInputs[milestoneKey].filter((_, index) => index !== idx);
+                                  setFileInputs(prev => ({ ...prev, [milestoneKey]: newFiles }));
+                                  // Clear input if no files left
+                                  if (newFiles.length === 0) {
+                                    clearFileInput(milestoneKey);
+                                  }
+                                }}
+                                className="ml-2 text-red-500 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
                             </div>
                           ))}
                         </div>

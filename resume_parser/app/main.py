@@ -2,7 +2,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Body
 from fastapi.responses import JSONResponse
 from .resume_handler import handle_resume_upload
-from .db import save_parsed_json
+from .db import save_parsed_json, get_parsed_json
 from .Embedding import process_freelancer
 from .Recommender import recommend_freelancers
 from dotenv import load_dotenv
@@ -24,6 +24,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/api/get-parsed-json/{freelancer_id}")
+async def get_parsed_json_endpoint(freelancer_id: int):
+    try:
+        parsed_json = get_parsed_json(freelancer_id)
+        if parsed_json is None:
+            raise HTTPException(status_code=404, detail="No parsed JSON found for this freelancer")
+        return parsed_json
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/parse-resume/")
 async def parse_resume(file: UploadFile = File(...), freelancer_id: int = Form(...)):

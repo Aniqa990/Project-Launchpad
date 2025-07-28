@@ -119,7 +119,7 @@ export function AdminProjectApprovals() {
               </Button>
               <div className="flex space-x-2 mt-auto">
                 <Button
-                  variant="secondary"
+                  variant="primary"
                   onClick={() => handleApprove(project.id)}
                   disabled={loading}
                 >

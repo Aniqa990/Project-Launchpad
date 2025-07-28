@@ -89,7 +89,7 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
   return <>{children}</>;
 }
 
-function AppRoutes() {
+const AppRoutes = () => {
   const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
@@ -185,7 +185,7 @@ function AppRoutes() {
       } />
     </Routes>
   );
-}
+};
 
 function App() {
   return (

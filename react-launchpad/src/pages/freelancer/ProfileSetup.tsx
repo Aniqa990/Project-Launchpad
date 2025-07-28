@@ -270,6 +270,9 @@ export function ProfileSetup() {
       name: fullName,
       email,
       phone,
+      hourly_rate: hourlyRate,
+      working_hours: workingHours,
+      availability,
       summary: profileData.summary,
       skills: profileData.skills,
       projects: profileData.projects.map(p => ({

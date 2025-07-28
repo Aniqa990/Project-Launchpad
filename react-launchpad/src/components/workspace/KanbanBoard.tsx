@@ -15,10 +15,11 @@ import {
   PlayCircle,
   AlertCircle
 } from 'lucide-react';
-import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectFreelancers, getProjectDetails, getTasksByProjectId } from '../../apiendpoints';
+import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask, Project, User } from '../../types';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
 import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -304,7 +305,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, pro
   onUpdate: (id: number, form: any) => void;
   onDelete: (id: number) => void;
   loading: boolean;
-  projectFreelancers: any[];
+  projectFreelancers: User[];
   projectDetails: any;
   validateTaskDeadline: (deadline: string) => string;
 }) {
@@ -400,8 +401,8 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, pro
           <select id="edit-createdByUserId" name="createdByUserId" value={form.createdByUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
             <option value="">Select a freelancer</option>
             {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.Id} value={freelancer.Id}>
-                {freelancer.FirstName} {freelancer.LastName}
+              <option key={freelancer.id} value={freelancer.id}>
+                {freelancer.firstName} {freelancer.lastName}
               </option>
             ))}
           </select>
@@ -409,8 +410,8 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, pro
           <select id="edit-assignedToUserId" name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
             <option value="">Select a freelancer</option>
             {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.Id} value={freelancer.Id}>
-                {freelancer.FirstName} {freelancer.LastName}
+              <option key={freelancer.id} value={freelancer.id}>
+                {freelancer.firstName} {freelancer.lastName}
               </option>
             ))}
           </select>
@@ -501,7 +502,7 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, p
   onSubmit: (form: any) => void; 
   loading: boolean; 
   selectedProjectId: number | null;
-  projectFreelancers: any[];
+  projectFreelancers: User[];
   projectDetails: any;
   validateTaskDeadline: (deadline: string) => string;
 }) {
@@ -586,8 +587,8 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, p
           <select id="add-createdByUserId" name="createdByUserId" value={form.createdByUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
             <option value="">Select a freelancer</option>
             {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.Id} value={freelancer.Id}>
-                {freelancer.FirstName} {freelancer.LastName}
+              <option key={freelancer.id} value={freelancer.id}>
+                {freelancer.firstName} {freelancer.lastName}
               </option>
             ))}
           </select>
@@ -595,8 +596,8 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, p
           <select id="add-assignedToUserId" name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
             <option value="">Select a freelancer</option>
             {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.Id} value={freelancer.Id}>
-                {freelancer.FirstName} {freelancer.LastName}
+              <option key={freelancer.id} value={freelancer.id}>
+                {freelancer.firstName} {freelancer.lastName}
               </option>
             ))}
           </select>
@@ -612,7 +613,7 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, p
 
 export function KanbanBoard() {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<{ id: number; projectTitle: string; description: string }[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
@@ -627,8 +628,7 @@ export function KanbanBoard() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [subtasks, setSubtasks] = useState<KanbanSubtask[]>([]);
   const [selectedSubtask, setSelectedSubtask] = useState<KanbanSubtask | null>(null);
-  const [projectFreelancers, setProjectFreelancers] = useState<any[]>([]);
-  const [loadingProjectFreelancers, setLoadingProjectFreelancers] = useState(false);
+
   const [projectDetails, setProjectDetails] = useState<any>(null);
   const [loadingProjectDetails, setLoadingProjectDetails] = useState(false);
 
@@ -687,16 +687,15 @@ export function KanbanBoard() {
   useEffect(() => {
     if (!selectedProjectId) {
       setTasks([]);
-      setProjectFreelancers([]);
       return;
     }
     async function fetchTasks() {
       setLoadingTasks(true);
       setMessage('');
       try {
-        const data = await getTasksByProjectId(selectedProjectId!);
-        setTasks(data);
-        if (data.length === 0) {
+        const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
+        setTasks(res.data);
+        if (res.data.length === 0) {
           setMessage('No tasks for this project yet.');
         }
       } catch (e) {
@@ -708,26 +707,7 @@ export function KanbanBoard() {
     fetchTasks();
   }, [selectedProjectId]);
 
-  // Fetch project freelancers when project is selected
-  useEffect(() => {
-    if (!selectedProjectId) {
-      setProjectFreelancers([]);
-      return;
-    }
-    async function fetchProjectFreelancers() {
-      setLoadingProjectFreelancers(true);
-      try {
-        const freelancersData = await getProjectFreelancers(selectedProjectId!);
-        setProjectFreelancers(freelancersData);
-      } catch (e) {
-        console.error('Could not fetch project freelancers:', e);
-        setProjectFreelancers([]);
-      } finally {
-        setLoadingProjectFreelancers(false);
-      }
-    }
-    fetchProjectFreelancers();
-  }, [selectedProjectId]);
+
 
   // Fetch project details when project is selected
   useEffect(() => {
@@ -738,7 +718,7 @@ export function KanbanBoard() {
     async function fetchProjectDetails() {
       setLoadingProjectDetails(true);
       try {
-        const projectData = await getProjectDetails(selectedProjectId!);
+        const projectData = await getProjectById(selectedProjectId!);
         setProjectDetails(projectData);
       } catch (e) {
         console.error('Could not fetch project details:', e);
@@ -749,6 +729,13 @@ export function KanbanBoard() {
     }
     fetchProjectDetails();
   }, [selectedProjectId]);
+
+  // Get freelancers from selected project's team
+  const getProjectFreelancers = (): User[] => {
+    if (!selectedProjectId) return [];
+    const selectedProject = projects.find(p => p.id === selectedProjectId);
+    return selectedProject?.team || [];
+  };
 
   // Validation function to check if task deadline is within project deadline
   const validateTaskDeadline = (taskDeadline: string): string => {
@@ -780,9 +767,9 @@ export function KanbanBoard() {
     setLoadingTasks(true);
     setMessage('');
     try {
-      const data = await getTasksByProjectId(selectedProjectId!);
-      setTasks(data);
-      if (data.length === 0) {
+      const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
+      setTasks(res.data);
+      if (res.data.length === 0) {
         setMessage('No tasks for this project yet.');
       }
     } catch (e) {
@@ -1203,7 +1190,7 @@ export function KanbanBoard() {
           onUpdate={handleEditTask}
           onDelete={handleDeleteTask}
           loading={formLoading}
-          projectFreelancers={projectFreelancers}
+          projectFreelancers={getProjectFreelancers()}
           projectDetails={projectDetails}
           validateTaskDeadline={validateTaskDeadline}
         />
@@ -1215,7 +1202,7 @@ export function KanbanBoard() {
         onSubmit={handleAddTask}
         loading={formLoading}
         selectedProjectId={selectedProjectId}
-        projectFreelancers={projectFreelancers}
+        projectFreelancers={getProjectFreelancers()}
         projectDetails={projectDetails}
         validateTaskDeadline={validateTaskDeadline}
       />

@@ -261,8 +261,8 @@ export default function Meetings() {
           role: 'client',
         },
         ...freelancers.map(f => ({
-          userId: f.Id,
-          userName: `${f.FirstName} ${f.LastName}`,
+          userId: f.id,
+          userName: `${f.firstName} ${f.lastName}`,
           role: 'freelancer',
         }))
       ];
@@ -396,10 +396,10 @@ export default function Meetings() {
           ) : (
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {freelancers.map((f) => (
-                <li key={f.Id} className="border rounded-lg p-4 bg-white shadow flex flex-col">
-                  <span className="font-medium">{f.FirstName} {f.LastName}</span>
-                  <span className="text-sm text-gray-600">{f.Email}</span>
-                  {f.Availability && <span className="text-xs text-green-700">{f.Availability}</span>}
+                <li key={f.id} className="border rounded-lg p-4 bg-white shadow flex flex-col">
+                  <span className="font-medium">{f.firstName} {f.lastName}</span>
+                  <span className="text-sm text-gray-600">{f.email}</span>
+                  {f.availability && <span className="text-xs text-green-700">{f.availability}</span>}
                 </li>
               ))}
             </ul>

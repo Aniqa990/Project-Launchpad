@@ -11,7 +11,9 @@ import {
   DollarSign,
   Clock,
   Send,
-  Briefcase
+  AlertCircle,
+  CheckCircle,
+  Briefcase,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest } from '../../apiendpoints';
@@ -65,6 +67,75 @@ export function CreateProject() {
   const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
+  // Validation states
+  const [dateValidation, setDateValidation] = useState({
+    deadlineError: '',
+    milestoneDateError: ''
+  });
+  const [budgetValidation, setBudgetValidation] = useState({
+    totalMilestoneAmount: 0,
+    budgetExceeded: false,
+    budgetExceededAmount: 0
+  });
+
+  // Validation functions
+  const validateDeadline = (deadline: string) => {
+    if (!deadline) return '';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    const deadlineDate = new Date(deadline);
+    
+    if (deadlineDate < today) {
+      return 'Project deadline cannot be in the past';
+    }
+    return '';
+  };
+
+  const validateMilestoneDate = (milestoneDate: string, projectDeadline: string) => {
+    if (!milestoneDate || !projectDeadline) return '';
+    
+    const milestoneDateObj = new Date(milestoneDate);
+    const projectDeadlineObj = new Date(projectDeadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (milestoneDateObj < today) {
+      return 'Milestone due date cannot be in the past';
+    }
+    
+    if (milestoneDateObj > projectDeadlineObj) {
+      return 'Milestone due date cannot exceed project deadline';
+    }
+    
+    return '';
+  };
+
+  const calculateBudgetValidation = () => {
+    if (budgetDivision !== 'milestone' || !projectData.Budget) {
+      return;
+    }
+    
+    const totalBudget = parseFloat(projectData.Budget);
+    const totalMilestoneAmount = milestones.reduce((sum, milestone) => {
+      return sum + (parseFloat(milestone.amount) || 0);
+    }, 0);
+    
+    const budgetExceeded = totalMilestoneAmount > totalBudget;
+    const budgetExceededAmount = totalMilestoneAmount - totalBudget;
+    
+    setBudgetValidation({
+      totalMilestoneAmount,
+      budgetExceeded,
+      budgetExceededAmount
+    });
+  };
+
+  // Update budget validation when milestones change
+  useEffect(() => {
+    calculateBudgetValidation();
+  }, [milestones, projectData.Budget, budgetDivision]);
+
   // Cloudinary upload function
   async function uploadToCloudinary(file: File) {
     const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`;
@@ -84,7 +155,11 @@ export function CreateProject() {
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
-  };
+    if (field === 'Deadline') {
+      const deadlineError = validateDeadline(value);
+      setDateValidation(prev => ({ ...prev, deadlineError }));
+    }
+  };  
 
   const handleAddSkill = (skill: string) => {
     if (skill && !projectData.Skills.includes(skill)) {
@@ -116,8 +191,25 @@ export function CreateProject() {
   };
 
   const handleNextStep = () => {
-    if (step === 4 && budgetDivision === 'fixed') {
-      setStep(6);
+    if (step === 4) {
+      // Validate deadline before proceeding
+      if (dateValidation.deadlineError) {
+        toast.error('Please fix the deadline validation error before proceeding');
+        return;
+      }
+      
+      if (budgetDivision === 'fixed') {
+        setStep(6);
+      } else {
+        setStep(step + 1);
+      }
+    } else if (step === 5) {
+      // Validate milestones before proceeding
+      if (budgetValidation.budgetExceeded) {
+        toast.error('Please fix the budget validation error before proceeding');
+        return;
+      }
+      setStep(step + 1);
     } else {
       setStep(step + 1);
     }
@@ -137,9 +229,23 @@ export function CreateProject() {
       return;
     }
     // Validate milestone due date does not exceed project deadline
-    if (projectData.Deadline && new Date(milestoneInput.dueDate) > new Date(projectData.Deadline)) {
-      setMilestoneError('Milestone due date cannot exceed the project deadline.');
+    const milestoneDateError = validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline);
+    if (milestoneDateError) {
+      setMilestoneError(milestoneDateError);
       return;
+    }
+     // Validate budget (for milestone-based projects)
+     if (budgetDivision === 'milestone' && projectData.Budget) {
+      const currentTotal = milestones.reduce((sum, milestone) => {
+        return sum + (parseFloat(milestone.amount) || 0);
+      }, 0);
+      const newTotal = currentTotal + parseFloat(milestoneInput.amount);
+      const totalBudget = parseFloat(projectData.Budget);
+      
+      if (newTotal > totalBudget) {
+        setMilestoneError(`Total milestone amount ($${newTotal}) exceeds project budget ($${totalBudget}). Please reduce milestone amounts.`);
+        return;
+      }
     }
     setMilestones(prev => [...prev, milestoneInput]);
     setMilestoneInput({ title: '', description: '', amount: '', dueDate: '' });
@@ -151,6 +257,15 @@ export function CreateProject() {
   };
 
   const handleSubmitProject = async () => {
+    if (dateValidation.deadlineError) {
+      toast.error('Please fix the deadline validation error before submitting');
+      return;
+    }
+    
+    if (budgetDivision === 'milestone' && budgetValidation.budgetExceeded) {
+      toast.error('Please fix the budget validation error before submitting');
+      return;
+    }
     setSubmitted(true);
     try {
       const deadlineISO = projectData.Deadline ? new Date(projectData.Deadline).toISOString() : '';
@@ -604,8 +719,17 @@ export function CreateProject() {
                 type="date"
                 value={projectData.Deadline}
                 onChange={(e) => handleInputChange('Deadline', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  dateValidation.deadlineError ? 'border-red-500' : 'border-gray-300'
+                }`}
+                min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
               />
+              {dateValidation.deadlineError && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {dateValidation.deadlineError}
+                </p>
+              )}
             </div>
 
             <div>
@@ -668,13 +792,59 @@ export function CreateProject() {
                 <input
                   type="date"
                   value={milestoneInput.dueDate}
-                  onChange={e => setMilestoneInput({ ...milestoneInput, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline) !== '' ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  min={new Date().toISOString().split('T')[0]}
+                  max={projectData.Deadline || undefined}
                 />
+                {milestoneInput.dueDate && validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline) !== '' && (
+                  <p className="text-red-500 text-sm mt-1 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline)}
+                  </p>
+                )}
               </div>
             </div>
             {milestoneError && <div className="text-red-500 text-sm">{milestoneError}</div>}
-            <Button onClick={handleAddMilestone} className="mt-2">Add Milestone</Button>
+            {/* Budget Summary */}
+            {budgetDivision === 'milestone' && projectData.Budget && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Budget Summary</h4>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Project Budget:</span>
+                    <span className="font-medium">${projectData.Budget}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Milestone Amount:</span>
+                    <span className={`font-medium ${budgetValidation.budgetExceeded ? 'text-red-600' : 'text-green-600'}`}>
+                      ${budgetValidation.totalMilestoneAmount}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Remaining Budget:</span>
+                    <span className={`font-medium ${budgetValidation.budgetExceeded ? 'text-red-600' : 'text-green-600'}`}>
+                      ${Math.max(0, parseFloat(projectData.Budget) - budgetValidation.totalMilestoneAmount)}
+                    </span>
+                  </div>
+                  {budgetValidation.budgetExceeded && (
+                    <div className="text-red-600 text-sm flex items-center mt-2">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      Budget exceeded by ${budgetValidation.budgetExceededAmount.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <Button 
+              onClick={handleAddMilestone} 
+              className="mt-2"
+              disabled={budgetValidation.budgetExceeded}
+            >
+              Add Milestone
+            </Button>
             <div className="mt-6">
               <h3 className="font-medium text-gray-800 mb-2">Milestones List</h3>
               {milestones.length === 0 && <div className="text-gray-500">No milestones added yet.</div>}
@@ -778,7 +948,8 @@ export function CreateProject() {
                 disabled={
                   (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
                   (step === 2 && projectData.Skills.length === 0) ||
-                  (step === 4 && (!projectData.Budget || !projectData.Deadline))
+                  (step === 4 && (!projectData.Budget || !projectData.Deadline || dateValidation.deadlineError !== '')) ||
+                  (step === 5 && (milestones.length === 0 || budgetValidation.budgetExceeded))
                 }
               >
                 Next Step

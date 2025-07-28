@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   signup: (userData: Partial<SignupRequest>) => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -144,8 +145,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     delete axios.defaults.headers.common['Authorization'];
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, token, signup, isAuthenticated: !!user, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, token, signup, updateUser, isAuthenticated: !!user, loading }}>
       {loading ? (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50">
           <div className="text-center">

@@ -38,8 +38,8 @@ export function ClientProjectRequests() {
                     ...req,
                     projectTitle: project.projectTitle,
                     projectDescription: project.description,
-                    freelancerName: `${freelancer.FirstName} ${freelancer.LastName}`,
-                    freelancerEmail: freelancer.Email,
+                    freelancerName: `${freelancer.firstName} ${freelancer.lastName}`,
+                    freelancerEmail: freelancer.email,
                   });
                 } catch {}
               }

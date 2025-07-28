@@ -39,11 +39,14 @@ export function Navbar() {
   const dropdownRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
+  console.log('User object in Navbar:', user);
+  console.log('Profile picture URL:', user?.profilePicture);
+
   const fetchNotifications = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const data = await getNotifications(user.id);
+      const data = await getNotifications(user?.id ?? 0);
       setNotifications(data);
       console.log('Fetched notifications:', data); // Debug log
     } catch (err) {
@@ -169,11 +172,23 @@ else if (user.role === 'admin') {
               )}
             </div>
             <div className="flex items-center space-x-3">
-              <img 
-                src={user.profilePicture} 
-                alt={user.firstName}
-                className="w-8 h-8 rounded-full object-cover"
-              />
+              {user.profilePicture ? (
+                <img 
+                  src={user.profilePicture} 
+                  alt={user.firstName}
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => {
+                    console.log('Profile picture failed to load:', user.profilePicture);
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              {!user.profilePicture && (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-medium">
+                  {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+              )}
               <div className="hidden md:block">
                 <p className="text-sm font-medium text-gray-900">{user.firstName}</p>
                 <p className="text-xs text-gray-500 capitalize">{user.role}</p>

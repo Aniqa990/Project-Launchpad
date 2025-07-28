@@ -9,7 +9,7 @@ export interface User {
   profilePicture?: string;
   role?: string;
   gender: string;
-  joinedDate?: string;
+  createdAt?: string;
 }
 
 export interface LoginResponse {
@@ -30,50 +30,50 @@ export interface SignupRequest {
 }
 
 export interface FreelancerProfile {
-  Id: number;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  PhoneNo: string;
-  Gender?: string;
-  ProfilePicture?: string;
-  Role: string;
-  CreatedAt?: string;
-  HourlyRate: number;
-  WorkingHours: string;
-  Availability: string;
-  AvgRating?: number;
-  Password?: string;
-  NewPassword?: string;
-  Summary: string;
-  Skills: string;
-  Experience: string;
-  Projects: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNo: string;
+  gender?: string;
+  profilePicture?: string;
+  role: string;
+  createdAt?: string;
+  hourlyRate: number;
+  workingHours: string;
+  availability: string;
+  avgRating?: number;
+  password?: string;
+  newPassword?: string;
+  summary: string;
+  skills: string;
+  experience: string;
+  projects: string;
 }
 
-export interface ProfileSetupData {
-  Summary: string;
-  Skills: {
-    Id: number;
-    SkillName: string;
-    Source: string;
-  }[];
-  Projects: {
-    Id: number;
-    Title: string;
-    Description: string;
-    Source: string;
-  }[];
-  Experience: {
-    Id: number;
-    Title: string;
-    Company: string;
-    StartDate: string;
-    EndDate: string;
-    Description: string;
-    Source: string;
-  }[];
-}
+// export interface ProfileSetupData {
+//   Summary: string;
+//   Skills: {
+//     Id: number;
+//     SkillName: string;
+//     Source: string;
+//   }[];
+//   Projects: {
+//     Id: number;
+//     Title: string;
+//     Description: string;
+//     Source: string;
+//   }[];
+//   Experience: {
+//     Id: number;
+//     Title: string;
+//     Company: string;
+//     StartDate: string;
+//     EndDate: string;
+//     Description: string;
+//     Source: string;
+//   }[];
+// }
 
 // export interface ParsedResumeData {
 //   summary: string;
@@ -121,6 +121,11 @@ export interface Milestone {
   description: string;
   amount: number;
   dueDate: string;
+  submissionDate?: string;
+  freelancerComments?: string;
+  isApproved?: boolean;
+  handoverStatus?: string;
+  projectId: number;
   status: 'pending' | 'submitted' | string;
   deliverables: string[];
 }
@@ -194,6 +199,7 @@ export interface Project {
   team?: User[];
   progress?: number;
   handoverStatus?: string;
+  rejectionReason?: string;
 }
 
 export interface ProjectRequest {
@@ -258,11 +264,11 @@ export interface Payment {
 }
 
 export interface Deliverable {
-  Id: number;
+  id: number;
+  milestoneId: number;
   uploadFiles: string;
   projectId: number;
   comment: string;
-  Status: string;
   status?: string;
 }
 
@@ -323,11 +329,11 @@ export interface KanbanTask {
 }
 
 export interface Feedback {
-  ProjectId: number;
-  FreelancerId: number;
-  Review: string;
-  Rating: number;
-  ProjectName: string;
-  ClientName: string;
-  CreatedAt: string;
+  projectId: number;
+  freelancerId: number;
+  review: string;
+  rating: number;
+  projectName: string;
+  clientName: string;
+  createdAt: string;
 }

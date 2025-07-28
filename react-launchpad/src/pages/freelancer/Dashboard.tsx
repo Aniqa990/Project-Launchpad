@@ -105,7 +105,7 @@ export function FreelancerDashboard() {
       const activeProjects = projects.filter((p: Project) => p.status === 'active').length;
       const pendingRequests = requests.filter((r: ProjectRequest) => r.status === 'pending').length;
       const monthlyEarnings = projects
-        .filter((p: Project) => p.status === 'completed')
+        .filter((p: Project) => p.status === 'closed')
         .reduce((sum: number, p: Project) => sum + (p.budget || 0), 0);
       const rating = 4.5;
 
@@ -310,17 +310,17 @@ export function FreelancerDashboard() {
       <div className="bg-white rounded-xl p-4 border border-gray-100">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <a href="/freelancer/submit-timesheet" className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+          <a href="/freelancer/hourly-logs" className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
             <div className="bg-blue-500 p-1.5 rounded-md">
               <Calendar className="w-4 h-4 text-white" />
             </div>
-            <span className="font-medium text-gray-900 text-sm">Log Time</span>
+            <span className="font-medium text-gray-900 text-sm">Hourly Logs</span>
           </a>
-          <a href="/freelancer/submit-deliverables" className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+          <a href="/freelancer/timesheets" className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
             <div className="bg-green-500 p-1.5 rounded-md">
               <CheckCircle className="w-4 h-4 text-white" />
             </div>
-            <span className="font-medium text-gray-900 text-sm">Submit Deliverable</span>
+            <span className="font-medium text-gray-900 text-sm">Timesheets</span>
           </a>
           <a href="/freelancer/payments" className="flex items-center space-x-2 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
             <div className="bg-purple-500 p-1.5 rounded-md">
