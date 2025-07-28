@@ -605,3 +605,88 @@ export const uploadMeetingAudio = async (meetingId: number, formData: FormData):
 
 
 
+
+// Meeting Summaries API
+export const getMeetingSummaries = async (userId: number, userRole: string, projectIds?: string, dateFrom?: string, dateTo?: string) => {
+  try {
+    const params = new URLSearchParams({
+      user_id: userId.toString(),
+      user_role: userRole
+    });
+    
+    if (projectIds) params.append('project_ids', projectIds);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    
+    // Use Python server URL for meeting summaries
+    const response = await axios.get(`http://localhost:8000/meeting-summaries?${params.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch meeting summaries');
+  }
+};
+
+export const startProjectMeeting = async (projectId: number, freelancerId: number) => {
+  try {
+    // Use Python server URL for meeting functionality
+    const response = await axios.post('http://localhost:8000/start-project-meeting', {
+      project_id: projectId,
+      freelancer_id: freelancerId
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to start project meeting');
+  }
+};
+
+export const stopMeeting = async () => {
+  try {
+    // Use Python server URL for meeting functionality
+    const response = await axios.post('http://localhost:8000/stop');
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to stop meeting');
+  }
+};
+
+export const storeMeetingSummary = async (summaryData: {
+  freelancer_id: number;
+  project_id: number;
+  freelancer_name: string;
+  project_name: string;
+  summary: string;
+  blocker?: string;
+}) => {
+  try {
+    // Use Python server URL for meeting functionality
+    const response = await axios.post('http://localhost:8000/store-meeting-summary', summaryData);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to store meeting summary');
+  }
+};
+
+export const getProjectDetails = async (projectId: number) => {
+  try {
+    // Use Python server URL for meeting functionality
+    const response = await axios.get(`http://localhost:8000/project/${projectId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project details');
+  }
+};
+
+export const getFreelancerDetails = async (freelancerId: number) => {
+  try {
+    // Use Python server URL for meeting functionality
+    const response = await axios.get(`http://localhost:8000/freelancer/${freelancerId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch freelancer details');
+  }
+};
+ 
+
+
+
+

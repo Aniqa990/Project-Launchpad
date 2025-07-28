@@ -43,10 +43,6 @@ def get_parsed_resume(freelancer_id):
     conn.close()
     return json.loads(result['parsed_json']) if result and result['parsed_json'] else None
 
-def get_parsed_json(freelancer_id):
-    """Alias for get_parsed_resume for consistency"""
-    return get_parsed_resume(freelancer_id)
-
 def save_parsed_json(freelancer_id, parsed_json):
     conn = get_connection()
     with conn.cursor() as cursor:

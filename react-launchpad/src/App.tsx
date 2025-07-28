@@ -31,6 +31,7 @@ import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 import Meetings from './pages/client/MeetingRoom';
 import FreelancerTimesheets from './pages/freelancer/Timesheets';
+import { MeetingSummaries } from './components/workspace/MeetingSummaries';
 
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
@@ -133,6 +134,7 @@ const AppRoutes = () => {
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
         <Route path="meetings" element={<MeetingRoom />} />
+        <Route path="meeting-summaries" element={<MeetingSummaries />} />
         <Route path="hourly-logs" element={<ClientHourlyLogViewer />} />
       </Route>
       
@@ -151,6 +153,7 @@ const AppRoutes = () => {
         <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
         <Route path="meetings" element={<FreelancerMeetingRoom />} />
+        <Route path="meeting-summaries" element={<MeetingSummaries />} />
       </Route>
 
       <Route path="/admin/*" element={

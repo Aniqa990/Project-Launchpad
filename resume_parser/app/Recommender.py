@@ -76,7 +76,7 @@ def rerank_with_flashrank(query, docs):
     return reranked_results
 
 
-def recommend_freelancers(project_summary, collection_list, top_n=3):
+def recommend_freelancers(project_summary, collection_list, top_n=10):
     if not isinstance(project_summary, str):
         raise ValueError("project_summary must be a string")
     project_summary = project_summary.strip()

@@ -38,6 +38,7 @@ export function Sidebar() {
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
     // { icon: CheckSquare, label: 'Milestones', path: '/client/milestones' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
+    { icon: MessageSquare, label: 'Meeting Summaries', path: '/client/meeting-summaries' },
     { icon: Settings, label: 'Settings', path: '/client/settings' },
     // { icon: MessageSquare, label: 'Messages', path: '/messages' },
     // { icon: LayoutDashboard, label: 'Meetings', path: '/client/meetings' },
@@ -53,6 +54,7 @@ export function Sidebar() {
     { icon: CheckSquare, label: 'Milestones', path: '/freelancer/milestones' },
     { icon: Clock, label: 'Timesheet', path: '/freelancer/timesheets' },
     { icon: Star, label: 'Feedback', path: '/freelancer/feedback' },
+    { icon: MessageSquare, label: 'Meeting Summaries', path: '/freelancer/meeting-summaries' },
     { icon: Settings, label: 'Settings', path: '/freelancer/settings' },
     { icon: Video, label: 'Meetings', path: '/freelancer/meetings' },
   ];
