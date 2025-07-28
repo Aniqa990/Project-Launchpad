@@ -56,5 +56,17 @@ namespace ProjectLaunchpad.DataAccess.Repositories
 
         }
 
+        public async Task DeleteAudioByUserId(int userId)
+        {
+            var recordings = await _db.meetingAudioRecordings
+                .Where(r => r.UserId == userId)
+                .ToListAsync();
+            if (recordings.Any())
+            {
+                _db.meetingAudioRecordings.RemoveRange(recordings);
+                await _db.SaveChangesAsync();
+            }
+        }
+
     }
 }

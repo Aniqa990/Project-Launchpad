@@ -45,5 +45,15 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             _db.notifications.Update(notification);
             await _db.SaveChangesAsync();
         }
+
+        public async Task DeleteByUserIdAsync(int id)
+        {
+            var notifications = await _db.notifications.Where(n => n.UserId == id).ToListAsync();
+            if (notifications.Any())
+            {
+                _db.notifications.RemoveRange(notifications);
+                await _db.SaveChangesAsync();
+            }
+        }
     }
 }

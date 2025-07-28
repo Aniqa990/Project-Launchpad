@@ -26,7 +26,7 @@ namespace ProjectLaunchpad.Utility
         }
 
         public async Task<(bool IsAuthorized, ClaimsPrincipal? User, HttpResponseData? UnauthorizedResponse)> AuthorizeAsync(
-            HttpRequestData req, string requiredRole)
+            HttpRequestData req, params string[] allowedRoles)
         {
             if (!req.Headers.TryGetValues("Authorization", out var values))
                 return (false, null, await CreateUnauthorizedResponse(req, "Missing Authorization header"));
@@ -41,7 +41,7 @@ namespace ProjectLaunchpad.Utility
                 return (false, null, await CreateUnauthorizedResponse(req, "Token validation failed"));
 
             var role = principal.FindFirst(ClaimTypes.Role)?.Value;
-            if (role != requiredRole)
+            if (string.IsNullOrEmpty(role) || !allowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
                 return (false, principal, await CreateUnauthorizedResponse(req, "Access denied for this role"));
 
             return (true, principal, null);

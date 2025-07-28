@@ -84,6 +84,16 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             }
         }
 
+        public async Task DeleteTimesheetsByFreelancerIdAsync(int freelancerId)
+        {
+            var sheets = await _db.TimeSheets
+                .Where(t => t.FreelancerId == freelancerId)
+                .ToListAsync();
+
+            if (sheets != null)
+                _db.TimeSheets.RemoveRange(sheets);
+        }
+
         public async Task UpdateTimeSheetAsync(TimeSheet timeSheet)
         {
             _db.TimeSheets.Update(timeSheet);

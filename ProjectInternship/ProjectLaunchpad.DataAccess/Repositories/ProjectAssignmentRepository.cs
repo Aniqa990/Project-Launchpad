@@ -82,6 +82,16 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 _db.projectFreelancers.Remove(assignment);
         }
 
+        public async Task RemoveFreelancerFromAllProjectsAsync(int freelancerId)
+        {
+            var assignments = await _db.projectFreelancers
+                .Where(pa => pa.FreelancerId == freelancerId)
+                .ToListAsync();
+
+            if (assignments != null)
+                _db.projectFreelancers.RemoveRange(assignments);
+        }
+
         public async Task<int> GetAllocatedResourcesAsync()
             
         {

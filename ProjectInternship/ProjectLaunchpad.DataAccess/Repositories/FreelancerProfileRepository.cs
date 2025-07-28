@@ -62,7 +62,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 // Create new profile
                 var entity = new FreelancerProfile
                 {
-                    Id = dto.Id,
+                    Id = dto.Id ?? 0,
                     Skills = dto.Skills,
                     Experience = dto.Experience,
                     Projects = dto.Projects,

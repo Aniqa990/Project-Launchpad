@@ -84,5 +84,16 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             }
         }
 
+        public async Task RemoveRequestsByFreelancerIdAsync(int freelancerId)
+        {
+            var requests = await _db.projectRequests
+                .Where(pr => pr.FreelancerId == freelancerId)
+                .ToListAsync();
+            if (requests != null)
+            {
+                _db.projectRequests.RemoveRange(requests);
+            }
+        }
+
     }
 }

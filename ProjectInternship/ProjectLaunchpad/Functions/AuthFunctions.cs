@@ -73,7 +73,7 @@ public async Task<HttpResponseData> Register(
             email = user.Email,
             firstName = user.FirstName,
             lastName = user.LastName,
-            phone = user.PhoneNo,
+            phoneNo = user.PhoneNo,
             profilePicture = user.ProfilePicture,
             gender = user.Gender,
             role = user.Role
@@ -101,7 +101,7 @@ public async Task<HttpResponseData> Register(
                     email = user.Email,
                     firstName = user.FirstName,
                     lastName = user.LastName,
-                    phone = user.PhoneNo,
+                    phoneNo = user.PhoneNo,
                     profilePicture = user.ProfilePicture,
                     gender = user.Gender,
                     role = user.Role
@@ -173,7 +173,7 @@ public async Task<HttpResponseData> Register(
                         email = user.Email,
                         firstName = user.FirstName,
                         lastName = user.LastName,
-                        phone = user.PhoneNo,
+                        phoneNo = user.PhoneNo,
                         profilePicture = user.ProfilePicture,
                         gender = user.Gender,
                         role = user.Role
