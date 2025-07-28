@@ -132,5 +132,21 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             // Step 2: Delete the task
             _db.taskItems.Remove(task);
         }
+
+        public async Task RemoveFreelancerFromAllTasksAsync(int freelancerId)
+        {
+            var tasks = await _db.taskItems
+                .Where(t => t.AssignedToUserId == freelancerId)
+                .ToListAsync();
+
+            var tasks_assignee = await _db.taskItems
+                .Where(t => t.CreatedByUserId == freelancerId)
+                .ToListAsync();
+
+            if (tasks != null)
+                _db.taskItems.RemoveRange(tasks);
+            if (tasks_assignee != null)
+                _db.taskItems.RemoveRange(tasks_assignee);
+        }
     }
 }

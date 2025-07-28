@@ -55,7 +55,15 @@ namespace ProjectLaunchpad.DataAccess.Repositories
           .ToListAsync();
         }
 
-
+        public async Task DeleteLogsByFreelancerId(int freelancerId)
+        {
+            var logs = await _db.logs.Where(l => l.FreelancerId == freelancerId).ToListAsync();
+            if (logs != null && logs.Count > 0)
+            {
+                _db.logs.RemoveRange(logs);
+                await _db.SaveChangesAsync();
+            }
+        }
 
 
 

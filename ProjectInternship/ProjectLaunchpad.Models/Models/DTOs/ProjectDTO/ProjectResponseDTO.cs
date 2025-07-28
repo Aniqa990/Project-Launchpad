@@ -18,9 +18,9 @@ namespace ProjectLaunchpad.Models.Models.DTOs.ProjectDTO
         public string? PaymentType { get; set; }
         public int? NumberOfFreelancers { get; set; }
         public string? AttachedDocumentPath { get; set; }
-        public UserRegisterDTO? Client { get; set; }
+        public UserDTO? Client { get; set; }
         public string? RequiredSkills { get; set; }
-        public List<UserRegisterDTO>? Team { get; set; }
+        public List<UserDTO>? Team { get; set; }
         public int? Progress { get; set; }
         public string? HandoverStatus { get; set; }
         public string? RejectionReason { get; set; }

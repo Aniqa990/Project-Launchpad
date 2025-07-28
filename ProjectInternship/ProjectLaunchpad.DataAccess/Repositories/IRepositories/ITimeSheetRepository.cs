@@ -18,6 +18,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task ApproveTimeSheetAsync(int id, string reviewerComments = "");
         Task RejectTimeSheetAsync(int id, string reviewerComments = "");
         Task DeleteTimeSheetAsync(int id);
+        Task DeleteTimesheetsByFreelancerIdAsync(int freelancerId);
         Task UpdateTimeSheetAsync(TimeSheet timeSheet);
     }
 }

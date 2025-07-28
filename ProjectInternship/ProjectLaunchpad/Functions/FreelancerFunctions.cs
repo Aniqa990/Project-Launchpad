@@ -101,7 +101,7 @@ namespace ProjectLaunchpad.Functions
                     FirstName = requestData.FirstName,
                     LastName = requestData.LastName,
                     Email = email,
-                    PhoneNo = requestData.Phone,
+                    PhoneNo = requestData.PhoneNo,
                     Role = "freelancer",
                     HourlyRate = requestData.HourlyRate,
                     Availability = requestData.Availability,
@@ -213,19 +213,29 @@ namespace ProjectLaunchpad.Functions
         //}
 
         [Function("UpdateFreelancerProfile")]
-        public async Task<HttpResponseData> AddFreelancerProfile(
+        public async Task<HttpResponseData> UpdateFreelancerProfile(
         [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "freelancer/profile/{id:int}")] HttpRequestData req, int id)
         {
             (bool isAuthorized, ClaimsPrincipal? userClaims, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer");
             if (!isAuthorized) return unauthorizedResponse!;
 
             var freelancer = await _unit.FreelancerProfiles.GetProfileByUserIdAsync(id);
+            var user_f = await _unit.Users.GetUserByIdAsync(id);
             if (freelancer == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
 
-            var dto = await req.ReadFromJsonAsync<FreelancerProfileDTO>();
+            if (user_f == null)
+            {
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                await errorResponse.WriteAsJsonAsync(new { error = "User not found" });
+                return errorResponse;
+            }
+
+            var dto = await req.ReadFromJsonAsync<FreelancerWithUserDTO>();
             if (dto == null)
                 return req.CreateResponse(HttpStatusCode.BadRequest);
+
+
 
             // Only update fields that are present in the DTO
             if (!string.IsNullOrEmpty(dto.Skills)) freelancer.Skills = dto.Skills;
@@ -234,8 +244,36 @@ namespace ProjectLaunchpad.Functions
             if (dto.HourlyRate.HasValue) freelancer.HourlyRate = dto.HourlyRate.Value;
             if (!string.IsNullOrEmpty(dto.Availability)) freelancer.Availability = dto.Availability;
             if (!string.IsNullOrEmpty(dto.Summary)) freelancer.Summary = dto.Summary;
+            if (!string.IsNullOrEmpty(dto.WorkingHours)) freelancer.WorkingHours = dto.WorkingHours;
+
+            if (!string.IsNullOrEmpty(dto.FirstName)) user_f.FirstName = dto.FirstName;
+            if (!string.IsNullOrEmpty(dto.LastName)) user_f.LastName = dto.LastName;
+            if (!string.IsNullOrEmpty(dto.Email)) user_f.Email = dto.Email;
+            if (!string.IsNullOrEmpty(dto.PhoneNo)) user_f.PhoneNo = dto.PhoneNo;
+            if (!string.IsNullOrEmpty(dto.ProfilePicture)) user_f.ProfilePicture = dto.ProfilePicture;
+
+            //check if password provided for update is correct
+            if (!string.IsNullOrEmpty(dto.Password) && !string.IsNullOrEmpty(dto.NewPassword))
+            {
+
+                if (!ProjectLaunchpad.Utility.PasswordHasher.Verify(dto.Password, user_f.Password))
+                {
+                    var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await errorResponse.WriteAsJsonAsync(new { error = "Current password is incorrect" });
+                    return errorResponse;
+                }
+
+                // Set new password hash
+                dto.Password = ProjectLaunchpad.Utility.PasswordHasher.Hash(dto.NewPassword);
+            }
+
+            if (!string.IsNullOrEmpty(dto.Password) && !string.IsNullOrEmpty(dto.NewPassword))
+                        {
+                            user_f.Password = dto.Password;
+                        }
 
             await _unit.FreelancerProfiles.UpdateFreelancerProfileAsync(freelancer);
+            await _unit.Users.UpdateUserAsync(user_f);
             await _unit.SaveAsync();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -260,6 +298,7 @@ namespace ProjectLaunchpad.Functions
                 // Get the email before deleting user
                 var email = profile.User?.Email;
 
+                
                 await _unit.FreelancerProfiles.DeleteFreelancerProfileAsync(id);
                 await _unit.Users.DeleteUserAsync(id);
                 await _unit.SaveAsync();
@@ -323,7 +362,6 @@ namespace ProjectLaunchpad.Functions
             await res.WriteAsJsonAsync(profiles);
             return res;
         }
-
 
     }
 

@@ -66,5 +66,16 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 _db.Feedbacks.Remove(feedback);
             }
         }
+
+        public async Task DeleteFeedbacksByUserId(int userId)
+        {
+            var feedbacks = await _db.Feedbacks
+                .Where(f => f.FreelancerId == userId)
+                .ToListAsync();
+            if (feedbacks.Any())
+            {
+                _db.Feedbacks.RemoveRange(feedbacks);
+            }
+        }
     }
 }

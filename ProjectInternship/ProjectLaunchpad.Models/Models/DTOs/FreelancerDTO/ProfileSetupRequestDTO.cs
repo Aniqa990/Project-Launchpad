@@ -10,7 +10,7 @@ namespace ProjectLaunchpad.Models.Models.DTOs.FreelancerDTO
     {
         public string? FirstName { get; set; } = string.Empty;
         public string? LastName { get; set; } = string.Empty;
-        public string? Phone { get; set; } = string.Empty;
+        public string? PhoneNo { get; set; } = string.Empty;
         public decimal? HourlyRate { get; set; }
         public string? Availability { get; set; } = string.Empty;
         public string? WorkingHours { get; set; } = string.Empty;

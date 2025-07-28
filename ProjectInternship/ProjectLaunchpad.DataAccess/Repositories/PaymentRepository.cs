@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ProjectLaunchpad.DataAccess.Repositories
 {
-    public class PaymentRepository:IPaymentRepository
+    public class PaymentRepository : IPaymentRepository
     {
         private readonly ApplicationDbContext _db;
         public PaymentRepository(ApplicationDbContext db) => _db = db;
@@ -34,6 +34,27 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         {
             _db.payments.Update(payment);
             await Task.CompletedTask;
+        }
+
+        public async Task DeletePaymentAsync(int id)
+        {
+            var payment = await _db.payments.FindAsync(id);
+            if (payment != null)
+            {
+                _db.payments.Remove(payment);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeletePaymentsByFreelancerId(int freelancerId)
+        {
+            var payments = await _db.payments.Where(p => p.FreelancerId == freelancerId).ToListAsync();
+            if (payments.Any())
+            {
+                _db.payments.RemoveRange(payments);
+                await _db.SaveChangesAsync();
+            }
+
         }
     }
 }

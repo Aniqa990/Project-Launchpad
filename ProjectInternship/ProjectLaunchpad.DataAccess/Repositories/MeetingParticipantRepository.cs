@@ -35,6 +35,16 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             await _db.MeetingParticipants.AddRangeAsync(participants);
         }
 
+        public async Task DeleteParticipantById(int userId)
+        {
+            var participantRecords = await _db.MeetingParticipants
+                .Where(p => p.UserId == userId)
+                .ToListAsync();
 
+            if (participantRecords != null)
+            {
+                _db.MeetingParticipants.RemoveRange(participantRecords);
+            }
+        }
     }
 }

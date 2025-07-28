@@ -136,8 +136,9 @@ namespace ProjectLaunchpad.Functions
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
                 AttachedDocumentPath = p.AttachedDocumentPath,
-                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                Client = p.Client != null && p.Client.User != null ? new UserDTO
                 {
+                    Id = p.Client.Id,
                     FirstName = p.Client.User.FirstName,
                     LastName = p.Client.User.LastName,
                     Email = p.Client.User.Email,
@@ -146,15 +147,16 @@ namespace ProjectLaunchpad.Functions
                     Gender = p.Client.User.Gender
                 } : null,
                 RequiredSkills = p.RequiredSkills,
-                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserDTO
                 {
+                    Id = af.Freelancer.User.Id,
                     FirstName = af.Freelancer.User.FirstName,
                     LastName = af.Freelancer.User.LastName,
                     Email = af.Freelancer.User.Email,
                     PhoneNo = af.Freelancer.User.PhoneNo,
                     Role = af.Freelancer.User.Role,
                     Gender = af.Freelancer.User.Gender
-                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                } : null).Where(u => u != null).ToList() ?? new List<UserDTO>(),
                 Progress = 0 // TODO: Calculate based on milestones if needed
             }).ToList();
 
@@ -235,8 +237,9 @@ namespace ProjectLaunchpad.Functions
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
                 AttachedDocumentPath = p.AttachedDocumentPath,
-                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                Client = p.Client != null && p.Client.User != null ? new UserDTO
                 {
+                    Id = p.Client.User.Id,
                     FirstName = p.Client.User.FirstName,
                     LastName = p.Client.User.LastName,
                     Email = p.Client.User.Email,
@@ -245,15 +248,16 @@ namespace ProjectLaunchpad.Functions
                     Gender = p.Client.User.Gender
                 } : null,
                 RequiredSkills = p.RequiredSkills,
-                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserDTO
                 {
+                    Id = af.Freelancer.User.Id,
                     FirstName = af.Freelancer.User.FirstName,
                     LastName = af.Freelancer.User.LastName,
                     Email = af.Freelancer.User.Email,
                     PhoneNo = af.Freelancer.User.PhoneNo,
                     Role = af.Freelancer.User.Role,
                     Gender = af.Freelancer.User.Gender
-                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                } : null).Where(u => u != null).ToList() ?? new List<UserDTO>(),
                 Progress = 0 // TODO: Calculate based on milestones if needed
             }).ToList();
 
@@ -285,8 +289,9 @@ namespace ProjectLaunchpad.Functions
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
                 AttachedDocumentPath = p.AttachedDocumentPath,
-                Client = p.Client != null && p.Client.User != null ? new UserRegisterDTO
+                Client = p.Client != null && p.Client.User != null ? new UserDTO
                 {
+                    Id = p.Client.User.Id,
                     FirstName = p.Client.User.FirstName,
                     LastName = p.Client.User.LastName,
                     Email = p.Client.User.Email,
@@ -295,15 +300,16 @@ namespace ProjectLaunchpad.Functions
                     Gender = p.Client.User.Gender
                 } : null,
                 RequiredSkills = p.RequiredSkills,
-                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserRegisterDTO
+                Team = p.AssignedFreelancers?.Select(af => af.Freelancer?.User != null ? new UserDTO
                 {
+                    Id = af.Freelancer.User.Id,
                     FirstName = af.Freelancer.User.FirstName,
                     LastName = af.Freelancer.User.LastName,
                     Email = af.Freelancer.User.Email,
                     PhoneNo = af.Freelancer.User.PhoneNo,
                     Role = af.Freelancer.User.Role,
                     Gender = af.Freelancer.User.Gender
-                } : null).Where(u => u != null).ToList() ?? new List<UserRegisterDTO>(),
+                } : null).Where(u => u != null).ToList() ?? new List<UserDTO>(),
                 Progress = 0 // TODO: Calculate based on milestones if needed
             }).ToList();
 
@@ -374,7 +380,7 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetProjectsWithPendingApproval")]
         public async Task<HttpResponseData> GetProjectsWithPendingApproval(
-    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/projects/pending")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/projects/pending")] HttpRequestData req)
         {
             var projects = await _unitOfWork.ProjectRepository.GetProjectsWithPendingApprovalAsync();
 
@@ -395,6 +401,35 @@ namespace ProjectLaunchpad.Functions
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(projectDTOs);
+            return response;
+        }
+
+        [Function("UpdateProjectApprovalStatus")]
+        public async Task<HttpResponseData> UpdateProjectApprovalStatus(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "platform/projects/{id:int}")] HttpRequestData req,
+            int id)
+        {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
+            var project = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
+            if (project == null)
+                return req.CreateResponse(HttpStatusCode.NotFound);
+
+            var approvalDto = await req.ReadFromJsonAsync<ProjectApprovalDTO>();
+            if (approvalDto == null)
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+
+            // Update approval status
+            project.ApprovalStatus = approvalDto.ApprovalStatus ?? project.ApprovalStatus;
+            project.RejectionReason = approvalDto.RejectionReason ?? project.RejectionReason;
+
+            await _unitOfWork.ProjectRepository.UpdateProjectAsync(project);
+            await _unitOfWork.SaveAsync();
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(new { message = "Project approval status updated successfully" });
             return response;
         }
     }
