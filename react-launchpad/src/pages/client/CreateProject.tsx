@@ -62,6 +62,10 @@ export function CreateProject() {
   const [signatureError, setSignatureError] = useState('');
   const [isSigned, setIsSigned] = useState(false);
   const [uploading, setUploading] = useState(false); // Add uploading state
+  // Signature upload state
+  const [signatureImage, setSignatureImage] = useState<File | null>(null);
+  const [signatureImageUrl, setSignatureImageUrl] = useState<string>('');
+  const [signatureUploading, setSignatureUploading] = useState(false);
 
   // Move Cloudinary env constants inside the component
   const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
@@ -289,6 +293,7 @@ export function CreateProject() {
           : [],
         attachedDocumentPath: projectData.CloudinaryUrl || null,
         clientId: user?.id ?? null,
+        signatureUrl: signatureImageUrl || null, // This will be a local object URL if uploaded
       };
       const response = await createProject(payload);
       console.log('Create project response:', response);
@@ -384,13 +389,23 @@ export function CreateProject() {
     if (submitted && freelancerSuggestions.length) fetchFreelancers();
   }, [submitted, freelancerSuggestions]);
 
+  // Signature image upload handler
+  const handleSignatureImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSignatureImage(file);
+      setSignatureImageUrl(URL.createObjectURL(file));
+      setIsSigned(true);
+    }
+  };
+
   const stepTitles = [
     'Project Details',
     'Skills & Requirements',
     'Files & Resources',
     'Budget & Timeline',
-    'Milestones',
-    'Terms and Condition Agreement', // <-- new step
+    ...(budgetDivision === 'milestone' ? ['Milestones'] : []),
+    'Terms and Condition Agreement',
     'Review & Submit',
   ];
 
@@ -500,18 +515,18 @@ export function CreateProject() {
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center">
-          {[1, 2, 3, 4, 5, 6].map((stepNum) => (
-            <div key={stepNum} className="flex items-center">
+          {stepTitles.map((title, idx) => (
+            <div key={idx} className="flex items-center">
               <div className={`
                 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                ${stepNum <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}
+                ${idx + 1 <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}
               `}>
-                {stepNum}
+                {idx + 1}
               </div>
-              {stepNum < 6 && (
+              {idx < stepTitles.length - 1 && (
                 <div className={`
                   w-12 h-1 mx-2
-                  ${stepNum < step ? 'bg-blue-600' : 'bg-gray-200'}
+                  ${idx + 1 < step ? 'bg-blue-600' : 'bg-gray-200'}
                 `} />
               )}
             </div>
@@ -767,7 +782,7 @@ export function CreateProject() {
         )}
 
         {/* Step 5: Milestones (only if milestone-based) */}
-        {step === 5 && budgetDivision === 'milestone' && (
+        {budgetDivision === 'milestone' && step === 5 && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Project Milestones</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -879,23 +894,65 @@ export function CreateProject() {
           </div>
         )}
 
-        {/* Step 6: Terms and Condition Agreement */}
-        {step === 6 && (
+        {/* Terms and Condition Agreement step (step 5 if not milestone, step 6 if milestone) */}
+        {step === (budgetDivision === 'milestone' ? 6 : 5) && (
           <div className="space-y-6 flex flex-col items-center">
             <h2 className="text-xl font-bold mb-2">Terms and Condition Agreement</h2>
             <p className="text-gray-600 mb-4">Please sign below to agree to the terms and conditions before creating your project.</p>
+            {/* Project Confidentiality & NDA Agreement Terms */}
+            <div className="w-full max-w-2xl mb-6">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 shadow-sm">
+                <h3 className="text-lg font-semibold mb-2">Project Confidentiality & NDA Agreement – Client</h3>
+                <p className="text-sm text-gray-700 mb-2"><strong>Effective Upon Project Posting</strong></p>
+                <p className="text-sm text-gray-700 mb-2">By posting a project on our platform, you agree to the following terms to ensure mutual confidentiality between you and the platform, and with any resource(s) allocated to your project:</p>
+                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1 mb-2">
+                  <li><strong>Confidential Information:</strong> Any business information, technical details, documents, files, or specifications you share via this platform in connection with your project will be treated as confidential.</li>
+                  <li><strong>Limited Access:</strong> Your project details will only be accessible to platform administrators and the specific freelancers or organizations you approve for allocation.</li>
+                  <li><strong>Protection of data:</strong> Any intellectual property, proprietary methods, or trade secrets shared in your project brief or attached files will remain solely your property.</li>
+                  <li><strong>Non-Disclosure by Platform & Resources:</strong> We ensure that any allocated freelancer or organization will be bound by a platform-enforced NDA preventing them from disclosing, copying, or using your confidential information outside the scope of your project.</li>
+                  <li><strong>Retention:</strong> The platform will retain project data securely and will not disclose it to third parties unless legally required.</li>
+                </ul>
+              </div>
+            </div>
             <SignatureCanvas
               ref={sigCanvasRef}
               penColor="black"
               canvasProps={{ width: 400, height: 200, className: "border rounded shadow" }}
-              onEnd={() => setIsSigned(!sigCanvasRef.current.isEmpty())}
+              onEnd={() => {
+                setIsSigned(!sigCanvasRef.current.isEmpty());
+                setSignatureImage(null);
+                setSignatureImageUrl('');
+              }}
             />
+            <div className="my-4 text-gray-500">OR</div>
+            <div className="flex flex-col items-center space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Upload Signature Image (PNG/JPG)</label>
+              <input
+                id="signature-upload"
+                type="file"
+                accept="image/png,image/jpeg"
+                onChange={handleSignatureImageUpload}
+                disabled={signatureUploading}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="signature-upload" className="mb-2">
+                <span className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 transition-colors">
+                  Choose Signature Image
+                </span>
+              </label>
+              {/* No uploading state needed for local preview */}
+              {signatureImageUrl && (
+                <img src={signatureImageUrl} alt="Signature Preview" className="mt-2 border rounded shadow max-h-32" />
+              )}
+            </div>
             <div className="flex space-x-2 mt-2">
               <button
                 onClick={() => {
                   sigCanvasRef.current.clear();
                   setSignatureError('');
                   setIsSigned(false);
+                  setSignatureImage(null);
+                  setSignatureImageUrl('');
                 }}
                 className="px-4 py-2 bg-gray-300 rounded"
               >
@@ -912,15 +969,15 @@ export function CreateProject() {
               </Button>
               <Button
                 onClick={() => {
-                  if (!isSigned) {
-                    setSignatureError('Signature is required to proceed.');
+                  if (!isSigned && !signatureImageUrl) {
+                    setSignatureError('Signature (drawn or uploaded) is required to proceed.');
                     return;
                   }
                   setSignatureError('');
                   setStep(step + 1);
                 }}
                 className="bg-blue-600 text-white"
-                disabled={!isSigned}
+                disabled={!isSigned && !signatureImageUrl}
               >
                 Next Step
               </Button>
@@ -928,8 +985,8 @@ export function CreateProject() {
           </div>
         )}
 
-        {/* Step 7: Review & Submit */}
-        {step === 7 && (
+        {/* Review & Submit step (step 6 if not milestone, step 7 if milestone) */}
+        {step === (budgetDivision === 'milestone' ? 7 : 6) && (
           <div className="space-y-6 text-center">
             <h2 className="text-xl font-bold">Review & Submit</h2>
             <p>Review your project details and submit when ready.</p>
@@ -945,8 +1002,7 @@ export function CreateProject() {
           </div>
         )}
 
-        {/* Navigation Buttons */}
-        {step !== 6 && (
+        {step !== (budgetDivision === 'milestone' ? 6 : 5) && (
           <div className="flex justify-between mt-8 pt-6 border-t">
             <Button 
               variant="outline" 
@@ -955,7 +1011,7 @@ export function CreateProject() {
             >
               Previous
             </Button>
-            {step < 7 ? (
+            {step < stepTitles.length ? (
               <Button 
                 onClick={handleNextStep}
                 icon={ArrowRight}
@@ -964,7 +1020,7 @@ export function CreateProject() {
                   (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
                   (step === 2 && projectData.Skills.length === 0) ||
                   (step === 4 && (!projectData.Budget || !projectData.Deadline || dateValidation.deadlineError !== '')) ||
-                  (step === 5 && (milestones.length === 0 || budgetValidation.budgetExceeded))
+                  (step === 5 && budgetDivision === 'milestone' && (milestones.length === 0 || budgetValidation.budgetExceeded))
                 }
               >
                 Next Step

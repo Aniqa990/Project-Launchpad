@@ -688,5 +688,23 @@ export const getFreelancerDetails = async (freelancerId: number) => {
  
 
 
+export const getTimesheetsByFreelancer = async (freelancerName: string) => {
+  const res = await api.get(`/timesheets/freelancer/${encodeURIComponent(freelancerName)}`);
+  return res.data;
+};
 
 
+export const getProjectsByClient = async (clientId: number | string) => {
+  const res = await api.get(`/clients/${clientId}/projects`);
+  return res.data;
+};
+
+export const getFreelancersByProject = async (projectId: number | string) => {
+  const res = await api.get(`/projects/${projectId}/freelancers`);
+  return res.data;
+};
+
+export const getTimesheetsByFreelancerId = async (freelancerId: number | string) => {
+  const res = await api.get(`/timesheets/freelancer/${freelancerId}`);
+  return res.data;
+};
