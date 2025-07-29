@@ -68,5 +68,22 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             }
         }
 
+        public async Task<IEnumerable<MeetingAudioRecordingResponseDto>> GetByMeetingIdAsync(int meetingId)
+        {
+            return await _db.meetingAudioRecordings
+                .Where(r => r.MeetingId == meetingId)
+                .Include(r => r.user)
+                .Select(r => new MeetingAudioRecordingResponseDto
+                {
+                    Id = r.Id,
+                    MeetingId = r.MeetingId,
+                    FilePath = r.AudioUrl!,
+                    UploadedAt = r.UploadedAt,
+                    UserId = r.UserId,
+                    Username = r.user!.FirstName + " " + r.user.LastName
+                })
+                .ToListAsync();
+        }
+
     }
 }

@@ -537,6 +537,43 @@ export async function getUnallocatedResources() {
   return data;
 }
 
+// AI Task Generation APIs
+export const getMeetingsByProjectId = async (projectId: number) => {
+  try {
+    const response = await api.get(`/projects/${projectId}/meetings`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project meetings');
+  }
+};
+
+export const getMeetingDetails = async (meetingId: number) => {
+  try {
+    const response = await api.get(`/meetings/${meetingId}/details`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch meeting details');
+  }
+};
+
+export const getAudioByMeetingId = async (meetingId: number) => {
+  try {
+    const response = await api.get(`/audio/meeting/${meetingId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch meeting audio/transcript');
+  }
+};
+
+export const syncTasksFromAI = async (tasks: any[]) => {
+  try {
+    const response = await api.post('/tasks/ai/sync', { tasks });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to sync AI tasks');
+  }
+};
+
 // Get logs by freelancer ID
 export const getLogsByFreelancerId = async (freelancerId: number): Promise<any[]> => {
   try {
@@ -565,17 +602,6 @@ export const getProjectFreelancers = async (projectId: number): Promise<Freelanc
     throw new Error(error.response?.data?.message || 'Failed to fetch project freelancers');
   }
 };
-
-// Get meeting details
-export const getMeetingDetails = async (meetingId: number): Promise<any> => {
-  try {
-    const response = await api.get(`/meetings/${meetingId}/details`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch meeting details');
-  }
-};
-
 // Start meeting
 export const startMeeting = async (meetingData: {
   projectId: number;
@@ -718,15 +744,6 @@ export const assignFreelancerToGist = async (assignmentData: {
     throw new Error(error.response?.data?.detail || 'Failed to assign freelancer to gist');
   }
 };
- 
-
-
-
-
-
-
- 
-
 
 export const getTimesheetsByFreelancer = async (freelancerName: string) => {
   const res = await api.get(`/timesheets/freelancer/${encodeURIComponent(freelancerName)}`);
@@ -739,9 +756,13 @@ export const getProjectsByClient = async (clientId: number | string) => {
   return res.data;
 };
 
-export const getFreelancersByProject = async (projectId: number | string) => {
-  const res = await api.get(`/projects/${projectId}/freelancers`);
-  return res.data;
+export const getFreelancersByProject = async (projectId: number) => {
+  try {
+    const response = await api.get(`/projects/${projectId}/freelancers`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project freelancers');
+  }
 };
 
 export const getTimesheetsByFreelancerId = async (freelancerId: number | string) => {

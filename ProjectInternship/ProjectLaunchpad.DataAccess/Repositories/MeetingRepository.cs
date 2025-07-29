@@ -29,9 +29,11 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         {
             return await _db.Meetings
                 .Include(m => m.Participants)
+                    .ThenInclude(p => p.User) // 👈 This loads user data
                 .Where(m => m.ProjectId == projectId)
                 .ToListAsync();
         }
+
 
         public async Task AddAsync(Meeting entity)
         {

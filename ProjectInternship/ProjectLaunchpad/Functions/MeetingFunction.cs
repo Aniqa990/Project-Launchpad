@@ -150,8 +150,30 @@ namespace ProjectLaunchpad.Functions
         {
             var meetings = await _unitOfWork.Meeting.GetMeetingsByProjectIdAsync(projectId);
 
-            return new OkObjectResult(meetings);
+            var meetingDtos = meetings.Select(m => new MeetingDto
+            {
+                Id = m.Id,
+                ProjectId = m.ProjectId,
+                MeetingRoomId = m.MeetingRoomId,
+                Title = m.Title,
+                Description = m.Description,
+                Agenda = m.Agenda,
+                ClientId = m.ClientId,
+                Status = m.Status,
+                RecordingUrl = m.RecordingUrl,
+                StartedAt = m.StartedAt,
+                EndedAt = m.EndedAt,
+                Participants = m.Participants?.Select(p => new MeetingParticipantDto
+                {
+                    UserId = p.UserId,
+                    UserName = p.User?.FirstName , // Make sure User is included in .Include() in your query
+                    Role = p.role
+                }).ToList()
+            }).ToList();
+
+            return new OkObjectResult(meetingDtos);
         }
+
 
         [Function("GetMeetingDetails")]
         public async Task<IActionResult> GetMeetingDetails(

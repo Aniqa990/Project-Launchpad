@@ -202,8 +202,11 @@ export default function Meetings() {
           return;
         }
       }
-      // 5. Format transcript with timestamps based on pauses
+      // 5. Format transcript with timestamps and username based on pauses
       let formatted = '';
+      const userName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
+      const userRole = 'Freelancer';
+      
       if (words && words.length > 0) {
         let segment = [];
         let lastEnd = 0;
@@ -213,9 +216,9 @@ export default function Meetings() {
           const w = words[i];
           // If this word starts more than 1s after the previous word ended, start a new segment
           if (i > 0 && w.start - lastEnd > PAUSE_THRESHOLD) {
-            // Output the previous segment
+            // Output the previous segment with username
             const ts = new Date(lastStart).toISOString().substr(11, 8);
-            formatted += `[${ts}] ${segment.join(' ')}\n`;
+            formatted += `[${ts}] ${userName} (${userRole}): ${segment.join(' ')}\n`;
             // Start new segment
             segment = [];
             lastStart = w.start;
@@ -223,14 +226,18 @@ export default function Meetings() {
           segment.push(w.text);
           lastEnd = w.end;
         }
-        // Output the last segment
+        // Output the last segment with username
         if (segment.length > 0) {
           const ts = new Date(lastStart).toISOString().substr(11, 8);
-          formatted += `[${ts}] ${segment.join(' ')}\n`;
+          formatted += `[${ts}] ${userName} (${userRole}): ${segment.join(' ')}\n`;
         }
       } else {
-        formatted = transcriptText;
+        // If no word-level timestamps, add username to the full transcript
+        formatted = `${userName} (${userRole}): ${transcriptText}`;
       }
+      
+      // No header needed - just the conversation with timestamps
+      
       setTranscript(formatted);
     } catch (err) {
       setTranscribeError('Transcription failed.');

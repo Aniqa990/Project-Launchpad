@@ -17,5 +17,8 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task<IEnumerable<TaskDto>> GetTasksByProjectIdAsync(int projectId);
 
         void Delete(TaskItem task);
+
+        Task<TaskItem?> FindTaskByTitleAndProjectAsync(string title, int projectId);
+
     }
 }

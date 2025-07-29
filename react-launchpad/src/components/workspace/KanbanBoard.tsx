@@ -13,7 +13,8 @@ import {
   Trash2,
   CheckCircle,
   PlayCircle,
-  AlertCircle
+  AlertCircle,
+  Brain
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask, Project, User } from '../../types';
 import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById } from '../../apiendpoints';
@@ -25,6 +26,7 @@ import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Avatar } from '../ui/avatar';
 import { Modal } from '../ui/Modal';
+import { AITaskGenerator } from '../ui/AITaskGenerator';
 // Remove import { mockSubtasks } from '../../utils/mockData';
 
 interface KanbanColumnProps {
@@ -631,6 +633,7 @@ export function KanbanBoard() {
 
   const [projectDetails, setProjectDetails] = useState<any>(null);
   const [loadingProjectDetails, setLoadingProjectDetails] = useState(false);
+  const [showAITaskGenerator, setShowAITaskGenerator] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -764,15 +767,19 @@ export function KanbanBoard() {
   // 2. After drag, add, or update, re-fetch only the selected project's tasks
   const fetchProjectTasks = async () => {
     if (!selectedProjectId) return;
+    console.log('🔄 KanbanBoard - fetchProjectTasks called for project:', selectedProjectId);
     setLoadingTasks(true);
     setMessage('');
     try {
-      const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
+      const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
+      console.log('🔄 KanbanBoard - Fetched tasks:', res.data);
+      console.log('🔄 KanbanBoard - Task count:', res.data.length);
       setTasks(res.data);
       if (res.data.length === 0) {
         setMessage('No tasks for this project yet.');
       }
     } catch (e) {
+      console.error('🔄 KanbanBoard - Error fetching tasks:', e);
       setMessage('Could not fetch tasks for this project.');
     } finally {
       setLoadingTasks(false);
@@ -1015,11 +1022,23 @@ export function KanbanBoard() {
             }
           </p>
         </div>
-        {user?.role === 'freelancer' && (
-          <Button icon={Plus} onClick={handleCreateTaskButton} className="ml-4" variant="primary">
-            Create Task
-          </Button>
-        )}
+        <div className="flex space-x-2">
+          {user?.role === 'freelancer' && (
+            <Button icon={Plus} onClick={handleCreateTaskButton} variant="primary">
+              Create Task
+            </Button>
+          )}
+          {selectedProjectId && (
+            <Button 
+              onClick={() => setShowAITaskGenerator(!showAITaskGenerator)}
+              variant="secondary"
+              className="flex items-center space-x-2"
+            >
+              <Brain className="w-4 h-4" />
+              <span>Generate AI Task Result</span>
+            </Button>
+          )}
+        </div>
       </div>
       {(user?.role === 'freelancer' || user?.role === 'client') && (
         <div className="mb-4">
@@ -1095,6 +1114,18 @@ export function KanbanBoard() {
         </div>
       )}
       
+
+
+      {/* AI Task Generator Section */}
+      {selectedProjectId && showAITaskGenerator && (
+        <Card className="mb-6">
+          <AITaskGenerator 
+            projectId={selectedProjectId}
+            onTasksGenerated={fetchProjectTasks}
+          />
+        </Card>
+      )}
+
       {/* Only show Kanban board if a project is selected */}
       {selectedProjectId ? (
         loadingTasks ? (

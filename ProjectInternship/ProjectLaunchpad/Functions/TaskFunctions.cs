@@ -133,5 +133,181 @@ namespace ProjectLaunchpad.Functions
 
             return req.CreateResponse(HttpStatusCode.NoContent);
         }
+
+
+        [Function("SyncTasksFromAI")]
+        public async Task<HttpResponseData> SyncTasksFromAI(
+[HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "tasks/ai/sync")] HttpRequestData req)
+        {
+            Console.WriteLine("🔍 DEBUG - SyncTasksFromAI started");
+
+            try
+            {
+                // ✅ Authorize client or freelancer
+                var (isAuthorized, user, unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer", "client");
+                if (!isAuthorized)
+                {
+                    Console.WriteLine("❌ DEBUG - Authorization failed");
+                    return unauthorizedResponse!;
+                }
+
+                Console.WriteLine($"✅ DEBUG - Authorization successful for user:");
+
+                // ✅ Parse JSON body into dictionary { tasks: [...] }
+                var requestData = await req.ReadFromJsonAsync<Dictionary<string, List<AiTaskDto>>>();
+                if (requestData == null || !requestData.TryGetValue("tasks", out var aiTasks) || aiTasks == null)
+                {
+                    Console.WriteLine("❌ DEBUG - Invalid request data or no tasks found");
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+
+                Console.WriteLine($"✅ DEBUG - Received {aiTasks.Count} tasks to process");
+
+                int tasksProcessed = 0;
+                int tasksCreated = 0;
+                int tasksUpdated = 0;
+
+                foreach (var aiTask in aiTasks)
+                {
+                    Console.WriteLine($" DEBUG - Processing task: '{aiTask.title}'");
+
+                    if (string.IsNullOrWhiteSpace(aiTask.title) || string.IsNullOrWhiteSpace(aiTask.project_id))
+                    {
+                        Console.WriteLine($"⚠️ DEBUG - Skipping task due to missing title or project ID");
+                        Console.WriteLine($"  Title: '{aiTask.title}'");
+                        Console.WriteLine($"  ProjectId: '{aiTask.project_id}'");
+                        continue;
+                    }
+
+                    // ✅ Parse project ID from "project1" → 1
+                    if (!int.TryParse(aiTask.project_id.Replace("project", ""), out var numericProjectId))
+                    {
+                        Console.WriteLine($"❌ DEBUG - Failed to parse project ID: {aiTask.project_id}");
+                        continue;
+                    }
+
+                    Console.WriteLine($"🔍 DEBUG - Parsed project ID: {numericProjectId}");
+
+                    // ✅ Check if task already exists by title + project ID
+                    var existingTask = await _unitOfWork.TaskRepository
+                        .FindTaskByTitleAndProjectAsync(aiTask.title, numericProjectId);
+
+                    if (existingTask != null)
+                    {
+                        Console.WriteLine($"🔍 DEBUG - Updating existing task: ID={existingTask.Id}, Title='{existingTask.Title}'");
+
+                        // ✅ Update existing task fields conditionally
+                        if (!string.IsNullOrWhiteSpace(aiTask.description))
+                        {
+                            Console.WriteLine($"🔍 DEBUG - Updating description: '{existingTask.Description}' → '{aiTask.description}'");
+                            existingTask.Description = aiTask.description;
+                        }
+
+                        if (aiTask.priority != 0)
+                        {
+                            Console.WriteLine($"🔍 DEBUG - Updating priority: {existingTask.Priority} → {aiTask.priority}");
+                            existingTask.Priority = (KanbanTaskPriorityLevel)aiTask.priority;
+                        }
+
+                        Console.WriteLine($"🔍 DEBUG - Updating status: {existingTask.Status} → {aiTask.status}");
+                        existingTask.Status = (KanbanTaskStatus)aiTask.status;
+
+                        if (!string.Equals(aiTask.estimated_deadline, "NA", StringComparison.OrdinalIgnoreCase) &&
+                            DateTime.TryParse(aiTask.estimated_deadline, out var parsedDeadline))
+                        {
+                            Console.WriteLine($"🔍 DEBUG - Updating deadline: {existingTask.EstimatedDeadline} → {parsedDeadline}");
+                            existingTask.EstimatedDeadline = parsedDeadline;
+                        }
+
+                        _unitOfWork.TaskRepository.Update(existingTask);
+                        tasksUpdated++;
+                        Console.WriteLine($"✅ DEBUG - Existing task updated successfully");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"🔍 DEBUG - Creating new task: '{aiTask.title}' for project {numericProjectId}");
+
+                        // ✅ Prepare new task object
+                        DateTime? deadline = null;
+                        if (!string.Equals(aiTask.estimated_deadline, "NA", StringComparison.OrdinalIgnoreCase) &&
+                            DateTime.TryParse(aiTask.estimated_deadline, out var parsedDeadline))
+                        {
+                            deadline = parsedDeadline;
+                            Console.WriteLine($"🔍 DEBUG - Setting deadline: {deadline}");
+                        }
+
+                        var newTask = new TaskItem
+                        {
+                            Title = aiTask.title,
+                            Description = aiTask.description ?? "",
+                            EstimatedDeadline = deadline,
+                            Priority = (KanbanTaskPriorityLevel)aiTask.priority,
+                            Status = (KanbanTaskStatus)aiTask.status,
+                            CreatedByUserId = aiTask.created_by_id,
+                            AssignedToUserId = aiTask.freelancer_id,
+                            projectId = numericProjectId,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        Console.WriteLine($"🔍 DEBUG - New task details:");
+                        Console.WriteLine($"  Title: {newTask.Title}");
+                        Console.WriteLine($"  Description: {newTask.Description}");
+                        Console.WriteLine($"  Priority: {newTask.Priority}");
+                        Console.WriteLine($"  Status: {newTask.Status}");
+                        Console.WriteLine($"  CreatedByUserId: {newTask.CreatedByUserId}");
+                        Console.WriteLine($"  AssignedToUserId: {newTask.AssignedToUserId}");
+                        Console.WriteLine($"  ProjectId: {newTask.projectId}");
+                        Console.WriteLine($"  CreatedAt: {newTask.CreatedAt}");
+
+                        await _unitOfWork.TaskRepository.AddAsync(newTask);
+                        tasksCreated++;
+                        Console.WriteLine($"✅ DEBUG - New task added to repository");
+                    }
+
+                    tasksProcessed++;
+                }
+
+                Console.WriteLine($"🔍 DEBUG - Summary before save:");
+                Console.WriteLine($"  Tasks processed: {tasksProcessed}");
+                Console.WriteLine($"  Tasks created: {tasksCreated}");
+                Console.WriteLine($"  Tasks updated: {tasksUpdated}");
+
+                Console.WriteLine("🔍 DEBUG - About to save changes to database...");
+                await _unitOfWork.SaveAsync();
+                Console.WriteLine("✅ DEBUG - Changes saved successfully to database!");
+
+                // ✅ Return a proper JSON response (NO MANUAL Content-Type HEADER!)
+                var response = req.CreateResponse(HttpStatusCode.OK);
+
+                var result = new
+                {
+                    success = true,
+                    message = "Tasks synced successfully",
+                    tasksProcessed = tasksProcessed,
+                    tasksCreated = tasksCreated,
+                    tasksUpdated = tasksUpdated
+                };
+
+                Console.WriteLine($"🔍 DEBUG - Returning response: {System.Text.Json.JsonSerializer.Serialize(result)}");
+                await response.WriteAsJsonAsync(result);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ DEBUG - Exception in SyncTasksFromAI: {ex.Message}");
+                Console.WriteLine($"❌ DEBUG - Stack trace: {ex.StackTrace}");
+
+                var errorResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
+                var errorResult = new
+                {
+                    success = false,
+                    message = "Error syncing tasks",
+                    error = ex.Message
+                };
+                await errorResponse.WriteAsJsonAsync(errorResult);
+                return errorResponse;
+            }
+        }
+
     }
 }

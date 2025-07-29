@@ -102,5 +102,36 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(logs);
             return response;
         }
+
+        [Function("GetAudioByMeetingId")]
+        public async Task<HttpResponseData> GetAudioByMeetingId(
+     [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "audio/meeting/{meetingId:int}")] HttpRequestData req,
+     int meetingId)
+        {
+            var audioRecordings = await _unitOfWork.MeetingAudioRecording.GetByMeetingIdAsync(meetingId);
+            if (audioRecordings == null || !audioRecordings.Any())
+            {
+                return req.CreateResponse(HttpStatusCode.NotFound);
+            }
+
+            // Flatten into a dictionary
+            var flatResult = new Dictionary<string, object>();
+            int counter = 1;
+
+            foreach (var item in audioRecordings)
+            {
+                flatResult[$"Link{counter}"] = item.FilePath;
+                flatResult[$"UserId{counter}"] = item.UserId;
+                flatResult[$"Username{counter}"] = item.Username;
+                counter++;
+            }
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(flatResult);
+            return response;
+        }
+
+
+
     }
 }
