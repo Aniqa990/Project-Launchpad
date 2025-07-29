@@ -1,0 +1,132 @@
+// Updated webhook function to handle both single and multi-freelancer payments
+[Function("StripeWebhook")]
+public async Task<HttpResponseData> StripeWebhook(
+    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "webhooks/stripe")] HttpRequestData req,
+    FunctionContext context)
+{
+    var logger = context.GetLogger("StripeWebhook");
+
+    // Read request body
+    var json = await new StreamReader(req.Body).ReadToEndAsync();
+
+    // Get Stripe signature from header
+    var stripeSignature = req.Headers.TryGetValues("Stripe-Signature", out var values)
+        ? values.FirstOrDefault()
+        : null;
+
+    var webhookSecret = _config["Stripe:WebhookSecret"];
+    StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
+
+    if (string.IsNullOrEmpty(stripeSignature) || string.IsNullOrEmpty(webhookSecret))
+    {
+        var badRes = req.CreateResponse(HttpStatusCode.BadRequest);
+        await badRes.WriteStringAsync("Missing signature or webhook secret");
+        return badRes;
+    }
+
+    Stripe.Event stripeEvent;
+    try
+    {
+        stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, webhookSecret, throwOnApiVersionMismatch: false);
+        logger.LogInformation($"🔔 Received event: {stripeEvent.Type}");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError($"❌ Webhook signature verification failed: {ex.Message}");
+        var res = req.CreateResponse(HttpStatusCode.BadRequest);
+        await res.WriteStringAsync("Invalid signature");
+        return res;
+    }
+
+    // Only handle checkout.session.completed
+    if (stripeEvent.Type == "checkout.session.completed")
+    {
+        try
+        {
+            var sessionJson = JsonConvert.SerializeObject(stripeEvent.Data.Object);
+            var checkoutSession = JsonConvert.DeserializeObject<Session>(sessionJson);
+
+            if (checkoutSession?.Metadata != null)
+            {
+                // Check if this is a multi-freelancer payment
+                if (checkoutSession.Metadata.ContainsKey("paymentIds"))
+                {
+                    // Handle multi-freelancer payment
+                    var paymentIdsStr = checkoutSession.Metadata["paymentIds"];
+                    logger.LogInformation($"📦 Multi-freelancer payment - paymentIds: {paymentIdsStr}");
+
+                    var paymentIds = paymentIdsStr.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    var updatedCount = 0;
+
+                    foreach (var paymentIdStr in paymentIds)
+                    {
+                        if (int.TryParse(paymentIdStr.Trim(), out int paymentId))
+                        {
+                            var payment = await _unitOfWork.PaymentRepository.GetPaymentByIdAsync(paymentId);
+                            if (payment != null)
+                            {
+                                payment.PaymentStatus = "Paid";
+                                await _unitOfWork.PaymentRepository.UpdateAsync(payment);
+                                updatedCount++;
+                                logger.LogInformation($"✅ Payment #{paymentId} marked as Paid.");
+                            }
+                            else
+                            {
+                                logger.LogWarning($"⚠️ No payment found with ID: {paymentId}");
+                            }
+                        }
+                        else
+                        {
+                            logger.LogWarning($"❗ Invalid payment ID: {paymentIdStr}");
+                        }
+                    }
+
+                    await _unitOfWork.SaveAsync();
+                    logger.LogInformation($"🎉 Successfully updated {updatedCount} payments for multi-freelancer session.");
+                }
+                else if (checkoutSession.Metadata.ContainsKey("paymentId"))
+                {
+                    // Handle single payment (existing logic)
+                    var paymentIdStr = checkoutSession.Metadata["paymentId"];
+                    logger.LogInformation($"📦 Single payment - paymentId: {paymentIdStr}");
+
+                    if (int.TryParse(paymentIdStr, out int paymentId))
+                    {
+                        var payment = await _unitOfWork.PaymentRepository.GetPaymentByIdAsync(paymentId);
+                        if (payment != null)
+                        {
+                            payment.PaymentStatus = "Paid";
+                            await _unitOfWork.PaymentRepository.UpdateAsync(payment);
+                            await _unitOfWork.SaveAsync();
+                            logger.LogInformation($"✅ Payment #{paymentId} marked as Paid.");
+                        }
+                        else
+                        {
+                            logger.LogWarning($"⚠️ No payment found with ID: {paymentId}");
+                        }
+                    }
+                    else
+                    {
+                        logger.LogWarning("❗ paymentId in metadata is not a valid integer");
+                    }
+                }
+                else
+                {
+                    logger.LogWarning("❗ Metadata missing paymentId or paymentIds");
+                }
+            }
+            else
+            {
+                logger.LogWarning("❗ Metadata missing or paymentId not found in session");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"❌ Exception while processing webhook: {ex.Message}");
+        }
+    }
+
+    var response = req.CreateResponse(HttpStatusCode.OK);
+    await response.WriteStringAsync("Webhook handled successfully");
+    return response;
+} 

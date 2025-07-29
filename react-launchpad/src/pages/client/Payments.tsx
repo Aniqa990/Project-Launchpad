@@ -18,8 +18,10 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { InvoicePage } from './InvoicePage'; // Restore InvoicePage import
-import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId } from '../../apiendpoints';
+import { MultiFreelancerPaymentModal } from './MultiFreelancerPaymentModal';
+import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers } from '../../apiendpoints';
 import PaymentForm from './PaymentForm'; // Added import for PaymentForm
+import { validatePaymentData, formatPaymentAmount, calculatePlatformFee, calculateFreelancerAmount, getPaymentStatusColor, formatPaymentDate } from '../../utils/paymentHelpers';
 // REMOVE: import StripeWrapper from './StripeWrapper';
 
 export function ClientPayments() {
@@ -33,6 +35,12 @@ export function ClientPayments() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | number>('all');
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState<'all' | 'milestone' | 'fixed'>('all');
+  const [payments, setPayments] = useState<any[]>([]);
+  const [milestonePayments, setMilestonePayments] = useState<{[key: number]: any}>({});
+  const [viewMode, setViewMode] = useState<'milestones' | 'payments'>('milestones');
+  const [showMultiFreelancerModal, setShowMultiFreelancerModal] = useState(false);
+  const [selectedMilestoneForMultiPayment, setSelectedMilestoneForMultiPayment] = useState<any>(null);
 
   // Hardcoded clientId for now; replace with auth context if available
   const clientId = 1;
@@ -51,6 +59,22 @@ export function ClientPayments() {
       }
     };
     fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    // Fetch payments for the current client
+    const fetchPayments = async () => {
+      try {
+        setLoading(true);
+        const data = await getClientPayments(clientId);
+        setPayments(data);
+      } catch (err) {
+        toast.error('Failed to fetch payments');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayments();
   }, []);
 
   useEffect(() => {
@@ -77,6 +101,91 @@ export function ClientPayments() {
     }
   }, [selectedProjectId]);
 
+  // Fetch payment status for milestones
+  useEffect(() => {
+    const fetchMilestonePayments = async () => {
+      if (milestones.length > 0) {
+        const paymentPromises = milestones.map(async (milestone) => {
+          const milestoneId = milestone.Id || milestone.id;
+          try {
+            const payments = await getPaymentByMilestone(milestoneId);
+            // getPaymentByMilestone now returns an array of payments
+            return { milestoneId, payments: Array.isArray(payments) ? payments : [] };
+          } catch (error) {
+            return { milestoneId, payments: [] };
+          }
+        });
+        
+        const results = await Promise.all(paymentPromises);
+        const paymentMap: {[key: number]: any[]} = {};
+        results.forEach(({ milestoneId, payments }) => {
+          paymentMap[milestoneId] = payments.filter(p => p); // Filter out null/undefined payments
+        });
+        setMilestonePayments(paymentMap);
+      }
+    };
+
+    fetchMilestonePayments();
+  }, [milestones]);
+
+  // Check if all freelancers for a milestone are paid
+  const checkAllFreelancersPaid = async (milestone: any) => {
+    try {
+      // Get all freelancers assigned to this milestone
+      const freelancers = await getMilestoneFreelancers(milestone.Id || milestone.id);
+      
+      if (freelancers.length === 0) {
+        return false; // No freelancers assigned
+      }
+
+      // Get all payments for this milestone
+      const payments = await getPaymentByMilestone(milestone.Id || milestone.id);
+      
+      // If no payments exist, not all are paid
+      if (!payments || payments.length === 0) {
+        return false;
+      }
+
+      // Check if all freelancers have paid payments
+      const paidFreelancerIds = payments
+        .filter((payment: any) => 
+          payment.PaymentStatus === 'Paid' || payment.PaymentStatus === 'paid' ||
+          payment.PaymentStatus === 'Released' || payment.PaymentStatus === 'released'
+        )
+        .map((payment: any) => payment.FreelancerId);
+
+      const allFreelancerIds = freelancers.map((f: any) => f.FreelancerId);
+      
+      // Check if all freelancers have paid payments
+      return allFreelancerIds.every((freelancerId: number) => 
+        paidFreelancerIds.includes(freelancerId)
+      );
+    } catch (error) {
+      console.error('Error checking freelancer payments:', error);
+      return false;
+    }
+  };
+
+  // Get payment status for milestone (for display)
+  const getMilestonePaymentStatus = (milestone: any) => {
+    const milestoneId = milestone.Id || milestone.id;
+    const payment = milestonePayments[milestoneId];
+    
+    if (!payment) {
+      return { status: 'none', message: 'No payment' };
+    }
+
+    const paymentStatus = payment.PaymentStatus || payment.paymentStatus || 'Unknown';
+    
+    if (paymentStatus === 'Paid' || paymentStatus === 'paid') {
+      return { status: 'paid', message: 'Payment Paid' };
+    } else if (paymentStatus === 'Released' || paymentStatus === 'released') {
+      return { status: 'released', message: 'Payment Released' };
+    } else {
+      return { status: 'pending', message: `Payment: ${paymentStatus}` };
+    }
+  };
+
   // Filtered milestones based on search and status
   const filteredMilestones = milestones.filter((milestone: any) => {
     const matchesSearch = (milestone.Title || milestone.title || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -90,15 +199,31 @@ export function ClientPayments() {
     return matchesSearch && matchesStatus;
   });
 
+  // Filtered payments based on search and filters
+  const filteredPayments = payments.filter((payment: any) => {
+    const matchesSearch = (payment.ProjectTitle || payment.projectTitle || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || payment.PaymentStatus?.toLowerCase() === statusFilter;
+    const matchesProject = selectedProjectId === 'all' || payment.ProjectId?.toString() === selectedProjectId.toString();
+    const matchesPaymentType = paymentTypeFilter === 'all' || payment.PaymentType?.toLowerCase() === paymentTypeFilter;
+    return matchesSearch && matchesStatus && matchesProject && matchesPaymentType;
+  });
+
   // Stats
   const totalPaid = milestones.filter((m: any) => (m.Status || m.status) === 2).reduce((sum: number, m: any) => sum + (m.Amount || m.amount || 0), 0);
   const totalPending = milestones.filter((m: any) => (m.Status || m.status) === 1).reduce((sum: number, m: any) => sum + (m.Amount || m.amount || 0), 0);
   const totalBudget = projects.reduce((sum: number, p: any) => sum + (p.Budget || p.budget || 0), 0);
 
-  const handleReleasePayment = (milestoneId: string) => {
-    // logic
+  const handleReleasePayment = async (paymentId: number) => {
+    try {
+      await releasePayment(paymentId);
     toast.success('Payment released successfully!');
     setShowPaymentModal(false);
+      // Refresh payments
+      const data = await getClientPayments(clientId);
+      setPayments(data);
+    } catch (err) {
+      toast.error('Failed to release payment');
+    }
   };
 
   const getStatusColor = (status: string | number) => {
@@ -119,29 +244,181 @@ export function ClientPayments() {
     }
   };
 
-  const calculatePlatformFee = (amount: number) => amount * 0.05; // 5% platform fee
-  const calculateFreelancerAmount = (amount: number) => amount - calculatePlatformFee(amount);
-
-  // Stripe checkout handler
-  const handleStripeCheckout = async (milestone: any) => {
+  // Fixed project payment handler with selected freelancer
+  const handleFixedProjectPaymentWithFreelancer = async (project: any, selectedFreelancerId: number) => {
     try {
-      // You may need to adjust these IDs based on your data model
-      const { url } = await createStripeCheckoutSession({
-        clientId: milestone.ClientId || milestone.clientId || clientId,
-        freelancerId: milestone.FreelancerId || milestone.freelancerId || 1,
-        projectId: milestone.ProjectId || milestone.projectId || selectedProjectId,
-        paymentType: 'Milestone',
-        milestoneId: milestone.Id || milestone.id,
+      const paymentData = {
+        clientId: project.ClientId || project.clientId || clientId,
+        freelancerId: selectedFreelancerId,
+        projectId: project.ProjectId || project.projectId,
+        paymentType: 'Fixed',
+        milestoneId: null, // Fixed payments don't have milestone IDs
         timesheetId: null,
-        amount: milestone.Amount ?? 0,
-      });
+        amount: project.Amount || project.amount || 0,
+      };
+
+      // Validate payment data
+      const validation = validatePaymentData(paymentData);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        return;
+      }
+
+      const { url } = await createStripeCheckoutSession(paymentData);
       if (url) {
         window.location.href = url;
       } else {
         toast.error('Failed to initiate Stripe Checkout.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Stripe checkout error:', err);
+      if (err.response?.data) {
+        toast.error(`Payment error: ${err.response.data}`);
+      } else {
+        toast.error('Error redirecting to Stripe Checkout.');
+      }
+    }
+  };
+
+  // Fixed project payment handler (fallback)
+  const handleFixedProjectPayment = async (project: any) => {
+    try {
+      const paymentData = {
+        clientId: project.ClientId || project.clientId || clientId,
+        freelancerId: project.FreelancerId || project.freelancerId || 2, // Use 2 as fallback
+        projectId: project.Id || project.id,
+        paymentType: 'Fixed',
+        milestoneId: null, // Fixed payments don't have milestone IDs
+        timesheetId: null,
+        amount: project.Budget || project.budget || 0,
+      };
+
+      // Validate payment data
+      const validation = validatePaymentData(paymentData);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        return;
+      }
+
+      const { url } = await createStripeCheckoutSession(paymentData);
+      if (url) {
+        window.location.href = url;
+      } else {
+        toast.error('Failed to initiate Stripe Checkout.');
+      }
+    } catch (err: any) {
+      console.error('Stripe checkout error:', err);
+      if (err.response?.data) {
+        toast.error(`Payment error: ${err.response.data}`);
+      } else {
+        toast.error('Error redirecting to Stripe Checkout.');
+      }
+    }
+  };
+
+  // Stripe checkout handler with selected freelancer
+  const handleStripeCheckoutWithFreelancer = async (milestone: any, selectedFreelancerId: number) => {
+    try {
+      const paymentData = {
+        clientId: milestone.ClientId || milestone.clientId || clientId,
+        freelancerId: selectedFreelancerId,
+        projectId: milestone.ProjectId || milestone.projectId || selectedProjectId,
+        paymentType: 'Milestone',
+        milestoneId: milestone.Id || milestone.id,
+        timesheetId: null,
+        amount: milestone.Amount ?? 0,
+      };
+
+      // Validate payment data
+      const validation = validatePaymentData(paymentData);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        return;
+      }
+
+      const { url } = await createStripeCheckoutSession(paymentData);
+      if (url) {
+        window.location.href = url;
+      } else {
+        toast.error('Failed to initiate Stripe Checkout.');
+      }
+    } catch (err: any) {
+      console.error('Stripe checkout error:', err);
+      if (err.response?.data) {
+        toast.error(`Payment error: ${err.response.data}`);
+      } else {
+        toast.error('Error redirecting to Stripe Checkout.');
+      }
+    }
+  };
+
+  // Check if milestone has multiple freelancers
+  const checkMilestoneFreelancers = async (milestone: any) => {
+    try {
+      const freelancers = await getMilestoneFreelancers(milestone.Id || milestone.id);
+      return freelancers.length > 1;
+    } catch (error) {
+      console.error('Failed to check milestone freelancers:', error);
+      return false;
+    }
+  };
+
+  // Handle milestone payment (single or multi-freelancer)
+  const handleMilestonePayment = async (milestone: any) => {
+    try {
+      const hasMultipleFreelancers = await checkMilestoneFreelancers(milestone);
+      
+      if (hasMultipleFreelancers) {
+        // Show multi-freelancer payment modal
+        setSelectedMilestoneForMultiPayment(milestone);
+        setShowMultiFreelancerModal(true);
+      } else {
+        // Use existing single freelancer logic
+        await handleStripeCheckout(milestone);
+      }
+    } catch (error) {
+      console.error('Failed to handle milestone payment:', error);
+      toast.error('Failed to process payment');
+    }
+  };
+
+  // Stripe checkout handler (fallback)
+  const handleStripeCheckout = async (milestone: any) => {
+    try {
+      // Get the project to find the freelancer ID
+      const project = projects.find(p => (p.Id || p.id) === (milestone.ProjectId || milestone.projectId));
+      const freelancerId = project?.FreelancerId || project?.freelancerId || 2; // Use 2 as fallback
+
+      const paymentData = {
+        clientId: milestone.ClientId || milestone.clientId || clientId,
+        freelancerId: milestone.FreelancerId || milestone.freelancerId || freelancerId,
+        projectId: milestone.ProjectId || milestone.projectId || selectedProjectId,
+        paymentType: 'Milestone',
+        milestoneId: milestone.Id || milestone.id,
+        timesheetId: null,
+        amount: milestone.Amount ?? 0,
+      };
+
+      // Validate payment data
+      const validation = validatePaymentData(paymentData);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        return;
+      }
+
+      const { url } = await createStripeCheckoutSession(paymentData);
+      if (url) {
+        window.location.href = url;
+      } else {
+        toast.error('Failed to initiate Stripe Checkout.');
+      }
+    } catch (err: any) {
+      console.error('Stripe checkout error:', err);
+      if (err.response?.data) {
+        toast.error(`Payment error: ${err.response.data}`);
+      } else {
       toast.error('Error redirecting to Stripe Checkout.');
+      }
     }
   };
 
@@ -201,6 +478,26 @@ export function ClientPayments() {
         </Card>
       </div>
 
+      {/* View Mode Toggle */}
+      <Card className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex space-x-2">
+            <Button
+              variant={viewMode === 'milestones' ? 'default' : 'outline'}
+              onClick={() => setViewMode('milestones')}
+            >
+              Milestones
+            </Button>
+            <Button
+              variant={viewMode === 'payments' ? 'default' : 'outline'}
+              onClick={() => setViewMode('payments')}
+            >
+              Payment History
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       {/* Filters */}
       <Card className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
@@ -208,7 +505,7 @@ export function ClientPayments() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search milestones..."
+              placeholder={viewMode === 'milestones' ? "Search milestones..." : "Search payments..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
@@ -226,15 +523,36 @@ export function ClientPayments() {
               </option>
             ))}
           </select>
+          {viewMode === 'payments' && (
+            <select
+              value={paymentTypeFilter}
+              onChange={(e) => setPaymentTypeFilter(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Payment Types</option>
+              <option value="milestone">Milestone-based</option>
+              <option value="fixed">Fixed-price</option>
+            </select>
+          )}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Status</option>
+            {viewMode === 'milestones' ? (
+              <>
             <option value="pending">Not Selected</option>
             <option value="in-progress">In Progress</option>
             <option value="completed">Completed</option>
+              </>
+            ) : (
+              <>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="released">Released</option>
+              </>
+            )}
           </select>
         </div>
       </Card>
@@ -290,30 +608,117 @@ export function ClientPayments() {
                   <div className="text-2xl font-bold text-gray-900 mb-2">
                     ${milestone.Amount?.toLocaleString() || ''}
                   </div>
-                  {(milestone.Status === 2 || milestone.status === 2) && (
-                    <Button
-                      icon={CreditCard}
-                      onClick={() => {
-                        setPayingMilestone(milestone);
-                        setShowInvoiceModal(true);
-                      }}
-                    >
-                      Pay Now
-                    </Button>
+                  {/* Payment Button Logic for Completed Milestones */}
+                  {/* 
+                    Logic:
+                    1. If milestone status is completed (2)
+                    2. Check if ALL freelancers for this milestone are paid
+                    3. If all paid → Show "All Paid" status
+                    4. If some paid → Show "Partial Payment" status
+                    5. If none paid → Show "Pay Now" button
+                  */}
+                                    {(milestone.Status === 2 || milestone.status === 2) && (
+                    (() => {
+                      const milestoneId = milestone.Id || milestone.id;
+                      const payments = milestonePayments[milestoneId] || [];
+                      
+                      // Check if any payments exist for this milestone
+                      if (payments.length > 0) {
+                        // Get freelancers for this milestone to check if all are paid
+                        const paidPayments = payments.filter((payment: any) => 
+                          payment.PaymentStatus === 'Paid' || payment.PaymentStatus === 'paid' ||
+                          payment.PaymentStatus === 'Released' || payment.PaymentStatus === 'released'
+                        );
+                        
+                        const pendingPayments = payments.filter((payment: any) => 
+                          payment.PaymentStatus === 'Pending' || payment.PaymentStatus === 'pending'
+                        );
+
+                        // Get unique freelancer IDs to count actual freelancers
+                        const uniqueFreelancerIds = [...new Set(payments.map((p: any) => p.FreelancerId))];
+                        const uniquePaidFreelancerIds = [...new Set(paidPayments.map((p: any) => p.FreelancerId))];
+                        const uniquePendingFreelancerIds = [...new Set(pendingPayments.map((p: any) => p.FreelancerId))];
+
+                        // Check if all freelancers are paid
+                        if (uniquePaidFreelancerIds.length === uniqueFreelancerIds.length) {
+                          // All freelancers are paid
+                          return (
+                            <div className="flex flex-col items-end space-y-2">
+                              <Badge variant="success" className="text-sm">
+                                All Paid
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {uniqueFreelancerIds.length} freelancer{uniqueFreelancerIds.length > 1 ? 's' : ''} paid
+                              </p>
+                            </div>
+                          );
+                        } else if (uniquePaidFreelancerIds.length > 0 && uniquePendingFreelancerIds.length > 0) {
+                          // Some freelancers paid, some pending
+                          return (
+                            <div className="flex flex-col items-end space-y-2">
+                              <Badge variant="warning" className="text-sm">
+                                Partial Payment
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {uniquePaidFreelancerIds.length}/{uniqueFreelancerIds.length} paid
+                              </p>
+                              <Button
+                                icon={CreditCard}
+                                onClick={() => handleMilestonePayment(milestone)}
+                                size="sm"
+                              >
+                                Pay Remaining
+                              </Button>
+                            </div>
+                          );
+                        } else {
+                          // All freelancers are pending
+                          return (
+                            <div className="flex flex-col items-end space-y-2">
+                              <Badge variant="warning" className="text-sm">
+                                Payment Pending
+                              </Badge>
+                              <p className="text-xs text-gray-500">
+                                {uniqueFreelancerIds.length} freelancer{uniqueFreelancerIds.length > 1 ? 's' : ''} pending
+                              </p>
+                              <Button
+                                icon={CreditCard}
+                                onClick={() => handleMilestonePayment(milestone)}
+                                size="sm"
+                              >
+                                Pay Now
+                              </Button>
+                            </div>
+                          );
+                        }
+                      } else {
+                        // No payments exist for this milestone - show Pay Now button
+                        return (
+                          <Button
+                            icon={CreditCard}
+                            onClick={() => handleMilestonePayment(milestone)}
+                          >
+                            Pay Now
+                          </Button>
+                        );
+                      }
+                    })()
                   )}
                   {(milestone.Status || milestone.status) === 1 && (
-                    <Button
-                      icon={CreditCard}
-                      onClick={() => {
-                        setSelectedMilestone(milestone);
-                        setShowPaymentModal(true);
-                      }}
-                    >
-                      Release Payment
-                    </Button>
+                    <div className="flex flex-col items-end space-y-2">
+                      <Badge variant="warning" className="text-sm">
+                        In Progress
+                      </Badge>
+                      <p className="text-xs text-gray-500">Awaiting completion</p>
+                    </div>
                   )}
                   {(milestone.Status || milestone.status) === 0 && (
-                    <p className="text-sm text-gray-500">Awaiting selection</p>
+                    <div className="flex flex-col items-end space-y-2">
+                      <Badge variant="default" className="text-sm">
+                        Not Started
+                      </Badge>
+                      <p className="text-xs text-gray-500">Awaiting selection</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -321,17 +726,136 @@ export function ClientPayments() {
           );
         })}
       </div>
+
+      {/* Fixed Projects Section */}
+      {viewMode === 'milestones' && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Fixed Price Projects</h2>
+          <div className="space-y-4">
+            {projects
+              .filter((project: any) => project.PaymentType === 'Fixed' && project.status === 'completed')
+              .map((project: any) => (
+                <Card key={project.Id || project.id} className="hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between p-6">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{project.ProjectTitle || project.projectTitle || project.Title || project.title}</h3>
+                        <Badge variant="success">Fixed Price</Badge>
+                      </div>
+                      <p className="text-gray-600 mb-2">{project.Description || project.description}</p>
+                      <div className="flex items-center space-x-6 text-sm text-gray-500">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : ''}
+                        </div>
+                        <div className="flex items-center">
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          Budget: ${project.Budget?.toLocaleString() || ''}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="ml-6 text-right">
+                      <div className="text-2xl font-bold text-gray-900 mb-2">
+                        ${project.Budget?.toLocaleString() || ''}
+                      </div>
+                      <Button
+                        icon={CreditCard}
+                        onClick={() => {
+                          setPayingMilestone({
+                            Title: project.ProjectTitle || project.projectTitle || project.Title || project.title,
+                            ProjectId: project.Id || project.id,
+                            Amount: project.Budget || project.budget || 0,
+                            PaymentType: 'Fixed'
+                          });
+                          setShowInvoiceModal(true);
+                        }}
+                      >
+                        Pay Full Amount
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Payment History View */}
+      {viewMode === 'payments' && (
+        <div className="space-y-4">
+          {filteredPayments.map((payment: any) => {
+            const project = projects.find(p => (p.Id || p.id) === payment.ProjectId);
+            return (
+              <Card key={payment.Id || payment.id} className="hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between p-6">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {payment.PaymentType === 'Fixed' ? 'Fixed Project Payment' : 'Milestone Payment'}
+                      </h3>
+                      <Badge variant={getPaymentStatusColor(payment.PaymentStatus)}>
+                        {payment.PaymentStatus}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-gray-600 mb-2">
+                      {project?.ProjectTitle || project?.projectTitle || project?.Title || project?.title || `Project #${payment.ProjectId}`}
+                    </p>
+                    
+                    {payment.PaymentType !== 'Fixed' && payment.MilestoneId && (
+                      <p className="text-sm text-blue-600 font-medium mb-2">
+                        Milestone ID: {payment.MilestoneId}
+                      </p>
+                    )}
+                    
+                                          <div className="flex items-center space-x-6 text-sm text-gray-500">
+                        <div className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {formatPaymentDate(payment.PaymentDate)}
+                        </div>
+                        <div className="flex items-center">
+                          <Receipt className="w-4 h-4 mr-1" />
+                          Ref: {payment.TransactionReference || 'N/A'}
+                        </div>
+                      </div>
+                  </div>
+                  
+                  <div className="ml-6 text-right">
+                    <div className="text-2xl font-bold text-gray-900 mb-2">
+                      {formatPaymentAmount(payment.Amount || 0)}
+                    </div>
+                    
+                    {payment.PaymentStatus === 'Paid' && (
+                      <Button
+                        icon={CreditCard}
+                        onClick={() => handleReleasePayment(payment.Id || payment.id)}
+                      >
+                        Release Payment
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
       {/* Empty State */}
-      {filteredMilestones.length === 0 && (
+      {(viewMode === 'milestones' && filteredMilestones.length === 0) || (viewMode === 'payments' && filteredPayments.length === 0) && (
         <Card className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <DollarSign className="w-8 h-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No payments found</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {viewMode === 'milestones' ? 'No milestones found' : 'No payments found'}
+          </h3>
           <p className="text-gray-600">
-            {searchTerm || statusFilter !== 'all' 
+            {searchTerm || statusFilter !== 'all' || (viewMode === 'payments' && paymentTypeFilter !== 'all')
               ? 'Try adjusting your search or filters' 
-              : 'Milestone payments will appear here as your projects progress'
+              : viewMode === 'milestones' 
+                ? 'Milestone payments will appear here as your projects progress'
+                : 'Payment history will appear here as you make payments'
             }
           </p>
         </Card>
@@ -358,12 +882,12 @@ export function ClientPayments() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Platform Fee (5%)</span>
-                <span className="font-semibold">-${calculatePlatformFee(selectedMilestone.Amount || 0).toLocaleString()}</span>
+                <span className="font-semibold">-{formatPaymentAmount(calculatePlatformFee(selectedMilestone.Amount || 0))}</span>
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-semibold">Freelancer Receives</span>
                 <span className="font-semibold text-green-600">
-                  ${calculateFreelancerAmount(selectedMilestone.Amount || 0).toLocaleString()}
+                  {formatPaymentAmount(calculateFreelancerAmount(selectedMilestone.Amount || 0))}
                 </span>
               </div>
             </div>
@@ -409,15 +933,43 @@ export function ClientPayments() {
               invoiceData={{
                 milestoneTitle: payingMilestone.Title || payingMilestone.title,
                 projectTitle: projects.find(p => (p.Id || p.id) === (payingMilestone.ProjectId || payingMilestone.projectId))?.Title || '',
+                projectId: payingMilestone.ProjectId || payingMilestone.projectId,
                 amount: payingMilestone.Amount || payingMilestone.amount,
+                paymentType: payingMilestone.PaymentType || 'Milestone',
                 // Add more fields as needed
               }}
-              onPayNow={() => handleStripeCheckout(payingMilestone)}
+              onPayNow={(data) => {
+                if (payingMilestone.PaymentType === 'Fixed') {
+                  handleFixedProjectPaymentWithFreelancer(payingMilestone, data.selectedFreelancerId);
+                } else {
+                  handleStripeCheckoutWithFreelancer(payingMilestone, data.selectedFreelancerId);
+                }
+              }}
               onClose={() => setShowInvoiceModal(false)}
             />
           </div>
         )}
       </Modal>
+
+      {/* Multi-Freelancer Payment Modal */}
+      {showMultiFreelancerModal && selectedMilestoneForMultiPayment && (
+        <MultiFreelancerPaymentModal
+          milestone={selectedMilestoneForMultiPayment}
+          projectId={selectedMilestoneForMultiPayment.ProjectId || selectedMilestoneForMultiPayment.projectId || Number(selectedProjectId)}
+          clientId={clientId}
+          onClose={() => {
+            setShowMultiFreelancerModal(false);
+            setSelectedMilestoneForMultiPayment(null);
+          }}
+          onSuccess={() => {
+            setShowMultiFreelancerModal(false);
+            setSelectedMilestoneForMultiPayment(null);
+            // Refresh payments and milestones
+            fetchPayments();
+            fetchMilestones();
+          }}
+        />
+      )}
     </div>
   );
 }

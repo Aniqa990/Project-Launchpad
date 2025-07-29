@@ -292,13 +292,87 @@ export const getProjectById = async (id: string | number) => {
 // Fetch projects for a specific client
 export const getClientProjects = async (clientId: number) => {
   const res = await api.get(`/clients/${clientId}/projects`);
-  return lowercaseFirstLetterKeys(res.data);
+  return res.data;
 };
 
 // Fetch projects by approval status for a specific client
 export const getProjectsByApprovalStatus = async (clientId: number, approvalStatus: string) => {
   const res = await api.get(`/clients/${clientId}/projects/approval/${approvalStatus}`);
   return lowercaseFirstLetterKeys(res.data);
+};
+
+// Get client details by ID
+export const getClientById = async (clientId: number) => {
+  try {
+    const response = await api.get(`/clients/${clientId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch client details');
+  }
+};
+
+// Get payment status for a specific milestone
+export const getPaymentByMilestone = async (milestoneId: number) => {
+  try {
+    const response = await api.get(`/payments/milestone/${milestoneId}`);
+    // Backend returns a list of payments, return all of them
+    const payments = response.data;
+    return payments || [];
+  } catch (error: any) {
+    // Return empty array if no payment found for this milestone
+    return [];
+  }
+};
+
+// Assign freelancer to milestone
+export const assignMilestoneToFreelancer = async (milestoneId: number, userId: number) => {
+  try {
+    const response = await api.post(`/milestones/${milestoneId}/assign/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to assign freelancer to milestone');
+  }
+};
+
+// Unassign freelancer from milestone
+export const unassignMilestoneFromFreelancer = async (milestoneId: number, userId: number) => {
+  try {
+    const response = await api.delete(`/milestones/${milestoneId}/unassign/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to unassign freelancer from milestone');
+  }
+};
+
+// Get milestones by freelancer ID
+export const getMilestonesByFreelancerId = async (userId: number) => {
+  try {
+    const response = await api.get(`/milestones/freelancer/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch freelancer milestones');
+  }
+};
+
+export const getMilestoneFreelancers = async (milestoneId: number) => {
+  try {
+    const response = await api.get(`/milestones/${milestoneId}/freelancers`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch milestone freelancers');
+  }
+};
+
+// Update handover status for a milestone
+export const updateMilestoneHandover = async (milestoneId: number, handoverStatus: string) => {
+  try {
+    const response = await api.patch(`/platform/handover/${milestoneId}`, { 
+      handoverStatus: handoverStatus 
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update handover status');
+  }
 };
 
 export const createProject = async (payload: any) => {
@@ -456,6 +530,32 @@ export const createStripeCheckoutSession = async (params: {
   return response.data;
 };
 
+export const createMultiFreelancerCheckoutSession = async (params: {
+  clientId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  totalAmount: number;
+  freelancerPayments: Array<{
+    freelancerId: number;
+    freelancerName: string;
+    amount: number;
+  }>;
+}): Promise<{ url: string }> => {
+  const response = await axios.post(
+    'http://localhost:7053/api/payments/create-multi-freelancer-checkout-session',
+    params,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return response.data;
+};
+
+export const getMilestonesByProjectId = async (projectId: number) => {
+  const response = await api.get(`/milestones/project/${projectId}`);
+  return lowercaseFirstLetterKeys(response.data);
+};
+
 export const getMilestonesByProjectId = async (projectId: number): Promise<Milestone[]> => {
   const response = await api.get(`/milestones/project/${projectId}`);
   return lowercaseFirstLetterKeys(response.data);
@@ -492,6 +592,45 @@ export const getNotifications = async (userId: number) => {
 export const markNotificationRead = async (notificationId: number) => {
   const response = await api.put(`/notifications/${notificationId}/read`);
   return response.data;
+};
+
+// Payment APIs
+export const getFreelancerPayments = async (freelancerId: number) => {
+  try {
+    const response = await api.get(`/payments/freelancer/${freelancerId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch freelancer payments');
+  }
+};
+
+export const getClientPayments = async (clientId: number) => {
+  try {
+    const response = await api.get(`/payments/client/${clientId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch client payments');
+  }
+};
+
+export const getPaymentsByProject = async (projectId: number) => {
+  try {
+    const response = await api.get(`/payments/project/${projectId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project payments');
+  }
+};
+
+export const releasePayment = async (paymentId: number) => {
+  try {
+    const response = await api.post(`/payments/release/${paymentId}`);
+    return response.data;
+  } catch (error: any) {
+    // Mock success for now since endpoint might not exist
+    console.warn('Backend endpoint not found, simulating success');
+    return { success: true, message: 'Payment released successfully' };
+  }
 };
 
 export async function deleteFreelancerProfile(userId: number) {

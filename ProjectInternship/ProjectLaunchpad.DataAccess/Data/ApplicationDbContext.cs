@@ -39,6 +39,8 @@ namespace ProjectLaunchpad.DataAccess.Data
 
         public DbSet<MeetingAudioRecording> meetingAudioRecordings { get; set; }
 
+        public DbSet<FreelancerMilestone> freelancerMilestones { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

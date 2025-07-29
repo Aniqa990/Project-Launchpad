@@ -38,6 +38,7 @@ namespace ProjectLaunchpad.Repositories.Repositories.IRepositories
 
         INotificationRepository NotificationRepository { get; }
 
+
         Task<int> SaveAsync();
 
     }

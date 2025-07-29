@@ -2,6 +2,7 @@
 using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
 using ProjectLaunchpad.Models.Models.Enums;
 using System;
@@ -165,13 +166,72 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             }
         }
 
-        //public async Task<IEnumerable<Milestone>> GetMilestonesByHandoverStatusAsync(string status)
-        //{
-        //    return await _db.milestones
-        //        .Where(m => m.HandoverStatus == status)
-        //        .ToListAsync();
-        //}
+        public async Task AssignMilestoneToFreelancerAsync(int milestoneId, int userId)
+        {
+            // Check if already assigned
+            var existing = await _db.freelancerMilestones
+                .FirstOrDefaultAsync(fm => fm.MilestoneId == milestoneId && fm.UserId == userId);
 
-      
+            if (existing == null)
+            {
+                var assignment = new FreelancerMilestone
+                {
+                    MilestoneId = milestoneId,
+                    UserId = userId,
+                    AssignedAt = DateTime.UtcNow
+                };
+
+                await _db.freelancerMilestones.AddAsync(assignment);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task<IEnumerable<Milestone>> GetMilestonesByFreelancerIdAsync(int userId)
+        {
+            var milestoneIds = await _db.freelancerMilestones
+                .Where(fm => fm.UserId == userId)
+                .Select(fm => fm.MilestoneId)
+                .ToListAsync();
+
+            return await _db.milestones
+                .Where(m => milestoneIds.Contains(m.Id))
+                .ToListAsync();
+        }
+
+        public async Task<FreelancerMilestone> GetFreelancerMilestoneAsync(int milestoneId, int userId)
+        {
+            return await _db.freelancerMilestones
+                .FirstOrDefaultAsync(fm => fm.MilestoneId == milestoneId && fm.UserId == userId);
+        }
+
+        public async Task UnassignMilestoneFromFreelancerAsync(int milestoneId, int userId)
+        {
+            var assignment = await _db.freelancerMilestones
+                .FirstOrDefaultAsync(fm => fm.MilestoneId == milestoneId && fm.UserId == userId);
+
+            if (assignment != null)
+            {
+                _db.freelancerMilestones.Remove(assignment);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task<IEnumerable<FreelancerMilestoneDTO>> getMilestoneFreelancers(int milestoneId)
+        {
+            return await _db.freelancerMilestones
+                .Where(fm => fm.MilestoneId == milestoneId)
+                .Include(fm => fm.User)
+                .Select(fm => new FreelancerMilestoneDTO
+                {
+                    FreelancerId = fm.UserId,
+                    FirstName = fm.User.FirstName,
+                    LastName = fm.User.LastName,
+                })
+                .ToListAsync();
+        }
+
+
+
+
     }
 }

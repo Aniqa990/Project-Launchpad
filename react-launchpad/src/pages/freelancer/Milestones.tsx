@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { Calendar, DollarSign, Upload, MessageSquare, Send, CheckCircle, XCircle, Clock, Filter, Paperclip, X, Target } from 'lucide-react';
-import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable, updateMilestone } from '../../apiendpoints';
+import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable, updateMilestoneHandover, getMilestonesByFreelancerId } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
-import { Project } from '../../types';
+import axios from 'axios';
 
 export function Milestones() {
   const { user, token } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState('All');
   const [milestones, setMilestones] = useState<any[]>([]);
   const [milestonesLoading, setMilestonesLoading] = useState(false);
@@ -25,7 +25,6 @@ export function Milestones() {
   const [commentInputs, setCommentInputs] = useState<{[key: string]: string}>({});
   const [uploadLoading, setUploadLoading] = useState<{[key: string]: boolean}>({});
   const [uploadError, setUploadError] = useState<{[key: string]: string}>({});
-  const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
   // Status mapping for MilestoneStatus enum
   const statusMap: Record<'not-started' | 'in-progress' | 'completed', number> = {
@@ -65,33 +64,43 @@ export function Milestones() {
     async function fetchMilestones() {
       setMilestonesLoading(true);
       try {
-        if (!selectedProject || selectedProject === 'All') {
+        if (!selectedProject || selectedProject === 'All' || !user?.id) {
           setMilestones([]);
         } else {
           // Extract Id from selectedProject value
           const selectedParts = selectedProject.split('___');
           const selectedId = selectedParts.length > 1 ? Number(selectedParts[1]) : undefined;
           const project = projects.find(p => p.id === selectedId);
+          
           if (project) {
-            const data = await getMilestonesByProjectId(project.id);
-            setMilestones(data);
+            // Get all milestones assigned to the current freelancer
+            const allAssignedMilestones = await getMilestonesByFreelancerId(user.id);
+            
+            // Filter milestones by the selected project
+            const projectMilestones = allAssignedMilestones.filter((milestone: any) => 
+              milestone.ProjectId === project.id
+            );
+            
+            setMilestones(projectMilestones);
+            
             // Fetch deliverables for each milestone
-            for (const milestone of data) {
-              const delivs = await getDeliverablesByMilestoneId(milestone.id);
-              setDeliverables(prev => ({ ...prev, [milestone.id]: delivs }));
+            for (const milestone of projectMilestones) {
+              const delivs = await getDeliverablesByMilestoneId(milestone.Id);
+              setDeliverables(prev => ({ ...prev, [milestone.Id]: delivs }));
             }
           }
         }
-      } catch {
+      } catch (error) {
+        console.error('Failed to fetch milestones:', error);
         setMilestones([]);
       } finally {
         setMilestonesLoading(false);
       }
     }
-    if (projects.length > 0 && selectedProject && selectedProject !== 'All') {
+    if (projects.length > 0 && selectedProject && selectedProject !== 'All' && user?.id) {
       fetchMilestones();
     }
-  }, [selectedProject, projects]);
+  }, [selectedProject, projects, user?.id]);
 
   // Filtering
   const filteredMilestones = milestones.filter(milestone => {
@@ -99,6 +108,16 @@ export function Milestones() {
     const statusMatch = statusFilter === 'All' || milestone.Status === statusFilter;
     return statusMatch;
   });
+
+  // Check if milestone is completed (locked for all freelancers)
+  const isMilestoneCompleted = (milestone: any) => {
+    return milestone.Status === 2; // 2 = Completed
+  };
+
+  // Check if milestone is locked (completed by any freelancer)
+  const isMilestoneLocked = (milestone: any) => {
+    return isMilestoneCompleted(milestone);
+  };
 
   // Status badge
   const getStatusBadge = (status: string | number | undefined) => {
@@ -140,27 +159,33 @@ export function Milestones() {
       [milestoneId]: prev[milestoneId]?.filter((_, index) => index !== fileIndex) || []
     }));
   };
-  const handleSubmit = async (milestoneId: string) => {
-    const files = uploadedFiles[milestoneId] || [];
-    const comment = comments[milestoneId] || '';
-    // For simplicity, just join file names as a string
-    await createDeliverable({
-      UploadFiles: files.map(f => f.name).join(','),
-      MilestoneId: Number(milestoneId),
-      ProjectId: Number(milestoneId),
-      Comment: comment,
-      Status: 'Submitted'
-    });
-    setExpandedMilestone(null);
-    setUploadedFiles(prev => ({ ...prev, [milestoneId]: [] }));
-    setComments(prev => ({ ...prev, [milestoneId]: '' }));
-    // Refresh deliverables for this milestone
-    const delivs = await getDeliverablesByMilestoneId(Number(milestoneId));
-    setDeliverables(prev => ({ ...prev, [milestoneId]: delivs }));
-  };
+  // const handleSubmit = async (milestoneId: string) => {
+  //   const files = uploadedFiles[milestoneId] || [];
+  //   const comment = comments[milestoneId] || '';
+  //   // For simplicity, just join file names as a string
+  //   await createDeliverable({
+  //     UploadFiles: files.map(f => f.name).join(','),
+  //     MilestoneId: Number(milestoneId),
+  //     ProjectId: Number(project.id),
+  //     Comment: comment,
+  //     Status: 'Submitted'
+  //   });
+  //   setExpandedMilestone(null);
+  //   setUploadedFiles(prev => ({ ...prev, [milestoneId]: [] }));
+  //   setComments(prev => ({ ...prev, [milestoneId]: '' }));
+  //   // Refresh deliverables for this milestone
+  //   const delivs = await getDeliverablesByMilestoneId(Number(milestoneId));
+  //   setDeliverables(prev => ({ ...prev, [milestoneId]: delivs }));
+  // };
 
   // Handle status change
   const handleStatusChange = async (milestone: any, newStatus: string) => {
+    // Prevent status changes if milestone is locked
+    if (isMilestoneLocked(milestone)) {
+      alert('Cannot change status - milestone has been completed by another team member');
+      return;
+    }
+
     const milestoneId = milestone.id || milestone.Id;
     if (!milestoneId) {
       alert('Milestone ID missing, cannot update status.');
@@ -168,7 +193,10 @@ export function Milestones() {
     }
     setStatusEdits(prev => ({ ...prev, [milestoneId]: newStatus }));
     try {
-      await updateMilestone(Number(milestoneId), {
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
+      await axios.put(`http://localhost:7071/api/updatemilestone/${milestoneId}`, {
         ...milestone,
         Status: statusMap[newStatus as 'not-started' | 'in-progress' | 'completed']
       });
@@ -180,8 +208,8 @@ export function Milestones() {
         const data = await getMilestonesByProjectId(project.id);
         setMilestones(data);
         for (const m of data) {
-          const delivs = await getDeliverablesByMilestoneId(m.id);
-          setDeliverables(prev => ({ ...prev, [m.id]: delivs }));
+          const delivs = await getDeliverablesByMilestoneId(m.id || m.Id);
+          setDeliverables(prev => ({ ...prev, [m.id || m.Id]: delivs }));
         }
       }
     } catch (err) {
@@ -192,7 +220,11 @@ export function Milestones() {
   // Update milestone status API
   const updateMilestoneStatus = async (milestone: any, status: 'not-started' | 'in-progress' | 'completed') => {
     try {
-      await updateMilestone(milestone.Id, {
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Using token for updateMilestoneStatus:', token);
+      }
+      await axios.put(`http://localhost:7071/api/updatemilestone/${milestone.Id}`, {
         ...milestone,
         Status: statusMap[status] // send integer value for enum
       });
@@ -202,8 +234,8 @@ export function Milestones() {
         const data = await getMilestonesByProjectId(project.id);
         setMilestones(data);
         for (const m of data) {
-          const delivs = await getDeliverablesByMilestoneId(m.id);
-          setDeliverables(prev => ({ ...prev, [m.id]: delivs }));
+          const delivs = await getDeliverablesByMilestoneId(m.Id);
+          setDeliverables(prev => ({ ...prev, [m.Id]: delivs }));
         }
       }
     } catch (err) {
@@ -213,28 +245,10 @@ export function Milestones() {
 
   // Handle file input
   const handleFileInput = (milestoneId: string, files: FileList) => {
-    console.log('Files selected:', files.length, Array.from(files).map(f => f.name));
-    setFileInputs(prev => {
-      const existingFiles = prev[milestoneId] || [];
-      const newFiles = Array.from(files);
-      // Combine existing and new files, avoiding duplicates
-      const allFiles = [...existingFiles, ...newFiles];
-      const uniqueFiles = allFiles.filter((file, index, self) => 
-        index === self.findIndex(f => f.name === file.name && f.size === file.size)
-      );
-      console.log('Combined files:', uniqueFiles.length, uniqueFiles.map(f => f.name));
-      return { ...prev, [milestoneId]: uniqueFiles };
-    });
+    setFileInputs(prev => ({ ...prev, [milestoneId]: Array.from(files) }));
   };
   const handleCommentInput = (milestoneId: string, comment: string) => {
     setCommentInputs(prev => ({ ...prev, [milestoneId]: comment }));
-  };
-
-  // Clear file input
-  const clearFileInput = (milestoneId: string) => {
-    if (fileInputRefs.current[milestoneId]) {
-      fileInputRefs.current[milestoneId]!.value = '';
-    }
   };
 
   // Handle deliverable upload
@@ -250,8 +264,11 @@ export function Milestones() {
       return;
     }
     try {
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
       // 1. Create deliverable
-      await createDeliverable({
+      await axios.post('http://localhost:7071/api/deliverables', {
         UploadFiles: files.map(f => f.name).join(','),
         MilestoneId: milestoneId,
         ProjectId: projectId,
@@ -259,15 +276,22 @@ export function Milestones() {
         Status: 'submitted'
       });
       // 2. Update milestone status to completed
-      await updateMilestone(Number(milestoneId), {
+      await axios.put(`http://localhost:7071/api/updatemilestone/${milestoneId}`, {
         ...milestone,
         Status: statusMap['completed']
       });
-      // 3. Clear inputs
+      
+      // 3. Update handover status to 'pending' for payment eligibility
+      try {
+        await updateMilestoneHandover(milestoneId, 'pending');
+      } catch (error) {
+        console.warn('Failed to update handover status:', error);
+      }
+      
+      // 4. Clear inputs
       setFileInputs(prev => ({ ...prev, [milestoneId]: [] }));
       setCommentInputs(prev => ({ ...prev, [milestoneId]: '' }));
       setStatusEdits(prev => ({ ...prev, [milestoneId]: 'completed' }));
-      clearFileInput(milestoneId);
       // 4. Refresh milestones
       const selectedParts = selectedProject.split('___');
       const selectedId = selectedParts.length > 1 ? Number(selectedParts[1]) : undefined;
@@ -276,8 +300,8 @@ export function Milestones() {
         const data = await getMilestonesByProjectId(project.id);
         setMilestones(data);
         for (const m of data) {
-          const delivs = await getDeliverablesByMilestoneId(m.id);
-          setDeliverables(prev => ({ ...prev, [m.id]: delivs }));
+          const delivs = await getDeliverablesByMilestoneId(m.id || m.Id);
+          setDeliverables(prev => ({ ...prev, [m.id || m.Id]: delivs }));
         }
       }
     } catch (err) {
@@ -337,7 +361,7 @@ export function Milestones() {
       {/* Milestones Grid */}
       <div className="space-y-4">
         {filteredMilestones.map((milestone) => {
-          const milestoneKey = milestone.id || milestone.Id || `milestone-${milestone.title || milestone.Title}`;
+          const milestoneKey = milestone.id || milestone.Id || Math.random();
           const currentStatus = statusEdits[milestoneKey] || getDropdownStatusValue(milestone.status || milestone.Status);
           // Ensure dropdown value is always a valid string
           const dropdownValue: 'not-started' | 'in-progress' | 'completed' =
@@ -366,72 +390,55 @@ export function Milestones() {
                   {getStatusBadge(getDropdownStatusValue(milestone.status || milestone.Status))}
                 </div>
                 <p className="text-gray-700 text-sm mb-4 max-w-2xl">{milestone.description || milestone.Description}</p>
-                {/* Always show status dropdown */}
+                {/* Show milestone lock status if completed */}
+                {isMilestoneLocked(milestone) && (
+                  <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-orange-600" />
+                      <span className="text-sm font-medium text-orange-800">
+                        Milestone Completed - Locked for All Freelancers
+                      </span>
+                    </div>
+                    <p className="text-xs text-orange-600 mt-1">
+                      This milestone has been completed by a team member. No further changes allowed.
+                    </p>
+                  </div>
+                )}
+
+                {/* Status dropdown - disabled if milestone is locked */}
                 <div className="mb-4 max-w-xs">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                   <select
                     value={dropdownValue}
                     onChange={(e) => handleStatusChange(milestone, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isMilestoneLocked(milestone)}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isMilestoneLocked(milestone) ? 'bg-gray-100 cursor-not-allowed' : ''
+                    }`}
                   >
                     <option key="not-started" value="not-started">Not Started</option>
                     <option key="in-progress" value="in-progress">In Progress</option>
                     <option key="completed" value="completed">Completed</option>
                   </select>
+                  {isMilestoneLocked(milestone) && (
+                    <p className="text-xs text-gray-500 mt-1">Status cannot be changed - milestone is completed</p>
+                  )}
                 </div>
                 {/* If status is completed, show deliverable upload UI */}
-                {dropdownValue === 'completed' && (
+                {dropdownValue === 'completed' && !isMilestoneLocked(milestone) && (
                   <div className="border-t border-gray-200 pt-4 mt-4 space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
-                      <div className="relative">
-                        <input
-                          ref={el => {
-                            fileInputRefs.current[milestoneKey] = el;
-                          }}
-                          type="file"
-                          multiple
-                          onChange={e => {
-                            console.log('File input change event:', e.target.files);
-                            if (e.target.files && e.target.files.length > 0) {
-                              handleFileInput(milestoneKey, e.target.files);
-                            }
-                          }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          id={`file-input-${milestoneKey}`}
-                          key={`file-input-${milestoneKey}`}
-                          accept="*/*"
-                        />
-                        <label
-                          htmlFor={`file-input-${milestoneKey}`}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
-                        >
-                          <Paperclip className="w-4 h-4 mr-2" />
-                          Choose Files (Multiple)
-                        </label>
-                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={e => e.target.files && handleFileInput(milestoneKey, e.target.files)}
+                      />
                       {fileInputs[milestoneKey]?.length > 0 && (
                         <div className="mt-2 space-y-2">
-                          <div className="text-xs text-gray-500 mb-2">
-                            {fileInputs[milestoneKey].length} file{fileInputs[milestoneKey].length !== 1 ? 's' : ''} selected
-                          </div>
                           {fileInputs[milestoneKey].map((file, idx) => (
                             <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                              <span className="text-sm text-gray-700 flex-1 truncate">{file.name}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newFiles = fileInputs[milestoneKey].filter((_, index) => index !== idx);
-                                  setFileInputs(prev => ({ ...prev, [milestoneKey]: newFiles }));
-                                  // Clear input if no files left
-                                  if (newFiles.length === 0) {
-                                    clearFileInput(milestoneKey);
-                                  }
-                                }}
-                                className="ml-2 text-red-500 hover:text-red-700"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
+                              <span className="text-sm text-gray-700">{file.name}</span>
                             </div>
                           ))}
                         </div>
@@ -455,6 +462,24 @@ export function Milestones() {
                     >
                       Upload Deliverable & Complete
                     </Button>
+                  </div>
+                )}
+
+                {/* Show message if milestone is locked and user tries to complete */}
+                {dropdownValue === 'completed' && isMilestoneLocked(milestone) && (
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <XCircle className="w-4 h-4 text-red-600" />
+                        <span className="text-sm font-medium text-red-800">
+                          Cannot Upload Deliverables
+                        </span>
+                      </div>
+                      <p className="text-xs text-red-600 mt-1">
+                        This milestone has already been completed by another team member. 
+                        Deliverables cannot be uploaded.
+                      </p>
+                    </div>
                   </div>
                 )}
                 {/* Deliverables List */}

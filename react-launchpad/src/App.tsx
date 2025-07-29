@@ -17,6 +17,7 @@ import { ClientProjectRequests } from './pages/client/Requests';
 import { ClientHourlyLogViewer } from './pages/client/HourlyLog';
 import {FreelancerSuggestions} from './pages/client/FreelancerSuggestions';
 import { ClientMessages } from './pages/client/Messages';
+import ClientMilestones from './pages/client/Milestones';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
@@ -37,6 +38,7 @@ import { MeetingSummaries } from './components/workspace/MeetingSummaries';
 
 import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
+import { FreelancerPayments } from './pages/freelancer/Payments';
 import MeetingRoom from './pages/client/MeetingRoom';
 import FreelancerMeetingRoom from './pages/freelancer/MeetingRoom';
 
@@ -134,6 +136,7 @@ const AppRoutes = () => {
         <Route path="freelancer-suggestions" element={<FreelancerSuggestions />} />
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
+        <Route path="milestone-management" element={<ClientMilestones />} />
         <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
@@ -156,6 +159,7 @@ const AppRoutes = () => {
         <Route path="timesheets" element={<FreelancerTimesheets />} />
         <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
+        <Route path="payments" element={<FreelancerPayments />} />
         <Route path="meetings" element={<FreelancerMeetingRoom />} />
         <Route path="meeting-summaries" element={<MeetingSummaries />} />
       </Route>

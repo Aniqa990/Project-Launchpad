@@ -28,8 +28,8 @@ namespace ProjectLaunchpad.Functions
 
         [Function("StripeWebhook")]
         public async Task<HttpResponseData> StripeWebhook(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "webhooks/stripe")] HttpRequestData req,
-            FunctionContext context)
+    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "webhooks/stripe")] HttpRequestData req,
+    FunctionContext context)
         {
             var logger = context.GetLogger("StripeWebhook");
 
@@ -42,7 +42,7 @@ namespace ProjectLaunchpad.Functions
                 : null;
 
             var webhookSecret = _config["Stripe:WebhookSecret"];
-            StripeConfiguration.ApiKey = _config["Stripe:SecretKey"]; // ✅ important
+            StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
 
             if (string.IsNullOrEmpty(stripeSignature) || string.IsNullOrEmpty(webhookSecret))
             {
@@ -55,7 +55,6 @@ namespace ProjectLaunchpad.Functions
             try
             {
                 stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, webhookSecret, throwOnApiVersionMismatch: false);
-
                 logger.LogInformation($"🔔 Received event: {stripeEvent.Type}");
             }
             catch (Exception ex)
@@ -71,33 +70,76 @@ namespace ProjectLaunchpad.Functions
             {
                 try
                 {
-                    // ✅ Correct way to get session object as JSON
                     var sessionJson = JsonConvert.SerializeObject(stripeEvent.Data.Object);
                     var checkoutSession = JsonConvert.DeserializeObject<Session>(sessionJson);
 
-                    if (checkoutSession?.Metadata != null && checkoutSession.Metadata.ContainsKey("paymentId"))
+                    if (checkoutSession?.Metadata != null)
                     {
-                        var paymentIdStr = checkoutSession.Metadata["paymentId"];
-                        logger.LogInformation($"📦 Metadata.paymentId: {paymentIdStr}");
-
-                        if (int.TryParse(paymentIdStr, out int paymentId))
+                        // Check if this is a multi-freelancer payment
+                        if (checkoutSession.Metadata.ContainsKey("paymentIds"))
                         {
-                            var payment = await _unitOfWork.PaymentRepository.GetPaymentByIdAsync(paymentId);
-                            if (payment != null)
+                            // Handle multi-freelancer payment
+                            var paymentIdsStr = checkoutSession.Metadata["paymentIds"];
+                            logger.LogInformation($"📦 Multi-freelancer payment - paymentIds: {paymentIdsStr}");
+
+                            var paymentIds = paymentIdsStr.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                            var updatedCount = 0;
+
+                            foreach (var paymentIdStr in paymentIds)
                             {
-                                payment.PaymentStatus = "Paid";
-                                await _unitOfWork.PaymentRepository.UpdateAsync(payment);
-                                await _unitOfWork.SaveAsync();
-                                logger.LogInformation($"✅ Payment #{paymentId} marked as Paid.");
+                                if (int.TryParse(paymentIdStr.Trim(), out int paymentId))
+                                {
+                                    var payment = await _unitOfWork.PaymentRepository.GetPaymentByIdAsync(paymentId);
+                                    if (payment != null)
+                                    {
+                                        payment.PaymentStatus = "Paid";
+                                        await _unitOfWork.PaymentRepository.UpdateAsync(payment);
+                                        updatedCount++;
+                                        logger.LogInformation($"✅ Payment #{paymentId} marked as Paid.");
+                                    }
+                                    else
+                                    {
+                                        logger.LogWarning($"⚠️ No payment found with ID: {paymentId}");
+                                    }
+                                }
+                                else
+                                {
+                                    logger.LogWarning($"❗ Invalid payment ID: {paymentIdStr}");
+                                }
+                            }
+
+                            await _unitOfWork.SaveAsync();
+                            logger.LogInformation($"🎉 Successfully updated {updatedCount} payments for multi-freelancer session.");
+                        }
+                        else if (checkoutSession.Metadata.ContainsKey("paymentId"))
+                        {
+                            // Handle single payment (existing logic)
+                            var paymentIdStr = checkoutSession.Metadata["paymentId"];
+                            logger.LogInformation($"📦 Single payment - paymentId: {paymentIdStr}");
+
+                            if (int.TryParse(paymentIdStr, out int paymentId))
+                            {
+                                var payment = await _unitOfWork.PaymentRepository.GetPaymentByIdAsync(paymentId);
+                                if (payment != null)
+                                {
+                                    payment.PaymentStatus = "Paid";
+                                    await _unitOfWork.PaymentRepository.UpdateAsync(payment);
+                                    await _unitOfWork.SaveAsync();
+                                    logger.LogInformation($"✅ Payment #{paymentId} marked as Paid.");
+                                }
+                                else
+                                {
+                                    logger.LogWarning($"⚠️ No payment found with ID: {paymentId}");
+                                }
                             }
                             else
                             {
-                                logger.LogWarning($"⚠️ No payment found with ID: {paymentId}");
+                                logger.LogWarning("❗ paymentId in metadata is not a valid integer");
                             }
                         }
                         else
                         {
-                            logger.LogWarning("❗ paymentId in metadata is not a valid integer");
+                            logger.LogWarning("❗ Metadata missing paymentId or paymentIds");
                         }
                     }
                     else
@@ -110,7 +152,6 @@ namespace ProjectLaunchpad.Functions
                     logger.LogError($"❌ Exception while processing webhook: {ex.Message}");
                 }
             }
-
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteStringAsync("Webhook handled successfully");

@@ -1,4 +1,5 @@
 ﻿using ProjectLaunchpad.Models.Models;
+using ProjectLaunchpad.Models.Models.DTOs;
 using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
 using System;
 using System.Collections.Generic;
@@ -21,5 +22,20 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task<IEnumerable<Milestone>> GetUnderReviewMilestonesAsync();
         Task<IEnumerable<MilestoneWithPaymentDTO>> GetMilestonesByHandoverStatusAsync(string status);
         Task UpdateHandoverStatusAsync(int id, string newStatus);
+
+        // Assign a milestone to a freelancer
+        Task AssignMilestoneToFreelancerAsync(int milestoneId, int userId);
+
+        // Get all milestones assigned to a freelancer
+        Task<IEnumerable<Milestone>> GetMilestonesByFreelancerIdAsync(int userId);
+
+        Task<IEnumerable<FreelancerMilestoneDTO>> getMilestoneFreelancers(int milestoneId);
+
+        // Get a specific assignment entry
+        Task<FreelancerMilestone> GetFreelancerMilestoneAsync(int milestoneId, int userId);
+
+        // Remove a milestone assignment from freelancer (if needed)
+        Task UnassignMilestoneFromFreelancerAsync(int milestoneId, int userId);
+
     }
 }
