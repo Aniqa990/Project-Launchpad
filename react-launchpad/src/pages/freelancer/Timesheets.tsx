@@ -335,6 +335,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFreelancerProjects, createTimesheet, getTimesheets } from '../../apiendpoints';
 import { Play, Square, Clock, Filter, Calendar } from 'lucide-react';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
 interface Project {
   id: number;
@@ -394,7 +395,8 @@ const FreelancerTimesheets: React.FC = () => {
             hourlyRate: p.HourlyRate || 0,
           }))
         );
-      } catch {
+      } catch (error) {
+        handleError(error, 'fetchProjects');
         setProjects([]);
       }
     };
@@ -409,7 +411,8 @@ const FreelancerTimesheets: React.FC = () => {
         const data = await getTimesheets();
         // Filter timesheets for this freelancer
         setTimesheets(data.filter((t: any) => t.FreelancerId === user.id));
-      } catch {
+      } catch (error) {
+        handleError(error, 'fetchTimesheets');
         setTimesheets([]);
       } finally {
         setLoading(false);
@@ -477,7 +480,9 @@ const FreelancerTimesheets: React.FC = () => {
         // Refresh timesheets
         const data = await getTimesheets();
         setTimesheets(data.filter((t: any) => t.FreelancerId === user.id));
+        showSuccessToast('Timesheet submitted successfully');
       } catch (e) {
+        handleError(e, 'submitTimesheet');
         setError('Failed to submit timesheet.');
       } finally {
         setSubmitting(false);

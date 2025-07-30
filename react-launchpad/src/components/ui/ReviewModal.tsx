@@ -3,7 +3,7 @@ import { Modal } from './Modal';
 import { Button } from './button';
 import { Avatar } from './avatar';
 import { Star, Send, CheckCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -66,7 +66,7 @@ export function ReviewModal({ isOpen, onClose, project, onSubmitReview }: Review
 
   const handleSubmit = () => {
     if (rating === 0) {
-      toast.error('Please provide a rating');
+      handleError(new Error('Please provide a rating'), 'validation');
       return;
     }
 
@@ -77,7 +77,7 @@ export function ReviewModal({ isOpen, onClose, project, onSubmitReview }: Review
     });
 
     setSubmitted(true);
-    toast.success('Review submitted successfully!');
+    showSuccessToast('Review submitted successfully!');
     
     // Auto-close after 2 seconds
     setTimeout(() => {

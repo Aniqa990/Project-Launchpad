@@ -17,7 +17,7 @@ import {
   Clock
 } from 'lucide-react';
 import { getUserMessages, getConversationMessages, sendMessage, markMessageRead, deleteMessage } from '../../apiendpoints';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
 interface Message {
   id: number;
@@ -121,7 +121,7 @@ export function ClientMessages() {
         .filter((msg: Message) => msg.senderId !== currentUserId && !msg.isRead)
         .forEach((msg: Message) => { markMessageRead(msg.id); });
     } catch (error) {
-      toast.error('Failed to load messages');
+      handleError(error, 'fetchMessages');
     }
   };
 
@@ -148,7 +148,7 @@ export function ClientMessages() {
           : conv
       ));
     } catch (error) {
-      toast.error('Failed to send message');
+      handleError(error, 'sendMessage');
     } finally {
       setSending(false);
     }
@@ -161,7 +161,7 @@ export function ClientMessages() {
         msg.id === messageId ? { ...msg, isRead: true } : msg
       ));
     } catch (error) {
-      console.error('Failed to mark message as read');
+      handleError(error, 'markMessageRead');
     }
   };
 
@@ -169,9 +169,9 @@ export function ClientMessages() {
     try {
       await deleteMessage(messageId);
       setMessages(prev => prev.filter((msg: Message) => msg.id !== messageId));
-      toast.success('Message deleted');
+      showSuccessToast('Message deleted');
     } catch (error) {
-      toast.error('Failed to delete message');
+      handleError(error, 'deleteMessage');
     }
   };
 

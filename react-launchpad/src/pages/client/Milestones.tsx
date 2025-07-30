@@ -11,7 +11,8 @@ import {
   assignMilestoneToFreelancer,
   unassignMilestoneFromFreelancer,
   getMilestonesByFreelancerId,
-  getMilestoneFreelancers
+  getMilestoneFreelancers,
+  getPaymentByMilestone
 } from '../../apiendpoints';
 import { 
   validateMilestoneAssignment, 
@@ -22,6 +23,11 @@ import {
   canAssignToMilestone
 } from '../../utils/milestoneHelpers';
 import { 
+  getPaymentStatusColor,
+  getMilestonePaymentStatus
+} from '../../utils/paymentHelpers';
+import { handleError, showSuccessToast } from '../../utils/errorHandler';
+import { 
   Calendar, 
   DollarSign, 
   Users, 
@@ -31,7 +37,9 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Target
+  Target,
+  Download,
+  Lock
 } from 'lucide-react';
 
 interface Project {
@@ -66,6 +74,7 @@ interface Milestone {
   project: any | null;
   Deliverables: any[];
   AssignedFreelancers?: FreelancerMilestone[];
+  paymentStatus?: string; // Added payment status
 }
 
 interface Freelancer {
@@ -111,6 +120,7 @@ const ClientMilestones: React.FC = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [milestoneAssignments, setMilestoneAssignments] = useState<{[milestoneId: number]: Freelancer[]}>({});
+  const [milestonePayments, setMilestonePayments] = useState<{[milestoneId: number]: any}>({});
 
   // Fetch client projects
   useEffect(() => {
@@ -120,7 +130,7 @@ const ClientMilestones: React.FC = () => {
         const data = await getClientProjects(clientId);
         setProjects(data);
       } catch (error) {
-        console.error('Failed to fetch projects:', error);
+        handleError(error, 'fetchProjects');
       } finally {
         setLoading(false);
       }
@@ -145,6 +155,7 @@ const ClientMilestones: React.FC = () => {
       if (!selectedProject || selectedProject === 'All') {
         setMilestones([]);
         setMilestoneAssignments({});
+        setMilestonePayments({});
         return;
       }
 
@@ -155,6 +166,8 @@ const ClientMilestones: React.FC = () => {
         
         // Fetch existing assignments for each milestone
         const assignments: {[milestoneId: number]: Freelancer[]} = {};
+        const payments: {[milestoneId: number]: any} = {};
+        
         for (const milestone of data) {
           try {
             const freelancersData = await getMilestoneFreelancers(milestone.Id);
@@ -180,18 +193,32 @@ const ClientMilestones: React.FC = () => {
                 Projects: ''
               }));
             }
+            
+            // Fetch payment status for completed milestones
+            if (milestone.Status === 2) {
+              try {
+                const paymentData = await getPaymentByMilestone(milestone.Id);
+                if (paymentData && paymentData.length > 0) {
+                  payments[milestone.Id] = paymentData[0]; // Take the first payment
+                }
+              } catch (error) {
+                console.error(`Failed to fetch payment for milestone ${milestone.Id}:`, error);
+              }
+            }
           } catch (error) {
             console.error(`Failed to fetch freelancers for milestone ${milestone.Id}:`, error);
           }
         }
         setMilestoneAssignments(assignments);
-      } catch (error) {
-        console.error('Failed to fetch milestones:', error);
-        setMilestones([]);
-        setMilestoneAssignments({});
-      } finally {
-        setLoading(false);
-      }
+        setMilestonePayments(payments);
+              } catch (error) {
+          handleError(error, 'fetchMilestones');
+          setMilestones([]);
+          setMilestoneAssignments({});
+          setMilestonePayments({});
+        } finally {
+          setLoading(false);
+        }
     };
 
     fetchMilestones();
@@ -209,7 +236,7 @@ const ClientMilestones: React.FC = () => {
         const data = await getProjectFreelancers(Number(selectedProject));
         setFreelancers(data);
       } catch (error) {
-        console.error('Failed to fetch freelancers:', error);
+        handleError(error, 'fetchFreelancers');
         setFreelancers([]);
       }
     };
@@ -253,8 +280,7 @@ const ClientMilestones: React.FC = () => {
       setSelectedMilestone(null);
       setSelectedFreelancer(null);
     } catch (error) {
-      console.error('Failed to assign freelancer:', error);
-      alert('Failed to assign freelancer to milestone');
+      handleError(error, 'assignMilestone');
     } finally {
       setLoading(false);
     }
@@ -272,8 +298,7 @@ const ClientMilestones: React.FC = () => {
         [milestoneId]: (prev[milestoneId] || []).filter(f => f.Id !== userId)
       }));
     } catch (error) {
-      console.error('Failed to unassign freelancer:', error);
-      alert('Failed to unassign freelancer from milestone');
+      handleError(error, 'unassignMilestone');
     } finally {
       setLoading(false);
     }
@@ -306,6 +331,69 @@ const ClientMilestones: React.FC = () => {
         </Badge>
       </div>
     );
+  };
+
+  // Get payment status badge
+  const getPaymentStatusBadge = (milestone: Milestone) => {
+    if (milestone.Status !== 2) return null; // Only show for completed milestones
+    
+    const payment = milestonePayments[milestone.Id];
+    if (!payment) {
+      return (
+        <div className="ml-2">
+          <Badge variant="default">
+            <Clock className="w-3 h-3 mr-1" />
+            No Payment
+          </Badge>
+        </div>
+      );
+    }
+
+    const status = payment.PaymentStatus || 'pending';
+    const statusColor = getPaymentStatusColor(status);
+    
+    let statusText = 'Pending';
+    let icon = <Clock className="w-3 h-3" />;
+    
+    switch (status.toLowerCase()) {
+      case 'paid':
+        statusText = 'Paid - Waiting for Approval';
+        icon = <AlertCircle className="w-3 h-3" />;
+        break;
+      case 'released':
+        statusText = 'Released';
+        icon = <CheckCircle className="w-3 h-3" />;
+        break;
+      default:
+        statusText = 'Pending';
+        icon = <Clock className="w-3 h-3" />;
+    }
+    
+    return (
+      <div className="ml-2">
+        <Badge variant={statusColor as any}>
+          {icon} {statusText}
+        </Badge>
+      </div>
+    );
+  };
+
+  // Handle download deliverables
+  const handleDownloadDeliverables = (milestone: Milestone) => {
+    const payment = milestonePayments[milestone.Id];
+    if (payment && payment.PaymentStatus === 'Released') {
+      // Here you would implement the actual download logic
+      // For now, we'll just show an alert
+      alert(`Downloading deliverables for milestone: ${milestone.Title}`);
+    }
+  };
+
+  // Check if download button should be enabled
+  const canDownloadDeliverables = (milestone: Milestone) => {
+    if (milestone.Status !== 2) return false; // Only for completed milestones
+    
+    const payment = milestonePayments[milestone.Id];
+    return payment && payment.PaymentStatus === 'Released';
   };
 
   // Filter milestones
@@ -401,7 +489,10 @@ const ClientMilestones: React.FC = () => {
                       <span>${(milestone.Amount || 0).toLocaleString()}</span>
                     </div>
                   </div>
-                  {getStatusBadge(milestone.Status || 0)}
+                  <div className="flex items-center space-x-2">
+                    {getStatusBadge(milestone.Status || 0)}
+                    {getPaymentStatusBadge(milestone)}
+                  </div>
                 </div>
                 
                 <p className="text-gray-700 text-sm mb-4 max-w-2xl">{milestone.Description || 'No description available'}</p>
@@ -411,6 +502,9 @@ const ClientMilestones: React.FC = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-4 h-4 text-gray-600" />
                     <span className="text-sm font-medium text-gray-700">Assigned Freelancers</span>
+                    {milestone.Status === 2 && (
+                      <Lock className="w-4 h-4 text-gray-500" />
+                    )}
                   </div>
                   
                   {milestoneAssignments[milestone.Id] && milestoneAssignments[milestone.Id].length > 0 ? (
@@ -425,14 +519,16 @@ const ClientMilestones: React.FC = () => {
                               {freelancer.Email} • ${freelancer.HourlyRate || 0}/hr
                             </p>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUnassignFreelancer(milestone.Id, freelancer.Id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <UserMinus className="w-3 h-3" />
-                          </Button>
+                          {milestone.Status !== 2 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleUnassignFreelancer(milestone.Id, freelancer.Id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <UserMinus className="w-3 h-3" />
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -467,60 +563,81 @@ const ClientMilestones: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Assign Freelancer Button */}
-                <Dialog open={assignDialogOpen && selectedMilestone?.Id === milestone.Id} onOpenChange={setAssignDialogOpen}>
-                  <DialogTrigger asChild>
-                                          <Button
+                {/* Action Buttons */}
+                <div className="flex items-center space-x-2">
+                  {/* Assign Freelancer Button */}
+                  <Dialog open={assignDialogOpen && selectedMilestone?.Id === milestone.Id} onOpenChange={setAssignDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedMilestone(milestone)}
                         disabled={!canAssignToMilestone(milestone.Status || 0) || getAvailableFreelancers(milestone.Id).length === 0}
                       >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        {!canAssignToMilestone(milestone.Status || 0) 
+                        {milestone.Status === 2 ? (
+                          <>
+                            <Lock className="w-4 h-4 mr-2" />
+                            Assignment Locked
+                          </>
+                        ) : !canAssignToMilestone(milestone.Status || 0) 
                           ? 'Cannot Assign (Completed)' 
                           : getAvailableFreelancers(milestone.Id).length === 0 
                             ? 'No Available Freelancers' 
                             : 'Assign Freelancer'}
                       </Button>
-                  </DialogTrigger>
-                  
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Assign Freelancer to "{milestone.Title}"</DialogTitle>
-                    </DialogHeader>
+                    </DialogTrigger>
                     
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Select Freelancer</label>
-                                                <select
-                          value={selectedFreelancer || ''}
-                          onChange={(e) => setSelectedFreelancer(Number(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          <option value="">Choose a freelancer</option>
-                          {getAvailableFreelancers(selectedMilestone?.Id || 0).map((freelancer) => (
-                            <option key={freelancer.Id} value={freelancer.Id}>
-                              {freelancer.FirstName} {freelancer.LastName} - ${freelancer.HourlyRate || 0}/hr
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Assign Freelancer to "{milestone.Title}"</DialogTitle>
+                      </DialogHeader>
                       
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={handleAssignFreelancer}
-                          disabled={!selectedFreelancer || loading}
-                        >
-                          {loading ? 'Assigning...' : 'Assign'}
-                        </Button>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Select Freelancer</label>
+                          <select
+                            value={selectedFreelancer || ''}
+                            onChange={(e) => setSelectedFreelancer(Number(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Choose a freelancer</option>
+                            {getAvailableFreelancers(selectedMilestone?.Id || 0).map((freelancer) => (
+                              <option key={freelancer.Id} value={freelancer.Id}>
+                                {freelancer.FirstName} {freelancer.LastName} - ${freelancer.HourlyRate || 0}/hr
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button 
+                            onClick={handleAssignFreelancer}
+                            disabled={!selectedFreelancer || loading}
+                          >
+                            {loading ? 'Assigning...' : 'Assign'}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Download Button */}
+                  {milestone.Status === 2 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadDeliverables(milestone)}
+                      disabled={!canDownloadDeliverables(milestone)}
+                      className={canDownloadDeliverables(milestone) ? 'text-green-600 hover:text-green-700' : 'text-gray-400'}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {canDownloadDeliverables(milestone) ? 'Download Deliverables' : 'Payment Not Released'}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))

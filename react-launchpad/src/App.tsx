@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppShell } from './components/layout/AppShell';
 import LandingPage from './pages/LandingPage';
@@ -199,7 +200,7 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    //<GlobalErrorBoundary>
+    <ErrorBoundary>
       <AuthProvider>
         <Router>
           <div className="App">
@@ -217,7 +218,7 @@ function App() {
           </div>
         </Router>
       </AuthProvider>
-    //</GlobalErrorBoundary>
+    </ErrorBoundary>
   );
 }
 

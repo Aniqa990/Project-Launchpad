@@ -32,7 +32,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { ProjectModal } from '@/components/ui/ProjectModal';
 import { ExperienceModal } from '@/components/ui/ExperienceModal';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
 
 export function ProfileSetup() {
@@ -156,10 +156,10 @@ export function ProfileSetup() {
             setProfileData(parsedData); // Optionally merge or replace, as per your logic
             setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'success' } : r));
             setShowParseResults(true);
-            toast.success(`Resume ${file.name} parsed successfully!`);
+            showSuccessToast(`Resume ${file.name} parsed successfully!`);
           } catch (error: any) {
             setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'error', error: error.message } : r));
-            toast.error(`Failed to parse ${file.name}. Please fill manually.`);
+            handleError(error, 'uploadFile');
           }
           setParsing(false);
         } finally {
@@ -309,10 +309,10 @@ export function ProfileSetup() {
         })
       });
       await updateFreelancerProfile(profilePayload, user?.id ?? 0);
-      toast.success('Profile saved successfully!');
+      showSuccessToast('Profile saved successfully!');
       navigate('/freelancer/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save profile');
+      handleError(error, 'updateProfile');
     }
   };
 

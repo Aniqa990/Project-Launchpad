@@ -1,6 +1,7 @@
 import axios from "axios";
 import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback, Milestone} from "@/types";
 import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst";
+import { handleError, getErrorType, ErrorType } from "@/utils/errorHandler";
 
 const api = axios.create({
   baseURL: "http://localhost:7071/api",
@@ -20,6 +21,21 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Add response interceptor for global error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Don't handle auth errors here as they're handled in AuthContext
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      return Promise.reject(error);
+    }
+    
+    // For other errors, we can log them but let individual handlers deal with them
+    console.error('API Error:', error);
+    return Promise.reject(error);
+  }
 );
 
 //AUTH

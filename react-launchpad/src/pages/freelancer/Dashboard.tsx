@@ -19,7 +19,7 @@ import {
   CheckCircle,
   TrendingUp
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { handleError } from '@/utils/errorHandler';
 
 export function FreelancerDashboard() {
   const navigate = useNavigate();
@@ -117,8 +117,7 @@ export function FreelancerDashboard() {
       });
 
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      handleError(error, 'fetchDashboardData');
     } finally {
       setLoading(false);
     }

@@ -16,7 +16,7 @@ import {
   Filter,
   Search
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 import { InvoicePage } from './InvoicePage'; // Restore InvoicePage import
 import { MultiFreelancerPaymentModal } from './MultiFreelancerPaymentModal';
 import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers } from '../../apiendpoints';
@@ -53,7 +53,7 @@ export function ClientPayments() {
         const data = await getClientProjects(clientId);
         setProjects(data);
       } catch (err) {
-        toast.error('Failed to fetch projects');
+        handleError(err, 'fetchProjects');
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export function ClientPayments() {
         const data = await getClientPayments(clientId);
         setPayments(data);
       } catch (err) {
-        toast.error('Failed to fetch payments');
+        handleError(err, 'fetchPayments');
       } finally {
         setLoading(false);
       }
@@ -89,7 +89,7 @@ export function ClientPayments() {
         const data = await getMilestonesByProjectId(Number(selectedProjectId));
         setMilestones(data);
       } catch (err) {
-        toast.error('Failed to fetch milestones');
+        handleError(err, 'fetchMilestones');
       } finally {
         setLoading(false);
       }
@@ -161,7 +161,7 @@ export function ClientPayments() {
         paidFreelancerIds.includes(freelancerId)
       );
     } catch (error) {
-      console.error('Error checking freelancer payments:', error);
+      handleError(error, 'checkFreelancerPayments');
       return false;
     }
   };
@@ -216,13 +216,13 @@ export function ClientPayments() {
   const handleReleasePayment = async (paymentId: number) => {
     try {
       await releasePayment(paymentId);
-    toast.success('Payment released successfully!');
-    setShowPaymentModal(false);
+      showSuccessToast('Payment released successfully!');
+      setShowPaymentModal(false);
       // Refresh payments
       const data = await getClientPayments(clientId);
       setPayments(data);
     } catch (err) {
-      toast.error('Failed to release payment');
+      handleError(err, 'releasePayment');
     }
   };
 
@@ -260,7 +260,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        toast.error(validation.error);
+        handleError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -268,15 +268,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        toast.error('Failed to initiate Stripe Checkout.');
+        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      console.error('Stripe checkout error:', err);
-      if (err.response?.data) {
-        toast.error(`Payment error: ${err.response.data}`);
-      } else {
-        toast.error('Error redirecting to Stripe Checkout.');
-      }
+      handleError(err, 'processPayment');
     }
   };
 
@@ -296,7 +291,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        toast.error(validation.error);
+        handleError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -304,15 +299,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        toast.error('Failed to initiate Stripe Checkout.');
+        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      console.error('Stripe checkout error:', err);
-      if (err.response?.data) {
-        toast.error(`Payment error: ${err.response.data}`);
-      } else {
-        toast.error('Error redirecting to Stripe Checkout.');
-      }
+      handleError(err, 'processPayment');
     }
   };
 
@@ -332,7 +322,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        toast.error(validation.error);
+        handleError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -340,15 +330,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        toast.error('Failed to initiate Stripe Checkout.');
+        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      console.error('Stripe checkout error:', err);
-      if (err.response?.data) {
-        toast.error(`Payment error: ${err.response.data}`);
-      } else {
-        toast.error('Error redirecting to Stripe Checkout.');
-      }
+      handleError(err, 'processPayment');
     }
   };
 
@@ -377,8 +362,7 @@ export function ClientPayments() {
         await handleStripeCheckout(milestone);
       }
     } catch (error) {
-      console.error('Failed to handle milestone payment:', error);
-      toast.error('Failed to process payment');
+      handleError(error, 'processPayment');
     }
   };
 
@@ -402,7 +386,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        toast.error(validation.error);
+        handleError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -410,15 +394,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        toast.error('Failed to initiate Stripe Checkout.');
+        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      console.error('Stripe checkout error:', err);
-      if (err.response?.data) {
-        toast.error(`Payment error: ${err.response.data}`);
-      } else {
-      toast.error('Error redirecting to Stripe Checkout.');
-      }
+      handleError(err, 'processPayment');
     }
   };
 

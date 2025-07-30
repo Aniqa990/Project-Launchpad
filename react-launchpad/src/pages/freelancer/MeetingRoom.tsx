@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getNotifications, getMeetingDetails, uploadMeetingAudio } from '../../apiendpoints';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../components/ui/select';
 import { Button } from '../../components/ui/button';
+import { handleError } from '@/utils/errorHandler';
 
 function renderMessage(msg: string) {
   if (!msg || typeof msg !== 'string') return null;
@@ -54,7 +55,10 @@ export default function Meetings() {
           setSelectedNotificationId(String(data[0].id));
         }
       })
-      .catch(() => setError('Failed to load notifications.'));
+      .catch((error) => {
+        handleError(error, 'fetchNotifications');
+        setError('Failed to load notifications.');
+      });
   }, [user?.id]);
 
   // Fetch meeting details for selected notification
@@ -70,7 +74,10 @@ export default function Meetings() {
           setMeeting(data);
           setMeetingId(data.meetingId || data.Id || data.id);
         })
-        .catch(() => setError('Failed to load meeting details.'));
+        .catch((error) => {
+          handleError(error, 'fetchMeetingDetails');
+          setError('Failed to load meeting details.');
+        });
     } else {
       setMeeting(null);
     }

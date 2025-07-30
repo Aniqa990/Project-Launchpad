@@ -7,6 +7,7 @@ import { Textarea } from '../../components/ui/textarea';
 import { User, Phone, Camera, Save, Briefcase, DollarSign, Clock, Edit2, Eye, EyeOff, Lock, X, Plus, Trash2, Pencil } from 'lucide-react';
 import { getFreelancerById, updateFreelancerProfile, deleteFreelancerProfile } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 import toast from 'react-hot-toast';
 import { Modal } from '../../components/ui/Modal';
 import { ParsedResumeData } from '@/types';
@@ -317,10 +318,9 @@ const handleSave = async () => {
     // 3. Update C# backend
     await updateFreelancerProfile(profilePayload, profileData.id);
     setIsEditing(false);
-    setSuccessMessage('Profile updated successfully!');
-    setTimeout(() => setSuccessMessage(null), 3000);
+    showSuccessToast('Profile updated successfully!');
   } catch (err: any) {
-    setError(err.message || 'Failed to update profile');
+    handleError(err, 'updateProfile');
   } finally {
     setLoading(false);
   }
@@ -422,7 +422,7 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
   const handleSavePassword = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      handleError(new Error('Passwords do not match'), 'validation');
       return;
     }
     if (!profileData) return;
@@ -455,10 +455,7 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       console.log('Form cleared');
     } catch (err: any) {
-      console.error('Password update error:', err);
-      console.error('Error response:', err?.response?.data);
-      const backendMsg = err?.response?.data?.message || err?.response?.data?.error;
-      toast.error(backendMsg || 'Failed to update password');
+      handleError(err, 'updatePassword');
     }
   };
 
@@ -469,7 +466,7 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const confirmDangerAction = async () => {
     setDangerModal({ open: false });
     await deleteFreelancerProfile(profileData?.id ?? 0);
-    toast.success('Account deleted!');
+    showSuccessToast('Account deleted!');
     navigate('/');
   };
 
@@ -505,7 +502,7 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         // Update the user context with the new profile picture
         updateUser({ profilePicture: data.secure_url });
         setIsEditing(true);
-        toast.success('Image uploaded!');
+        showSuccessToast('Image uploaded!');
         
         // Save the profile picture URL to the database
         if (profileData) {
@@ -522,10 +519,10 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           }
         }
       } else {
-        toast.error('Failed to upload image');
+        handleError(new Error('Failed to upload image'), 'uploadImage');
       }
     } catch (err) {
-      toast.error('Image upload error');
+      handleError(err, 'uploadImage');
     }
   };
 

@@ -14,7 +14,7 @@ import {
   Download,
   Eye
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 import { getFreelancerPayments, getFreelancerProjects, getClientById } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -46,7 +46,7 @@ export function FreelancerPayments() {
           const clientData = await Promise.all(clientPromises);
           setClients(clientData);
         } catch (err) {
-          console.error('Failed to fetch client details');
+          handleError(err, 'fetchClientDetails');
         }
       }
     };
@@ -60,7 +60,7 @@ export function FreelancerPayments() {
       const data = await getFreelancerPayments(freelancerId);
       setPayments(data);
     } catch (err) {
-      toast.error('Failed to fetch payments');
+      handleError(err, 'fetchPayments');
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export function FreelancerPayments() {
       const data = await getFreelancerProjects(freelancerId);
       setProjects(data);
     } catch (err) {
-      toast.error('Failed to fetch projects');
+      handleError(err, 'fetchProjects');
     }
   };
 
@@ -126,7 +126,7 @@ export function FreelancerPayments() {
 
   const handleDownloadInvoice = (payment: any) => {
     // Implement invoice download logic
-    toast.success('Invoice download started');
+    showSuccessToast('Invoice download started');
   };
 
   const handleViewDetails = (payment: any) => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Eye, EyeOff, Mail, Lock, User, CheckCircle, Phone, MessageCircle } from "lucide-react";
-import toast from "react-hot-toast";
+import { handleError, showSuccessToast } from '../utils/errorHandler';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { Avatar } from '../components/ui/avatar';
@@ -141,17 +141,17 @@ export function Auth({ mode }: AuthProps) {
     } else if (step === 2) {
       // Step 2: Basic information - validate required fields, email, and phone
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.gender) {
-        toast.error("Please fill in all required fields");
+        handleError(new Error("Please fill in all required fields"), 'validation');
         return;
       }
       
       if (!validateEmail(formData.email)) {
-        toast.error("Please enter a valid email address");
+        handleError(new Error("Please enter a valid email address"), 'validation');
         return;
       }
       
       if (!phoneValidation.isValid) {
-        toast.error("Please enter a valid phone number");
+        handleError(new Error("Please enter a valid phone number"), 'validation');
         return;
       }
       
@@ -176,9 +176,9 @@ export function Auth({ mode }: AuthProps) {
       setLoading(true);
       try {
         await login(formData.email, formData.password);
-        toast.success("Welcome back!");
+        showSuccessToast("Welcome back!");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Authentication failed");
+        handleError(error, 'login');
       } finally {
         setLoading(false);
       }
@@ -188,27 +188,27 @@ export function Auth({ mode }: AuthProps) {
       const phoneValidationResult = validatePhoneNumber(formData.phoneNo);
       
       if (!passwordValidationResult.isValid) {
-        toast.error("Please fix password requirements");
+        handleError(new Error("Please fix password requirements"), 'validation');
         setShowPasswordValidation(true);
         return;
       }
       
       if (!phoneValidationResult.isValid) {
-        toast.error(phoneValidationResult.error);
+        handleError(new Error(phoneValidationResult.error), 'validation');
         return;
       }
       
       if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match');
+        handleError(new Error('Passwords do not match'), 'validation');
         return;
       }
       
       setIsLoading(true);
       try {
         await signup(formData);
-        toast.success("Account created successfully!");
+        showSuccessToast("Account created successfully!");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Signup failed");
+        handleError(error, 'signup');
       } finally {
         setIsLoading(false);
       }

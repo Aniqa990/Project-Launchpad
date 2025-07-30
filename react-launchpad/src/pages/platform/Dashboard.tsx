@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { getProjects, getAllocatedResources, getUnallocatedResources, getMilestonesByHandoverStatus, getProjectsWithPendingApproval } from '@/apiendpoints';
 import type { Project } from '@/types';
+import { handleError } from '@/utils/errorHandler';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -41,6 +42,7 @@ export function PlatformDashboard() {
         setPendingProjects(pendingProjectsData);
         setPendingPayments(pendingPaymentsData);
       } catch (e) {
+        handleError(e, 'fetchDashboardData');
         setProjects([]);
         setAllocated(0);
         setUnallocated(0);

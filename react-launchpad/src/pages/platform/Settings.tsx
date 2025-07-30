@@ -8,7 +8,7 @@ import { fetchPlatformProfile, updatePlatformProfile } from '../../apiendpoints'
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { User } from '@/types';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 import { User as UserIcon, Phone, Camera, Save, Eye, EyeOff, Lock } from 'lucide-react';
 
 export function PlatformSettings() {
@@ -42,7 +42,7 @@ export function PlatformSettings() {
         };
         setProfile(transformData);
       } catch (err: any) {
-        setError(err.message || 'Failed to load profile');
+        handleError(err, 'fetchProfile');
         setProfile(null);
       } finally {
         setLoading(false);
@@ -63,10 +63,9 @@ export function PlatformSettings() {
     try {
       await updatePlatformProfile(profile?.id ?? 0, profile);
       setIsEditing(false);
-      setSuccessMessage('Profile updated successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      showSuccessToast('Profile updated successfully!');
     } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+      handleError(err, 'updateProfile');
     } finally {
       setLoading(false);
     }
@@ -89,12 +88,12 @@ export function PlatformSettings() {
       if (data.secure_url) {
         setProfile((prev) => prev ? { ...prev, profilePicture: data.secure_url } : prev);
         setIsEditing(true);
-        toast.success('Image uploaded!');
+        showSuccessToast('Image uploaded!');
       } else {
-        toast.error('Failed to upload image');
+        handleError(new Error('Failed to upload image'), 'uploadImage');
       }
     } catch (err) {
-      toast.error('Image upload error');
+      handleError(err, 'uploadImage');
     }
   };
 
@@ -110,7 +109,7 @@ export function PlatformSettings() {
 
   const handleSavePassword = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      handleError(new Error('Passwords do not match'), 'validation');
       return;
     }
     if (!profile) return;
@@ -122,11 +121,10 @@ export function PlatformSettings() {
         password: formData.currentPassword,
         newPassword: formData.newPassword,
       });
-      toast.success('Password updated successfully!');
+      showSuccessToast('Password updated successfully!');
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err: any) {
-      const backendMsg = err?.response?.data?.message;
-      toast.error(backendMsg || 'Failed to update profile');
+      handleError(err, 'updatePassword');
     } finally {
       setLoading(false);
     }

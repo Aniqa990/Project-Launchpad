@@ -15,6 +15,7 @@ import {
   CheckCircle,
   Briefcase,
 } from 'lucide-react';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 import toast from 'react-hot-toast';
 import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest, addProjectToGist } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
@@ -222,7 +223,7 @@ export function CreateProject() {
         return;
       }
       if (dateValidation.deadlineError) {
-        toast.error('Please fix the deadline validation error before proceeding');
+        handleError(new Error('Please fix the deadline validation error before proceeding'), 'validation');
         return;
       }
       
@@ -234,7 +235,7 @@ export function CreateProject() {
     } else if (step === 5) {
       // Validate milestones before proceeding
       if (budgetValidation.budgetExceeded) {
-        toast.error('Please fix the budget validation error before proceeding');
+        handleError(new Error('Please fix the budget validation error before proceeding'), 'validation');
         return;
       }
       setStep(step + 1);
@@ -290,12 +291,12 @@ export function CreateProject() {
       return;
     }
     if (dateValidation.deadlineError) {
-      toast.error('Please fix the deadline validation error before submitting');
+      handleError(new Error('Please fix the deadline validation error before submitting'), 'validation');
       return;
     }
     
     if (budgetDivision === 'milestone' && budgetValidation.budgetExceeded) {
-      toast.error('Please fix the budget validation error before submitting');
+      handleError(new Error('Please fix the budget validation error before submitting'), 'validation');
       return;
     }
     setSubmitted(true);
@@ -350,9 +351,9 @@ export function CreateProject() {
         }
       }
       
-      toast.success('Project created successfully!');
+      showSuccessToast('Project created successfully!');
     } catch (err) {
-      toast.error('Failed to create project.');
+      handleError(err, 'createProject');
       setSubmitted(false);
     }
   };

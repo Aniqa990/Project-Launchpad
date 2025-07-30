@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFreelancerHourlyLogs, getFreelancerProjects, getLogsByProjectId } from '../../apiendpoints';
+import { handleError } from '@/utils/errorHandler';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
@@ -41,6 +42,7 @@ const HourlyLogViewer: React.FC = () => {
         const data = await getFreelancerProjects(user.id);
         setProjects(data);
       } catch (e) {
+        handleError(e, 'fetchProjects');
         setProjects([]);
       }
     }
@@ -75,6 +77,7 @@ const HourlyLogViewer: React.FC = () => {
         }));
         setLogs(transformed);
       } catch (err: any) {
+        handleError(err, 'fetchLogs');
         setError(err.message || 'Failed to fetch logs');
       } finally {
         setLoading(false);

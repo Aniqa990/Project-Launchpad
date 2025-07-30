@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ProjectDetails } from "@/components/ProjectDetails";
 import type { Project, Milestone } from "@/types";
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
 export function AdminProjectApprovals() {
   const navigate = useNavigate();
@@ -25,8 +25,12 @@ export function AdminProjectApprovals() {
   }, []);
 
   const fetchProjects = async () => {
-    const data = await getProjectsWithPendingApproval();
-    setProjects(data);
+    try {
+      const data = await getProjectsWithPendingApproval();
+      setProjects(data);
+    } catch (error) {
+      handleError(error, 'fetchProjects');
+    }
   };
 
   const handleApprove = async (projectId: number) => {
@@ -34,8 +38,9 @@ export function AdminProjectApprovals() {
     try {
       await updateProjectApprovalStatus(projectId, "approved");
       await fetchProjects();
+      showSuccessToast('Project approved successfully');
     } catch (error) {
-      console.error(error);
+      handleError(error, 'approveProject');
     } finally {
       setLoading(false);
     }
@@ -58,8 +63,9 @@ export function AdminProjectApprovals() {
       setSelectedProject(null);
       setShowMilestoneModal(false);
       setMilestones([]);
+      showSuccessToast('Project rejected successfully');
     } catch (error) {
-      console.error(error);
+      handleError(error, 'rejectProject');
     } finally {
       setLoading(false);
     }
@@ -94,6 +100,7 @@ export function AdminProjectApprovals() {
       const data = await getMilestonesByProjectId(project.id);
       setMilestones(data);
     } catch (e) {
+      handleError(e, 'fetchMilestones');
       setMilestones([]);
     } finally {
       setMilestonesLoading(false);

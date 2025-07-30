@@ -16,7 +16,7 @@ import {
   Eye,
   Upload
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 import { ProjectRequest } from '@/types';
 
 export function FreelancerRequests() {
@@ -36,7 +36,7 @@ export function FreelancerRequests() {
           console.log(data);
         }
       } catch (error: any) {
-        toast.error(error.message || 'Failed to load project requests');
+        handleError(error, 'fetchData');
       }
     };
     fetchRequests();
@@ -81,9 +81,9 @@ export function FreelancerRequests() {
           // Don't show error to user as this is not critical
         }
       }
-      toast.success('Project request accepted!');
+      showSuccessToast('Project request accepted!');
     } catch (err: any) {
-      toast.error(err.message);
+      handleError(err, 'respondToRequest');
     } finally {
       setShowDetailDialog(false);
     }
@@ -95,9 +95,9 @@ export function FreelancerRequests() {
       setRequests((prev)=> prev.map((req) =>
         req.projectId === projectId ? { ...req, status: 'rejected' } : req
       ));
-      toast.success('Project request declined');
+      showSuccessToast('Project request declined');
     } catch (err: any) {
-      toast.error(err.message);
+      handleError(err, 'respondToRequest');
     } finally {
       setShowDetailDialog(false);
     }

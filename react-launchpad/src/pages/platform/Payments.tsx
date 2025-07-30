@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, Clock, DollarSign, Download, User, Calendar, Upload, FileText, AlertCircle, Send } from 'lucide-react';
 import { getMilestonesByHandoverStatus, updateHandoverStatus } from '../../apiendpoints';
 import type { MilestoneWithPayment } from '../../types';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
 export function MilestonePayments() {
   const [milestones, setMilestones] = useState<MilestoneWithPayment[]>([]);
@@ -24,7 +24,10 @@ export function MilestonePayments() {
         }));
         setMilestones(normalized);
       })
-      .catch((err) => setError(err.message || 'Failed to fetch milestones'))
+      .catch((err) => {
+        handleError(err, 'fetchMilestones');
+        setError('Failed to fetch milestones');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -32,10 +35,10 @@ export function MilestonePayments() {
     try {
       await updateHandoverStatus(milestoneId, 'completed');
       setMilestones((prev) => prev.filter((m) => Number(m.id) !== milestoneId));
-      toast.success('Milestone released and handed over successfully');
+      showSuccessToast('Milestone released and handed over successfully');
     } catch (err: any) {
-      toast.error('Failed to update handover status');
-      setError(err.message || 'Failed to update handover status');
+      handleError(err, 'updateHandoverStatus');
+      setError('Failed to update handover status');
     }
   };
 

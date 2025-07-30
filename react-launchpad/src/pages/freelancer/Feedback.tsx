@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getFreelancerFeedbacks } from '../../apiendpoints';
 import { Star, Calendar, User, MessageSquare, Filter, Search, TrendingUp } from 'lucide-react';
 import { Feedback as FeedbackType } from '@/types';
+import { handleError } from '@/utils/errorHandler';
 
 export function Feedback() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export function Feedback() {
         console.log('Feedback API response:', feedbacks);
         setFeedback(feedbacks);
       } catch (error) {
+        handleError(error, 'fetchFeedbacks');
         setFeedback([]);
       }
     };

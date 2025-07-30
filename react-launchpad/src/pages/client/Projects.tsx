@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { getClientProjects, getProjectById, updateProject } from '../../apiendpoints';
 import { Project } from '@/types';
+import { handleError } from '@/utils/errorHandler';
 
 export function ClientProjects() {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ export function ClientProjects() {
           setProjects([]);
         }
       } catch (err) {
+        handleError(err, 'fetchProjects');
         setError('Failed to load projects.');
       } finally {
         setLoading(false);
