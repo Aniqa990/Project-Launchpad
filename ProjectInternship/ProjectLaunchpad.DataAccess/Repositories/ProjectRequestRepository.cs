@@ -43,6 +43,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .Include(pr => pr.Project)
                     .ThenInclude(p => p.Client)
                         .ThenInclude(c => c.User)
+                .Where(pr => pr.Project.ApprovalStatus == "rejected")
                 .Select(pr => new ProjectRequestResponseDTO
                 {
                     ProjectId = pr.ProjectId,
@@ -67,10 +68,19 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return await _db.projectRequests.FirstOrDefaultAsync(pr => pr.FreelancerId == freelancerId && pr.ProjectId == projectId);
         }
 
-        public async Task<List<ProjectRequest>> GetRequestsByProjectIdAsync(int projectId)
+        public async Task<List<ProjectRequestResponseForClient>> GetRequestsByProjectIdAsync(int projectId)
         {
             return await _db.projectRequests
                 .Where(pr => pr.ProjectId == projectId)
+                .Include(pr => pr.Project)
+                .Where(pr => pr.Project.ApprovalStatus != "rejected")
+                .Select(pr => new ProjectRequestResponseForClient
+                {
+                    ProjectId = pr.ProjectId,
+                    FreelancerId = pr.FreelancerId,
+                    Status = pr.Status,
+                    RequestedAt = pr.RequestedAt
+                })
                 .ToListAsync();
         }
 

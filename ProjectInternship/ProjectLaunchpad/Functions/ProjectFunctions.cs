@@ -78,6 +78,7 @@ namespace ProjectLaunchpad.Functions
                 Description = projectDto.Description,
                 CategoryOrDomain = projectDto.CategoryOrDomain,
                 PaymentType = projectDto.PaymentType,
+                StartDate = projectDto.StartDate,
                 Deadline = projectDto.Deadline,
                 RequiredSkills = projectDto.RequiredSkills,
                 Budget = projectDto.Budget,
@@ -130,6 +131,7 @@ namespace ProjectLaunchpad.Functions
                 Description = p.Description,
                 Status = p.Status ?? "active",
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
                 CategoryOrDomain = p.CategoryOrDomain,
@@ -185,6 +187,7 @@ namespace ProjectLaunchpad.Functions
                 Description = project.Description,
                 PaymentType = project.PaymentType,
                 CategoryOrDomain = project.CategoryOrDomain,
+                StartDate = project.StartDate,
                 Deadline = project.Deadline,
                 RequiredSkills = project.RequiredSkills,
                 Budget = project.Budget,
@@ -223,13 +226,17 @@ namespace ProjectLaunchpad.Functions
         {
             var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientIdAsync(clientId);
 
-            var projectDTOs = projects.Select(p => new ProjectResponseDTO
+            // Filter out rejected projects
+            var filteredProjects = projects.Where(p => p.ApprovalStatus != "rejected");
+
+            var projectDTOs = filteredProjects.Select(p => new ProjectResponseDTO
             {
                 Id = p.Id,
                 ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
                 Status = p.Status ?? "active",
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
                 // Add these fields if your DTO and frontend expect them:
@@ -259,7 +266,8 @@ namespace ProjectLaunchpad.Functions
                     Gender = af.Freelancer.User.Gender
                 } : null).Where(u => u != null).ToList() ?? new List<UserDTO>(),
                 Progress = 0 // TODO: Calculate based on milestones if needed
-            }).ToList();
+            })
+                .ToList();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(projectDTOs);
@@ -275,16 +283,20 @@ namespace ProjectLaunchpad.Functions
         {
             var projects = await _unitOfWork.ProjectRepository.GetProjectsByFreelancerAsync(freelancerId);
 
-            var projectDTOs = projects.Select(p => new ProjectResponseDTO
+
+            // Filter out rejected projects
+            var filteredProjects = projects.Where(p => p.ApprovalStatus != "rejected");
+
+            var projectDTOs = filteredProjects.Select(p => new ProjectResponseDTO
             {
                 Id = p.Id,
                 ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
                 Status = p.Status ?? "active",
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
-                // Add these fields if your DTO and frontend expect them:
                 CategoryOrDomain = p.CategoryOrDomain,
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
@@ -391,6 +403,7 @@ namespace ProjectLaunchpad.Functions
                 Description = p.Description,
                 Status = p.Status ?? "completed",
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
                 CategoryOrDomain = p.CategoryOrDomain,

@@ -25,6 +25,9 @@ namespace ProjectLaunchpad.Models.Models
         public string CategoryOrDomain { get; set; } = string.Empty;
 
         [Required]
+        public DateTime StartDate { get; set; }
+
+        [Required]
         public DateTime Deadline { get; set; }
 
         [NotMapped]
@@ -38,7 +41,7 @@ namespace ProjectLaunchpad.Models.Models
 
         [Required]
         public int NumberOfFreelancers { get; set; }
-        public string? Status { get; set; } = "active"; // active, closed, in progress
+        public string? Status { get; set; } = "active"; // active, closed, open
 
         public string? AttachedDocumentPath { get; set; }
         public string ApprovalStatus { get; set; } = "pending";

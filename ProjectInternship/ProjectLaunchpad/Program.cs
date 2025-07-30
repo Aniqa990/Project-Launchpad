@@ -22,6 +22,7 @@ builder.Services
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IStripeService, StripeService>();
+//builder.Services.AddScoped<IProjectStatusService, ProjectStatusService>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
