@@ -18,6 +18,8 @@ namespace ProjectLaunchpad.Models.Models.DTOs.ProjectDTO
 
         public string CategoryOrDomain { get; set; } = string.Empty;
 
+        public DateTime StartDate { get; set; }
+
         public DateTime Deadline { get; set; }
 
         public TimeSpan Duration => Deadline - DateTime.Now;
