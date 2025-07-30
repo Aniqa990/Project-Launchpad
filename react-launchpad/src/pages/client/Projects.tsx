@@ -314,6 +314,14 @@ export function ClientProjects() {
                   
                   {/* Action Buttons */}
                   <div className="flex flex-col space-y-2 ml-4">
+                    <Button
+                      onClick={() => navigate(`/client/project-details/${project.id}`)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      View Details
+                    </Button>
+                    
                     {project.approvalStatus === 'approved' && project.status === 'open' && (
                       <Button
                         onClick={() => navigate(`/client/freelancer-suggestions?projectId=${project.id}`)}
@@ -331,16 +339,6 @@ export function ClientProjects() {
                         size="sm"
                       >
                         Update Project
-                      </Button>
-                    )}
-                    
-                    {project.status === 'open' && (
-                      <Button
-                        onClick={() => navigate(`/workspace/${project.id}`)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        View Details
                       </Button>
                     )}
                     

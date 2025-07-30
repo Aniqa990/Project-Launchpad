@@ -53,7 +53,7 @@ export function CreateProject() {
     dueDate: '',
   });
   const [milestoneError, setMilestoneError] = useState('');
-  const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone' | 'hourly'>('fixed');
+  const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
   const [detailedFreelancers, setDetailedFreelancers] = useState<any[]>([]);
@@ -306,8 +306,7 @@ export function CreateProject() {
         startDate: startDateISO,
         deadline: deadlineISO,
         requiredSkills: projectData.Skills.join(','),
-        budget: budgetDivision === 'hourly' ? undefined : Number(projectData.Budget),
-        hourlyRate: budgetDivision === 'hourly' ? Number(projectData.Budget) : undefined,
+        budget: Number(projectData.Budget),
         numberOfFreelancers: projectData.NumberOfFreelancers,
         milestones: budgetDivision === 'milestone'
           ? milestones.map(m => ({
@@ -345,6 +344,7 @@ export function CreateProject() {
           // Don't show error to user as this is not critical
         }
       }
+      
       toast.success('Project created successfully!');
     } catch (err) {
       toast.error('Failed to create project.');
@@ -409,7 +409,10 @@ export function CreateProject() {
             <Send className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Created Successfully!</h1>
-
+          <p className="text-gray-600 mb-8">
+            Your project has been created and is pending admin approval.
+          </p>
+        </Card>
         
         <div className="flex justify-center space-x-4 mt-8">
           <Button variant="outline" onClick={() => navigate('/client/projects')}>
@@ -635,22 +638,12 @@ export function CreateProject() {
                 >
                   Milestone-based
                 </button>
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded-lg border-2 ${budgetDivision === 'hourly' ? 'border-blue-600 bg-blue-50' : 'border-gray-300'}`}
-                  onClick={() => {
-                    handleInputChange('PaymentType', 'hourly');
-                    setBudgetDivision('hourly');
-                  }}
-                >
-                  Hourly
-                </button>
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {budgetDivision === 'hourly' ? 'Hourly Rate *' : 'Budget Amount *'}
+                Budget Amount *
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -659,13 +652,11 @@ export function CreateProject() {
                   value={projectData.Budget}
                   onChange={(e) => handleInputChange('Budget', e.target.value)}
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={budgetDivision === 'hourly' ? 'Hourly Rate' : (projectData.PaymentType === 'fixed' ? '5000' : '75')}
+                  placeholder={projectData.PaymentType === 'fixed' ? '5000' : '75'}
                 />
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {budgetDivision === 'hourly'
-                  ? 'Enter your hourly rate for this project'
-                  : (projectData.PaymentType === 'fixed' ? 'Total project budget' : 'Hourly rate')}
+                Total project budget
               </p>
             </div>
 

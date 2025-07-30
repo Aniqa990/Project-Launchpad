@@ -210,9 +210,12 @@ export interface ProjectRequest {
   projectTitle: string;
   projectDescription: string;
   projectCategory:string;
+  startDate: Date;
   deadline: Date;
   skills: string;
   budget?:number;
+  paymentType?: string;
+  attachedDocumentPath?: string;
   clientId: number;
   clientName: string;
   clientEmail: string;

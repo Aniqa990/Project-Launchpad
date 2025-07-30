@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {getProjectRequests, updateProjectRequestStatus, assignFreelancerToProject, assignFreelancerToGist} from '@/apiendpoints';
+import {getProjectRequests, updateProjectRequestStatus, assignFreelancerToProject, assignFreelancerToGist, getMilestonesByProjectId} from '@/apiendpoints';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,8 @@ import {
   Clock,
   Check,
   X,
-  Eye
+  Eye,
+  Upload
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProjectRequest } from '@/types';
@@ -23,6 +24,8 @@ export function FreelancerRequests() {
   const [requests, setRequests] = useState<ProjectRequest[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<ProjectRequest | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(false);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -38,6 +41,23 @@ export function FreelancerRequests() {
     };
     fetchRequests();
   }, [user?.id]);
+
+  const fetchMilestones = async (projectId: number) => {
+    if (selectedRequest?.paymentType === 'milestone') {
+      setLoadingMilestones(true);
+      try {
+        const milestoneData = await getMilestonesByProjectId(projectId);
+        setMilestones(milestoneData);
+      } catch (error) {
+        console.error('Failed to fetch milestones:', error);
+        setMilestones([]);
+      } finally {
+        setLoadingMilestones(false);
+      }
+    } else {
+      setMilestones([]);
+    }
+  };
 
   const handleAcceptRequest = async (projectId: number) => {
     try {
@@ -137,9 +157,10 @@ export function FreelancerRequests() {
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={() => {
+          onClick={async () => {
             setSelectedRequest(request);
             setShowDetailDialog(true);
+            await fetchMilestones(request.projectId);
           }}
         >
           <Eye className="w-4 h-4" />
@@ -267,11 +288,24 @@ export function FreelancerRequests() {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2">Project: {selectedRequest.projectTitle}</h4>
                 <p className="text-gray-600 mb-4">{selectedRequest.projectDescription}</p>
+                
+                {/* Project Category */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <p className="text-gray-900">{selectedRequest.projectCategory}</p>
+                </div>
+                
+                {/* Budget and Payment Type */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   {selectedRequest.budget && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
-                      <p className="text-lg font-semibold text-green-600">${selectedRequest.budget.toLocaleString()}</p>
+                      <p className="text-lg font-semibold text-green-600">
+                        ${selectedRequest.budget.toLocaleString()}
+                        {selectedRequest.paymentType && (
+                          <span className="text-sm text-gray-500 ml-2">({selectedRequest.paymentType})</span>
+                        )}
+                      </p>
                     </div>
                   )}
                   <div>
@@ -281,6 +315,24 @@ export function FreelancerRequests() {
                     </p>
                   </div>
                 </div>
+                
+                {/* Attached Document */}
+                {selectedRequest.attachedDocumentPath && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Project Documents</label>
+                    <a 
+                      href={selectedRequest.attachedDocumentPath} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline flex items-center"
+                    >
+                      <Upload className="w-4 h-4 mr-1" />
+                      View Project Documents
+                    </a>
+                  </div>
+                )}
+                
+                {/* Required Skills */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Required Skills</label>
                   <div className="flex flex-wrap gap-2">
@@ -289,6 +341,38 @@ export function FreelancerRequests() {
                     ))}
                   </div>
                 </div>
+                
+                {/* Milestones for milestone-based projects */}
+                {selectedRequest.paymentType === 'milestone' && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Project Milestones</label>
+                    {loadingMilestones ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="text-sm text-gray-500 mt-2">Loading milestones...</p>
+                      </div>
+                    ) : milestones.length > 0 ? (
+                      <div className="space-y-3">
+                        {milestones.map((milestone, index) => (
+                          <div key={milestone.id || index} className="border rounded-lg p-3 bg-gray-50">
+                            <div className="flex justify-between items-start mb-2">
+                              <h5 className="font-medium text-gray-900">{milestone.title}</h5>
+                              <span className="text-sm font-semibold text-green-600">
+                                ${milestone.amount}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{milestone.description}</p>
+                            <div className="text-xs text-gray-500">
+                              Due: {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : 'Not set'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No milestones found for this project.</p>
+                    )}
+                  </div>
+                )}
               </div>
               {/* Actions */}
               {selectedRequest.status === 'pending' && (

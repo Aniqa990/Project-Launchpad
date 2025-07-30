@@ -11,6 +11,7 @@ import { ClientDashboard } from './pages/client/Dashboard';
 import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
 import { UpdateProject } from './pages/client/UpdateProject';
+import { ProjectDetails } from './components/ProjectDetails';
 import { ClientPayments } from './pages/client/Payments';
 import { ClientProjectRequests } from './pages/client/Requests';
 import { ClientHourlyLogViewer } from './pages/client/HourlyLog';
@@ -128,6 +129,7 @@ const AppRoutes = () => {
         <Route path="create-project" element={<CreateProject />} />
         <Route path="projects" element={<ClientProjects />} />
         <Route path="update-project/:projectId" element={<UpdateProject />} />
+        <Route path="project-details/:projectId" element={<ProjectDetails />} />
         <Route path="project-requests" element={<ClientProjectRequests />} />
         <Route path="freelancer-suggestions" element={<FreelancerSuggestions />} />
         <Route path="kanban" element={<KanbanBoard />} /> 
@@ -166,6 +168,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<PlatformDashboard />} />
         <Route path="payments" element={<MilestonePayments />} />
         <Route path="projects" element={<AdminProjectApprovals />} />
+        <Route path="project-details/:projectId" element={<ProjectDetails />} />
         <Route path="view-projects" element={<AdminViewProjects />} />
         <Route path="settings" element={<PlatformSettings />} />
       </Route>
