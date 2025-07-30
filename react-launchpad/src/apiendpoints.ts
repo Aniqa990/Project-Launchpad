@@ -308,7 +308,7 @@ export const getProjectById = async (id: string | number) => {
 // Fetch projects for a specific client
 export const getClientProjects = async (clientId: number) => {
   const res = await api.get(`/clients/${clientId}/projects`);
-  return res.data;
+  return lowercaseFirstLetterKeys(res.data);
 };
 
 // Fetch projects by approval status for a specific client
@@ -321,7 +321,7 @@ export const getProjectsByApprovalStatus = async (clientId: number, approvalStat
 export const getClientById = async (clientId: number) => {
   try {
     const response = await api.get(`/clients/${clientId}`);
-    return response.data;
+    return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch client details');
   }
@@ -560,7 +560,7 @@ export const createMultiFreelancerCheckoutSession = async (params: {
   }>;
 }): Promise<{ url: string }> => {
   const response = await axios.post(
-    'http://localhost:7053/api/payments/create-multi-freelancer-checkout-session',
+    'http://localhost:7071/api/payments/create-multi-freelancer-checkout-session',
     params,
     { headers: { 'Content-Type': 'application/json' } }
   );

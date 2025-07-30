@@ -771,7 +771,7 @@ export function KanbanBoard() {
     setLoadingTasks(true);
     setMessage('');
     try {
-      const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
+      const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
       console.log('🔄 KanbanBoard - Fetched tasks:', res.data);
       console.log('🔄 KanbanBoard - Task count:', res.data.length);
       setTasks(res.data);

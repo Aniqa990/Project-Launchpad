@@ -36,7 +36,7 @@ export function ClientDashboard() {
     }
 
     const activeProjects = projects.filter(project => 
-      project.Status === 'active' || project.Status === 'in progress' || !project.Status
+      project.Status === 'active'
     ).length;
 
     const totalFreelancers = projects.reduce((sum, project) => 
@@ -49,7 +49,7 @@ export function ClientDashboard() {
 
     // Calculate success rate based on completed projects
     const completedProjects = projects.filter(project => 
-      project.Status === 'completed'
+      project.Status === 'closed'
     ).length;
     const successRate = projects.length > 0 ? Math.round((completedProjects / projects.length) * 100) : 0;
 

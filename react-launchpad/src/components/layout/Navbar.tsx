@@ -196,11 +196,12 @@ else if (user.role === 'admin') {
             </div>
             <div className="flex items-center space-x-2">
               <Link 
-                to={user.role === 'freelancer' ? '/freelancer/profile' : '#'}
+                to={user.role === 'freelancer' ? '/freelancer/settings' : '/client/settings'}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <Settings className="w-5 h-5" />
               </Link>
+              
               <button 
                 onClick={handleLogout}
                 className="p-2 text-gray-400 hover:text-red-600 transition-colors"
