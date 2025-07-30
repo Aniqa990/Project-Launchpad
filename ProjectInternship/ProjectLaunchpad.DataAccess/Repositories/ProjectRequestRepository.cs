@@ -43,7 +43,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .Include(pr => pr.Project)
                     .ThenInclude(p => p.Client)
                         .ThenInclude(c => c.User)
-                .Where(pr => pr.Project.ApprovalStatus == "rejected")
                 .Select(pr => new ProjectRequestResponseDTO
                 {
                     ProjectId = pr.ProjectId,
@@ -52,9 +51,14 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                     ProjectCategory = pr.Project.CategoryOrDomain,
                     Deadline = pr.Project.Deadline,
                     Skills = pr.Project.RequiredSkills,
+                    Budget = pr.Project.Budget,
+                    PaymentType = pr.Project.PaymentType,
+                    AttachedDocumentPath = pr.Project.AttachedDocumentPath,
+                    Budget = pr.Project.Budget,
                     ClientId = pr.Project.ClientId,
                     ClientName = pr.Project.Client.User.FirstName + " " + pr.Project.Client.User.LastName,
                     ClientEmail = pr.Project.Client.User.Email,
+                    ClientPhoneNumber = pr.Project.Client.User.PhoneNo,
                     ClientProfilePicture = pr.Project.Client.User.ProfilePicture,
                     Status = pr.Status,
                     RequestedAt = pr.RequestedAt
@@ -72,8 +76,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         {
             return await _db.projectRequests
                 .Where(pr => pr.ProjectId == projectId)
-                .Include(pr => pr.Project)
-                .Where(pr => pr.Project.ApprovalStatus != "rejected")
                 .Select(pr => new ProjectRequestResponseForClient
                 {
                     ProjectId = pr.ProjectId,
