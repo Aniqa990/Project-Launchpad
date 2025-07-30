@@ -556,11 +556,6 @@ export const getMilestonesByProjectId = async (projectId: number) => {
   return lowercaseFirstLetterKeys(response.data);
 };
 
-export const getMilestonesByProjectId = async (projectId: number): Promise<Milestone[]> => {
-  const response = await api.get(`/milestones/project/${projectId}`);
-  return lowercaseFirstLetterKeys(response.data);
-};
-
 export const getDeliverablesByMilestoneId = async (milestoneId: number): Promise<any[]> => {
   try {
     const response = await api.get(`/deliverables/milestone/${milestoneId}`);
