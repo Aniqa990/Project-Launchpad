@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {getProjectRequests, updateProjectRequestStatus, assignFreelancerToProject} from '@/apiendpoints';
+import {getProjectRequests, updateProjectRequestStatus, assignFreelancerToProject, assignFreelancerToGist} from '@/apiendpoints';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +47,19 @@ export function FreelancerRequests() {
       ));
       if (user?.id) {
         await assignFreelancerToProject(projectId, user?.id);
+        
+        // Assign freelancer to GitHub gist
+        try {
+          await assignFreelancerToGist({
+            id: projectId.toString(),
+            freelancerId: user.id.toString(),
+            freelancerName: `${user.firstName} ${user.lastName}`
+          });
+          console.log('Freelancer assigned to GitHub gist successfully');
+        } catch (error) {
+          console.error('Failed to assign freelancer to GitHub gist:', error);
+          // Don't show error to user as this is not critical
+        }
       }
       toast.success('Project request accepted!');
     } catch (err: any) {
@@ -81,10 +94,10 @@ export function FreelancerRequests() {
 
   const RequestCard = ({ request }: { request: ProjectRequest }) => (
     <Card className="transition-shadow hover:shadow-md cursor-pointer">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center space-x-3 mb-3">
-            <Avatar src={request.clientProfile} size="sm" />
+                <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-3">
+                <Avatar src={request.clientProfilePicture} size="sm" />
             <div>
               <p className="font-medium text-gray-900">{request.clientName}</p>
               <p className="text-sm text-gray-500">wants to hire you</p>
@@ -244,7 +257,7 @@ export function FreelancerRequests() {
             <div className="space-y-6">
               {/* Client Info */}
               <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <Avatar src={selectedRequest.clientProfile} size="lg" />
+                <Avatar src={selectedRequest.clientProfilePicture} size="lg" />
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{selectedRequest.clientName}</h3>
                   <p className="text-gray-600">Client</p>

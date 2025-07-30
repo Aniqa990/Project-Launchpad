@@ -16,7 +16,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest } from '../../apiendpoints';
+import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest, addProjectToGist } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
 import { Badge } from '../../components/ui/badge';
 import SignatureCanvas from 'react-signature-canvas';
@@ -34,6 +34,7 @@ export function CreateProject() {
     Skills: [] as string[],
     Files: [] as File[],
     Budget: '',
+    StartDate: '',
     Deadline: '',
     PaymentType: 'fixed', // default to lowercase for backend
     CategoryOrDomain: '',
@@ -55,7 +56,6 @@ export function CreateProject() {
   const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone' | 'hourly'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
-  const [freelancerSuggestions, setFreelancerSuggestions] = useState<any[]>([]);
   const [detailedFreelancers, setDetailedFreelancers] = useState<any[]>([]);
   const [sendingRequests, setSendingRequests] = useState(false);
   const sigCanvasRef = useRef<any>(null);
@@ -69,6 +69,7 @@ export function CreateProject() {
 
   // Validation states
   const [dateValidation, setDateValidation] = useState({
+    startDateError: '',
     deadlineError: '',
     milestoneDateError: ''
   });
@@ -79,6 +80,22 @@ export function CreateProject() {
   });
 
   // Validation functions
+  const validateStartDate = (startDate: string) => {
+    if (!startDate) return '';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1); // One day after today
+    
+    const startDateObj = new Date(startDate);
+    
+    if (startDateObj < tomorrow) {
+      return 'Start date must be at least one day after project posting to allow for admin approval';
+    }
+    return '';
+  };
+
   const validateDeadline = (deadline: string) => {
     if (!deadline) return '';
     
@@ -155,7 +172,10 @@ export function CreateProject() {
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
-    if (field === 'Deadline') {
+    if (field === 'StartDate') {
+      const startDateError = validateStartDate(value);
+      setDateValidation(prev => ({ ...prev, startDateError }));
+    } else if (field === 'Deadline') {
       const deadlineError = validateDeadline(value);
       setDateValidation(prev => ({ ...prev, deadlineError }));
     }
@@ -192,7 +212,11 @@ export function CreateProject() {
 
   const handleNextStep = () => {
     if (step === 4) {
-      // Validate deadline before proceeding
+      // Validate start date and deadline before proceeding
+      if (dateValidation.startDateError) {
+        toast.error('Please fix the start date validation error before proceeding');
+        return;
+      }
       if (dateValidation.deadlineError) {
         toast.error('Please fix the deadline validation error before proceeding');
         return;
@@ -257,6 +281,10 @@ export function CreateProject() {
   };
 
   const handleSubmitProject = async () => {
+    if (dateValidation.startDateError) {
+      toast.error('Please fix the start date validation error before submitting');
+      return;
+    }
     if (dateValidation.deadlineError) {
       toast.error('Please fix the deadline validation error before submitting');
       return;
@@ -268,12 +296,14 @@ export function CreateProject() {
     }
     setSubmitted(true);
     try {
+      const startDateISO = projectData.StartDate ? new Date(projectData.StartDate).toISOString() : '';
       const deadlineISO = projectData.Deadline ? new Date(projectData.Deadline).toISOString() : '';
       const payload: any = {
         projectTitle: projectData.ProjectTitle,
         description: projectData.Description,
         paymentType: projectData.PaymentType.toLowerCase(),
         categoryOrDomain: projectData.CategoryOrDomain,
+        startDate: startDateISO,
         deadline: deadlineISO,
         requiredSkills: projectData.Skills.join(','),
         budget: budgetDivision === 'hourly' ? undefined : Number(projectData.Budget),
@@ -292,23 +322,29 @@ export function CreateProject() {
       };
       const response = await createProject(payload);
       console.log('Create project response:', response);
-      const projectSummary = payload.description;
-
-    const suggestRes = await fetch("http://localhost:8000/api/suggest-freelancers/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ project_summary: projectSummary })
-    });
-    const suggestData = await suggestRes.json();
-    console.log('Freelancer suggestions:', suggestData);
-    setFreelancerSuggestions(suggestData.suggestions || []);
-
-      setCreatedProjectId(
-        response?.Id?.toString() ||
+      
+      // Get the project ID from the response
+      const projectId = response?.Id?.toString() ||
         response?.id?.toString() ||
         response?.projectId?.toString() ||
-        null
-      );
+        null;
+      
+      setCreatedProjectId(projectId);
+      
+      // Add project to GitHub gist
+      if (projectId) {
+        try {
+          await addProjectToGist({
+            id: projectId,
+            projectTitle: payload.projectTitle,
+            description: payload.description
+          });
+          console.log('Project added to GitHub gist successfully');
+        } catch (error) {
+          console.error('Failed to add project to GitHub gist:', error);
+          // Don't show error to user as this is not critical
+        }
+      }
       toast.success('Project created successfully!');
     } catch (err) {
       toast.error('Failed to create project.');
@@ -354,35 +390,6 @@ export function CreateProject() {
     }
   };
 
-  useEffect(() => {
-    async function fetchFreelancers() {
-      if (!freelancerSuggestions.length) return;
-      const details = await Promise.all(
-        freelancerSuggestions.map(async (sugg) => {
-          try {
-            const profile = await getFreelancerById(Number(sugg.freelancer_id));
-            console.log(profile)
-            // Fetch projects for this freelancer
-            const projects = await getFreelancerProjects(Number(sugg.freelancer_id));
-            console.log(projects);
-            const activeProjects = Array.isArray(projects)
-              ? projects.filter((p: any) => p.status === 'active').length
-              : 0;
-            return { ...profile, summary: sugg.summary,   skills: Array.isArray(sugg.skills)
-              ? sugg.skills
-              : (typeof sugg.skills === 'string'
-                  ? JSON.parse(sugg.skills)
-                  : []),
-            activeProjects, };
-          } catch {
-            return null;
-          }
-        })
-      );
-      setDetailedFreelancers(details.filter(Boolean));
-    }
-    if (submitted && freelancerSuggestions.length) fetchFreelancers();
-  }, [submitted, freelancerSuggestions]);
 
   const stepTitles = [
     'Project Details',
@@ -402,71 +409,8 @@ export function CreateProject() {
             <Send className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Project Created Successfully!</h1>
-          <p className="text-gray-600 mb-8">
-            Now, discover and invite top freelancers for your project.
-          </p>
-        </Card>
-        {createdProjectId && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold">Suggested Freelancers</h2>
-            <div className="grid gap-6">
-              {detailedFreelancers.map((f, idx) => {
-              console.log('Freelancer data:', f);
-              return (
-                <Card key={f.id || idx} className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">{f.firstName} {f.lastName}</h3>
-                        {/* Add availability badge if you have it */}
-                      </div>
-                      <div className="text-gray-700 mb-2">{f.summary}</div>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {f.skills && f.skills.length > 0
-                          ? f.skills.map((skill: string, i: number) => (
-                              <Badge key={i} variant="info" size="sm">{skill}</Badge>
-                            ))
-                          : <span className="text-gray-400">No skills listed</span>
-                        }
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 min-w-[180px]">
-                      <div className="flex items-center text-gray-600">
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        <span className="font-medium">${f.hourlyRate}/hr</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                        <span className="font-medium">{f.avgRating ?? 'N/A'}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Briefcase className="h-4 w-4 mr-1" />
-                        <span className="font-medium">{f.activeProjects ?? 0} active</span>
-                      </div>
-                      <Button
-                        variant={selectedFreelancers.includes(f.id || 0) ? 'primary' : 'outline'}
-                        onClick={() => f.id && handleSelectFreelancer(f.id)}
-                        disabled={!f.id}
-                      >
-                        {selectedFreelancers.includes(f.id || 0) ? 'Selected' : 'Select'}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-            </div>
-            {detailedFreelancers.length > 0 && (
-              <Button
-                className="mt-4"
-                onClick={handleSendRequests}
-                disabled={selectedFreelancers.length === 0 || sendingRequests}
-              >
-                {sendingRequests ? 'Sending...' : 'Send Requests to Selected'}
-              </Button>
-            )}
-          </div>
-        )}
+
+        
         <div className="flex justify-center space-x-4 mt-8">
           <Button variant="outline" onClick={() => navigate('/client/projects')}>
             View Projects
@@ -727,6 +671,34 @@ export function CreateProject() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Project Start Date *
+              </label>
+              <input
+                type="date"
+                value={projectData.StartDate}
+                onChange={(e) => handleInputChange('StartDate', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  dateValidation.startDateError ? 'border-red-500' : 'border-gray-300'
+                }`}
+                min={(() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  return tomorrow.toISOString().split('T')[0];
+                })()} // Minimum one day after today
+              />
+              {dateValidation.startDateError && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {dateValidation.startDateError}
+                </p>
+              )}
+              <p className="text-sm text-gray-500 mt-1">
+                Start date must be at least one day after posting to allow for admin approval
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Project Deadline *
               </label>
               <input
@@ -736,7 +708,7 @@ export function CreateProject() {
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   dateValidation.deadlineError ? 'border-red-500' : 'border-gray-300'
                 }`}
-                min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
+                min={projectData.StartDate || new Date().toISOString().split('T')[0]} // Must be after start date
               />
               {dateValidation.deadlineError && (
                 <p className="text-red-500 text-sm mt-1 flex items-center">
@@ -936,7 +908,7 @@ export function CreateProject() {
             <Button onClick={handleSubmitProject} disabled={
               !projectData.ProjectTitle || !projectData.Description ||
               projectData.Skills.length === 0 ||
-              !projectData.Budget || !projectData.Deadline ||
+              !projectData.Budget || !projectData.StartDate || !projectData.Deadline ||
               (budgetDivision === 'milestone' && (milestones.length === 0 || milestones.some(m => !m.title || !m.description || !m.amount || !m.dueDate))) ||
               (budgetDivision === 'fixed' && !projectData.NumberOfFreelancers)
             }>
@@ -963,7 +935,7 @@ export function CreateProject() {
                 disabled={
                   (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
                   (step === 2 && projectData.Skills.length === 0) ||
-                  (step === 4 && (!projectData.Budget || !projectData.Deadline || dateValidation.deadlineError !== '')) ||
+                  (step === 4 && (!projectData.Budget || !projectData.StartDate || !projectData.Deadline || dateValidation.startDateError !== '' || dateValidation.deadlineError !== '')) ||
                   (step === 5 && (milestones.length === 0 || budgetValidation.budgetExceeded))
                 }
               >

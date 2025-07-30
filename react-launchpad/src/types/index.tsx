@@ -187,6 +187,7 @@ export interface Project {
   projectTitle?: string;
   description?: string;
   status?: 'open' | 'active' | 'closed';
+  startDate?: string;
   budget?: number;
   deadline?: string;
   clientId?: string;
@@ -198,8 +199,8 @@ export interface Project {
   requiredSkills?: string;
   team?: User[];
   progress?: number;
-  handoverStatus?: string;
   rejectionReason?: string;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface ProjectRequest {
@@ -215,8 +216,8 @@ export interface ProjectRequest {
   clientId: number;
   clientName: string;
   clientEmail: string;
-  clientPhone: string;
-  clientProfile?: string;
+  clientPhoneNumber: string;
+  clientProfilePicture?: string;
   status: 'pending' | 'accepted' | 'rejected';
   requestedAt: string;
 }

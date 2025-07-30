@@ -364,6 +364,16 @@ export const FreelancerSuggestions: React.FC = () => {
           </Button>
         </div>
       )}
+      
+      {/* Navigation Buttons */}
+      <div className="flex justify-center space-x-4 mt-8 pt-6 border-t">
+        <Button variant="outline" onClick={() => navigate('/client/projects')}>
+          View Projects
+        </Button>
+        <Button onClick={() => navigate('/client/dashboard')}>
+          Back to Dashboard
+        </Button>
+      </div>
       </div>
   );
 };

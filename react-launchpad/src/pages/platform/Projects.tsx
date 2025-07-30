@@ -63,12 +63,22 @@ export function AdminProjectApprovals() {
   };
 
   const getTimeline = (project: Project) => {
-    const start = (project as any).startDate || project.deadline || "";
+    const start = project.startDate || (project as any).startDate || "";
     const end = project.deadline || "";
     return {
       start: start ? new Date(start).toLocaleDateString() : "",
       end: end ? new Date(end).toLocaleDateString() : "",
     };
+  };
+
+  const isProjectOverdue = (project: Project) => {
+    const deadline = project.deadline ? new Date(project.deadline) : null;
+    return deadline && deadline < new Date();
+  };
+
+  const isStartDateReached = (project: Project) => {
+    const startDate = project.startDate ? new Date(project.startDate) : (project as any).startDate ? new Date((project as any).startDate) : null;
+    return startDate && startDate <= new Date();
   };
 
   // Fetch milestones when opening the modal

@@ -295,13 +295,19 @@ export const getClientProjects = async (clientId: number) => {
   return lowercaseFirstLetterKeys(res.data);
 };
 
+// Fetch projects by approval status for a specific client
+export const getProjectsByApprovalStatus = async (clientId: number, approvalStatus: string) => {
+  const res = await api.get(`/clients/${clientId}/projects/approval/${approvalStatus}`);
+  return lowercaseFirstLetterKeys(res.data);
+};
+
 export const createProject = async (payload: any) => {
   const res = await api.post('/projects', payload);
   return res.data;
 };
 
 export const updateProject = async (id: number, updatedData: any) => {
-  const res = await api.put(`/projects/${id}`, updatedData);
+  const res = await api.patch(`/projects/${id}`, updatedData);
   return res.data;
 };
 
@@ -619,7 +625,7 @@ export const getMeetingSummaries = async (userId: number, userRole: string, proj
     if (dateTo) params.append('date_to', dateTo);
     
     // Use Python server URL for meeting summaries
-    const response = await axios.get(`http://localhost:8000/meeting-summaries?${params.toString()}`);
+    const response = await axios.get(`http://localhost:8001/meeting-summaries?${params.toString()}`);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch meeting summaries');
@@ -629,7 +635,7 @@ export const getMeetingSummaries = async (userId: number, userRole: string, proj
 export const startProjectMeeting = async (projectId: number, freelancerId: number) => {
   try {
     // Use Python server URL for meeting functionality
-    const response = await axios.post('http://localhost:8000/start-project-meeting', {
+    const response = await axios.post('http://localhost:8001/start-project-meeting', {
       project_id: projectId,
       freelancer_id: freelancerId
     });
@@ -642,7 +648,7 @@ export const startProjectMeeting = async (projectId: number, freelancerId: numbe
 export const stopMeeting = async () => {
   try {
     // Use Python server URL for meeting functionality
-    const response = await axios.post('http://localhost:8000/stop');
+    const response = await axios.post('http://localhost:8001/stop');
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to stop meeting');
@@ -659,7 +665,7 @@ export const storeMeetingSummary = async (summaryData: {
 }) => {
   try {
     // Use Python server URL for meeting functionality
-    const response = await axios.post('http://localhost:8000/store-meeting-summary', summaryData);
+    const response = await axios.post('http://localhost:8001/store-meeting-summary', summaryData);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to store meeting summary');
@@ -685,6 +691,40 @@ export const getFreelancerDetails = async (freelancerId: number) => {
     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer details');
   }
 };
+
+// GitHub Gist API functions
+export const addProjectToGist = async (projectData: {
+  id: string;
+  projectTitle: string;
+  description: string;
+}) => {
+  try {
+    const response = await axios.post('http://localhost:8001/add-project', projectData);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to add project to gist');
+  }
+};
+
+export const assignFreelancerToGist = async (assignmentData: {
+  id: string;
+  freelancerId: string;
+  freelancerName: string;
+}) => {
+  try {
+    const response = await axios.post('http://localhost:8001/assign-freelancer', assignmentData);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.detail || 'Failed to assign freelancer to gist');
+  }
+};
+ 
+
+
+
+
+
+
  
 
 

@@ -192,7 +192,7 @@ export function ClientProjectRequests() {
         <Card className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900 mb-2">No project requests yet</h3>
           <p className="text-gray-600">
-            Project requests from clients will appear here. Make sure your profile is complete to attract more opportunities.
+            Project requests will appear here when you send requests to freelancers.
           </p>
         </Card>
       )}
