@@ -7,6 +7,7 @@ import { Trash2, Calendar as CalendarIcon, X } from "lucide-react";
 import { Experience } from "@/types";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { showErrorToast } from "@/utils/errorHandler";
 
 export function ExperienceModal({ open, onClose, onSave, onDelete, initialData }: {
   open: boolean;
@@ -23,6 +24,7 @@ export function ExperienceModal({ open, onClose, onSave, onDelete, initialData }
     endDate: '',
     description: '',
   });
+
   useEffect(() => {
     setFields(initialData || {
       id: 0,
@@ -33,6 +35,32 @@ export function ExperienceModal({ open, onClose, onSave, onDelete, initialData }
       description: '',
     });
   }, [initialData, open]);
+
+  const validateDates = (): boolean => {
+    if (fields.startDate && fields.endDate && fields.endDate !== 'Present') {
+      const startDate = new Date(fields.startDate);
+      const endDate = new Date(fields.endDate);
+      
+      if (endDate <= startDate) {
+        showErrorToast('End date must be after start date');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateDates()) {
+      onSave(fields);
+    }
+  };
+
+  const handleEndDateChange = (date: Date | null) => {
+    const endDateStr = date ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+    setFields(f => ({ ...f, endDate: endDateStr }));
+  };
 
   if (!open) return null;
 
@@ -48,7 +76,7 @@ export function ExperienceModal({ open, onClose, onSave, onDelete, initialData }
         <h3 className="text-lg font-medium text-gray-900 mb-4">
           {fields.id ? 'Edit Experience' : 'Add Experience'}
         </h3>
-        <form className="space-y-4" onSubmit={e => { e.preventDefault(); onSave(fields); }}>
+        <form className="space-y-4" onSubmit={handleSave}>
           <div className="space-y-2">
             <Label htmlFor="exp-title">Title</Label>
             <Input
@@ -92,7 +120,7 @@ export function ExperienceModal({ open, onClose, onSave, onDelete, initialData }
                 <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4 pointer-events-none" />
                 <DatePicker
                   selected={fields.endDate && fields.endDate !== 'Present' ? new Date(fields.endDate) : null}
-                  onChange={date => setFields(f => ({ ...f, endDate: date ? date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '' }))}
+                  onChange={handleEndDateChange}
                   dateFormat="MMM yyyy"
                   showMonthYearPicker
                   className={`pl-10 rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 shadow-sm w-full ${fields.endDate === 'Present' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}

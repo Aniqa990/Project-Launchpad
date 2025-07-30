@@ -30,7 +30,8 @@ namespace ProjectLaunchpad.Services
                 PhoneNo = dto.PhoneNo,
                 Password = PasswordHasher.Hash(dto.Password),
                 Role = dto.Role,
-                Gender = dto.Gender
+                Gender = dto.Gender,
+                ProfilePicture = dto.ProfilePicture
             };
 
             await _unitOfWork.Users.AddUserAsync(user);

@@ -255,12 +255,12 @@ export function Auth({ mode }: AuthProps) {
       const data = await res.json();
       if (data.secure_url) {
         setFormData((prev) => ({ ...prev, profilePicture: data.secure_url }));
-        toast.success('Profile picture uploaded!');
+        showSuccessToast('Profile picture uploaded!');
       } else {
-        toast.error('Failed to upload image');
+        handleError(new Error('Failed to upload image'), 'signup');
       }
     } catch (err) {
-      toast.error('Image upload error');
+      handleError(err, 'signup');
     } finally {
       setProfilePicUploading(false);
     }
