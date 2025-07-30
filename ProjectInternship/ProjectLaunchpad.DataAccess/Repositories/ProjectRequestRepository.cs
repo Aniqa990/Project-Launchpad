@@ -49,11 +49,17 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                     ProjectTitle = pr.Project.ProjectTitle,
                     ProjectDescription = pr.Project.Description,
                     ProjectCategory = pr.Project.CategoryOrDomain,
+                    StartDate = pr.Project.StartDate,
                     Deadline = pr.Project.Deadline,
                     Skills = pr.Project.RequiredSkills,
+                    Budget = pr.Project.Budget,
+                    PaymentType = pr.Project.PaymentType,
+                    AttachedDocumentPath = pr.Project.AttachedDocumentPath,
+                    Budget = pr.Project.Budget,
                     ClientId = pr.Project.ClientId,
                     ClientName = pr.Project.Client.User.FirstName + " " + pr.Project.Client.User.LastName,
                     ClientEmail = pr.Project.Client.User.Email,
+                    ClientPhoneNumber = pr.Project.Client.User.PhoneNo,
                     ClientProfilePicture = pr.Project.Client.User.ProfilePicture,
                     Status = pr.Status,
                     RequestedAt = pr.RequestedAt
@@ -67,10 +73,17 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return await _db.projectRequests.FirstOrDefaultAsync(pr => pr.FreelancerId == freelancerId && pr.ProjectId == projectId);
         }
 
-        public async Task<List<ProjectRequest>> GetRequestsByProjectIdAsync(int projectId)
+        public async Task<List<ProjectRequestResponseForClient>> GetRequestsByProjectIdAsync(int projectId)
         {
             return await _db.projectRequests
                 .Where(pr => pr.ProjectId == projectId)
+                .Select(pr => new ProjectRequestResponseForClient
+                {
+                    ProjectId = pr.ProjectId,
+                    FreelancerId = pr.FreelancerId,
+                    Status = pr.Status,
+                    RequestedAt = pr.RequestedAt
+                })
                 .ToListAsync();
         }
 

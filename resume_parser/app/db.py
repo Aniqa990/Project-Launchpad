@@ -45,14 +45,64 @@ def get_parsed_resume(freelancer_id):
 
 def save_parsed_json(freelancer_id, parsed_json):
     conn = get_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("""
-            UPDATE freelancers 
-            SET parsed_json=%s, parsed_at=CURRENT_TIMESTAMP 
-            WHERE id=%s
-        """, (json.dumps(parsed_json), freelancer_id))
-    conn.commit()
-    conn.close()
+    try:
+        with conn.cursor() as cursor:
+            # First check if freelancer exists
+            cursor.execute("SELECT id FROM freelancers WHERE id = %s", (freelancer_id,))
+            freelancer_exists = cursor.fetchone()
+            
+            if not freelancer_exists:
+                # Create new freelancer entry
+                print(f"Creating new freelancer entry with ID: {freelancer_id}")
+                cursor.execute("""
+                    INSERT INTO freelancers (id) 
+                    VALUES (%s)
+                """, (freelancer_id))
+            
+            # Extract all fields from parsed JSON
+            name = parsed_json.get('name', '')
+            email = parsed_json.get('email', '')
+            phone = parsed_json.get('phone', '')
+            summary = parsed_json.get('summary', '')
+            
+            # Update freelancer profile with all extracted data
+            cursor.execute("""
+                UPDATE freelancers 
+                SET 
+                    name = %s,
+                    email = %s,
+                    phone = %s,
+                    summary = %s,
+                    parsed_json = %s,
+                    parsed_at = CURRENT_TIMESTAMP,
+                WHERE id = %s
+            """, (
+                name,
+                email,
+                phone,
+                summary,
+                json.dumps(parsed_json),
+                freelancer_id
+            ))
+            
+            if cursor.rowcount == 0:
+                print(f"Warning: No rows updated for freelancer ID: {freelancer_id}")
+            else:
+                print(f"Successfully updated freelancer profile for ID: {freelancer_id}")
+                print(f"Updated fields: name='{name}', email='{email}', phone='{phone}', summary='{summary[:50]}...'")
+                
+        conn.commit()
+        
+    except mysql.connector.Error as e:
+        print(f"Database error: {e}")
+        conn.rollback()
+        raise
+    except Exception as e:
+        print(f"Error saving parsed JSON: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 def is_email_duplicate(email, freelancer_id):
     conn = get_connection()

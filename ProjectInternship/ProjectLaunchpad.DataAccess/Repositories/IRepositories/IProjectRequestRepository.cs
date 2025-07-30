@@ -13,7 +13,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task CreateRequestAsync(ProjectRequestCreateDTO request);
         Task<List<ProjectRequestResponseDTO>> GetRequestsByFreelancerAsync(int freelancerId);
         Task<ProjectRequest?> GetRequestByFreelancerAndProjectAsync(int freelancerId, int projectId);
-        Task<List<ProjectRequest>> GetRequestsByProjectIdAsync(int projectId);
+        Task<List<ProjectRequestResponseForClient>> GetRequestsByProjectIdAsync(int projectId);
         Task RemoveRequestAsync(int projectId, int freelancerId);
     }
 }

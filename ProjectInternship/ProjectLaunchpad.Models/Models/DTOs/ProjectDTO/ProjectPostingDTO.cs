@@ -18,6 +18,8 @@ namespace ProjectLaunchpad.Models.Models.DTOs.ProjectDTO
 
         public string CategoryOrDomain { get; set; } = string.Empty;
 
+        public DateTime StartDate { get; set; }
+
         public DateTime Deadline { get; set; }
 
         public TimeSpan Duration => Deadline - DateTime.Now;
@@ -28,7 +30,7 @@ namespace ProjectLaunchpad.Models.Models.DTOs.ProjectDTO
 
         public int NumberOfFreelancers { get; set; }
 
-        public string? Status { get; set; } = "Open"; // Open, Closed, In Progress
+        public string? Status { get; set; } = "open"; // Open, Closed, In Progress
 
         public string? AttachedDocumentPath { get; set; }
 

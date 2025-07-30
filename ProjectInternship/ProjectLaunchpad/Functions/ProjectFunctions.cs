@@ -78,11 +78,13 @@ namespace ProjectLaunchpad.Functions
                 Description = projectDto.Description,
                 CategoryOrDomain = projectDto.CategoryOrDomain,
                 PaymentType = projectDto.PaymentType,
+                StartDate = p.StartDate,
                 Deadline = projectDto.Deadline,
                 RequiredSkills = projectDto.RequiredSkills,
                 Budget = projectDto.Budget,
                 NumberOfFreelancers = projectDto.NumberOfFreelancers,
-                Status = "open",
+                Status = "", // Empty string initially
+                ApprovalStatus = "pending", // Set to pending for admin approval
                 AttachedDocumentPath = projectDto.AttachedDocumentPath,
                 ClientId = clientId
             };
@@ -130,6 +132,7 @@ namespace ProjectLaunchpad.Functions
                 Description = p.Description,
                 Status = p.Status ?? "active",
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
                 CategoryOrDomain = p.CategoryOrDomain,
@@ -157,7 +160,9 @@ namespace ProjectLaunchpad.Functions
                     Role = af.Freelancer.User.Role,
                     Gender = af.Freelancer.User.Gender
                 } : null).Where(u => u != null).ToList() ?? new List<UserDTO>(),
-                Progress = 0 // TODO: Calculate based on milestones if needed
+                Progress = 0, // TODO: Calculate based on milestones if needed
+                ApprovalStatus = p.ApprovalStatus,
+                RejectionReason = p.RejectionReason
             }).ToList();
 
 
@@ -185,6 +190,7 @@ namespace ProjectLaunchpad.Functions
                 Description = project.Description,
                 PaymentType = project.PaymentType,
                 CategoryOrDomain = project.CategoryOrDomain,
+                StartDate = p.StartDate,
                 Deadline = project.Deadline,
                 RequiredSkills = project.RequiredSkills,
                 Budget = project.Budget,
@@ -228,11 +234,11 @@ namespace ProjectLaunchpad.Functions
                 Id = p.Id,
                 ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
-                Status = p.Status ?? "active",
+                Status = p.Status,
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
-                // Add these fields if your DTO and frontend expect them:
                 CategoryOrDomain = p.CategoryOrDomain,
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
@@ -258,7 +264,9 @@ namespace ProjectLaunchpad.Functions
                     Role = af.Freelancer.User.Role,
                     Gender = af.Freelancer.User.Gender
                 } : null).Where(u => u != null).ToList() ?? new List<UserDTO>(),
-                Progress = 0 // TODO: Calculate based on milestones if needed
+                Progress = 0 ,// TODO: Calculate based on milestones if needed
+                ApprovalStatus = p.ApprovalStatus,
+                RejectionReason = p.RejectionReason
             }).ToList();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -280,11 +288,11 @@ namespace ProjectLaunchpad.Functions
                 Id = p.Id,
                 ProjectTitle = p.ProjectTitle,
                 Description = p.Description,
-                Status = p.Status ?? "active",
+                Status = p.Status,
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
-                // Add these fields if your DTO and frontend expect them:
                 CategoryOrDomain = p.CategoryOrDomain,
                 PaymentType = p.PaymentType,
                 NumberOfFreelancers = p.NumberOfFreelancers,
@@ -310,7 +318,9 @@ namespace ProjectLaunchpad.Functions
                     Role = af.Freelancer.User.Role,
                     Gender = af.Freelancer.User.Gender
                 } : null).Where(u => u != null).ToList() ?? new List<UserDTO>(),
-                Progress = 0 // TODO: Calculate based on milestones if needed
+                Progress = 0, // TODO: Calculate based on milestones if needed
+                ApprovalStatus = p.ApprovalStatus,
+                RejectionReason = p.RejectionReason
             }).ToList();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
@@ -320,18 +330,48 @@ namespace ProjectLaunchpad.Functions
 
         [Function("UpdateProjectPosting")]
         public async Task<HttpResponseData> UpdateProjectPosting(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "projects/{id:int}")] HttpRequestData req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "projects/{id:int}")] HttpRequestData req,
             int id)
         {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
 
-            var updatedProject = await req.ReadFromJsonAsync<Project>();
-            updatedProject.Id = id;
-            await _unitOfWork.ProjectRepository.UpdateProjectAsync(updatedProject);
+            var project = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
+            if (project == null)
+                return req.CreateResponse(HttpStatusCode.NotFound);
+
+            var updateData = await req.ReadFromJsonAsync<Project>();
+            if (updateData == null)
+                return req.CreateResponse(HttpStatusCode.BadRequest);
+
+            // Update only the fields that are provided
+            if (!string.IsNullOrEmpty(updateData.ProjectTitle))
+                project.ProjectTitle = updateData.ProjectTitle;
+            if (!string.IsNullOrEmpty(updateData.Description))
+                project.Description = updateData.Description;
+            if (!string.IsNullOrEmpty(updateData.CategoryOrDomain))
+                project.CategoryOrDomain = updateData.CategoryOrDomain;
+            if (updateData.Budget>0)
+                project.Budget = updateData.Budget;
+            if (updateData.Deadline!=default(DateTime))
+                project.Deadline = updateData.Deadline;
+            if (!string.IsNullOrEmpty(updateData.RequiredSkills))
+                project.RequiredSkills = updateData.RequiredSkills;
+            if (updateData.NumberOfFreelancers>0)
+                project.NumberOfFreelancers = updateData.NumberOfFreelancers;
+            if (!string.IsNullOrEmpty(updateData.AttachedDocumentPath))
+                project.AttachedDocumentPath = updateData.AttachedDocumentPath;
+            if (!string.IsNullOrEmpty(updateData.ApprovalStatus))
+                project.ApprovalStatus = updateData.ApprovalStatus;
+            if (updateData.StartDate != default(DateTime))
+                project.StartDate = updateData.StartDate;
+
+            await _unitOfWork.ProjectRepository.UpdateProjectAsync(project);
             await _unitOfWork.SaveAsync();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            Console.WriteLine();
-            await response.WriteAsJsonAsync(updatedProject);
+            await response.WriteAsJsonAsync(new { message = "Project updated successfully" });
             return response;
         }
 
@@ -391,6 +431,7 @@ namespace ProjectLaunchpad.Functions
                 Description = p.Description,
                 Status = p.Status ?? "completed",
                 Budget = p.Budget,
+                StartDate = p.StartDate,
                 Deadline = p.Deadline,
                 ClientId = p.ClientId,
                 CategoryOrDomain = p.CategoryOrDomain,
@@ -425,11 +466,67 @@ namespace ProjectLaunchpad.Functions
             project.ApprovalStatus = approvalDto.ApprovalStatus ?? project.ApprovalStatus;
             project.RejectionReason = approvalDto.RejectionReason ?? project.RejectionReason;
 
+            // Update project status based on approval status
+            if (approvalDto.ApprovalStatus == "approved")
+            {
+                project.Status = "open"; // Set to open when approved
+            }
+            else if (approvalDto.ApprovalStatus == "rejected")
+            {
+                project.Status = ""; // Keep empty when rejected
+            }
+
             await _unitOfWork.ProjectRepository.UpdateProjectAsync(project);
             await _unitOfWork.SaveAsync();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(new { message = "Project approval status updated successfully" });
+            return response;
+        }
+
+        [Function("GetProjectsByApprovalStatus")]
+        public async Task<HttpResponseData> GetProjectsByApprovalStatus(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "clients/{clientId}/projects/approval/{approvalStatus}")] HttpRequestData req,
+            int clientId, string approvalStatus)
+        {
+            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            if (!isAuthorized)
+                return unauthorizedResponse!;
+
+            var projects = await _unitOfWork.ProjectRepository.GetProjectsByClientAsync(clientId);
+            var filteredProjects = projects.Where(p => p.ApprovalStatus == approvalStatus).ToList();
+
+            var projectDTOs = filteredProjects.Select(p => new ProjectResponseDTO
+            {
+                Id = p.Id,
+                ProjectTitle = p.ProjectTitle,
+                Description = p.Description,
+                Status = p.Status ?? "",
+                ApprovalStatus = p.ApprovalStatus,
+                RejectionReason = p.RejectionReason,
+                Budget = p.Budget,
+                StartDate = p.StartDate,
+                Deadline = p.Deadline,
+                ClientId = p.ClientId,
+                CategoryOrDomain = p.CategoryOrDomain,
+                PaymentType = p.PaymentType,
+                NumberOfFreelancers = p.NumberOfFreelancers,
+                AttachedDocumentPath = p.AttachedDocumentPath,
+                RequiredSkills = p.RequiredSkills,
+                Client = p.Client != null && p.Client.User != null ? new UserDTO
+                {
+                    Id = p.Client.Id,
+                    FirstName = p.Client.User.FirstName,
+                    LastName = p.Client.User.LastName,
+                    Email = p.Client.User.Email,
+                    PhoneNo = p.Client.User.PhoneNo,
+                    Role = p.Client.User.Role,
+                    Gender = p.Client.User.Gender
+                } : null
+            }).ToList();
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(projectDTOs);
             return response;
         }
     }

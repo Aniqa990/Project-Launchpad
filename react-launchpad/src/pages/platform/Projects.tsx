@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getProjectsWithPendingApproval, updateProjectApprovalStatus, getMilestonesByProjectId } from "@/apiendpoints";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ProjectDetails } from "@/components/ProjectDetails";
 import type { Project, Milestone } from "@/types";
 import toast from 'react-hot-toast';
 
 export function AdminProjectApprovals() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
@@ -63,12 +66,22 @@ export function AdminProjectApprovals() {
   };
 
   const getTimeline = (project: Project) => {
-    const start = (project as any).startDate || project.deadline || "";
+    const start = project.startDate || "";
     const end = project.deadline || "";
     return {
-      start: start ? new Date(start).toLocaleDateString() : "",
-      end: end ? new Date(end).toLocaleDateString() : "",
+      start: start ? new Date(start).toLocaleDateString() : "Not set",
+      end: end ? new Date(end).toLocaleDateString() : "Not set",
     };
+  };
+
+  const isProjectOverdue = (project: Project) => {
+    const deadline = project.deadline ? new Date(project.deadline) : null;
+    return deadline && deadline < new Date();
+  };
+
+  const isStartDateReached = (project: Project) => {
+    const startDate = project.startDate ? new Date(project.startDate) : (project as any).startDate ? new Date((project as any).startDate) : null;
+    return startDate && startDate <= new Date();
   };
 
   // Fetch milestones when opening the modal
@@ -96,28 +109,26 @@ export function AdminProjectApprovals() {
           return (
             <div key={project.id} className="bg-white rounded-xl shadow p-6 flex flex-col">
               <h3 className="text-lg font-semibold">{project.projectTitle}</h3>
-              <p className="text-gray-600 mb-2">{project.description}</p>
               <div className="mb-2">
                 <span className="font-medium">Category:</span> {project.categoryOrDomain}
               </div>
               <div className="mb-2">
                 <span className="font-medium">Timeline:</span>{" "}
                 <span>
-                  {start}
-                  {end && start !== end ? ` to ${end}` : ""}
+                  {start !== "Not set" ? `${start} to ${end}` : end !== "Not set" ? `Due: ${end}` : "Not set"}
                 </span>
               </div>
               <div className="mb-2">
                 <span className="font-medium">Budget:</span> ${project.budget}
               </div>
-              <Button
-                variant="outline"
-                className="mb-2"
-                onClick={() => openMilestoneModal(project)}
-              >
-                View Milestones
-              </Button>
               <div className="flex space-x-2 mt-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`admin/project-details/${project.id}`)}
+                  size="sm"
+                >
+                  View Details
+                </Button>
                 <Button
                   variant="primary"
                   onClick={() => handleApprove(project.id)}

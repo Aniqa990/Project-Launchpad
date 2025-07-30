@@ -24,6 +24,7 @@ from utils.formatter import format_transcript_to_txt
 from llm.groq_llm import call_groq_llm
 from db.store import store_summary, fetch_all_summaries, get_project_by_id, get_freelancer_by_id, get_meeting_summaries_by_user
 from db_connection import DatabaseConnection
+from github.uploader import AssignFreelancerPayload, ProjectPayload, MeetingPayload, load_gist, update_gist
 
 # Load environment variables
 load_dotenv()
@@ -34,6 +35,10 @@ AUDIO_PATH = "audio/recorded.wav"
 TXT_PATH = "docs/transcript.txt"
 DOCX_PATH = "docs/transcript.docx"
 
+# Create necessary directories
+os.makedirs("audio", exist_ok=True)
+os.makedirs("docs", exist_ok=True)
+
 # FastAPI setup
 app = FastAPI(title="Meeting Bot API", version="1.0.0")
 app.add_middleware(
@@ -41,6 +46,8 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    allow_credentials=True
 )
 
 # Pydantic models
@@ -161,17 +168,20 @@ def stop_and_transcribe():
     doc.save(DOCX_PATH)
 
     # Upload to GitHub
+    # Upload to GitHub Gist (structured JSON-based)
     try:
-        from github.uploader import upload_file_to_github
-        upload_file_to_github(TXT_PATH)
+        from github.uploader import add_meeting
+        add_meeting(cleaned)
     except Exception as e:
-        print("GitHub commit error:", e)
+        print("❌ Gist upload error:", e)
+
+    
 
     return {"status": "success", "transcript": cleaned}
 
 # ElevenLabs bot automation
 def run_bot():
-    EMAIL = "sahmedali568@gmail.com"
+    EMAIL = "aniqaazhar99@gmail.com"
     PASSWORD = "Mazik_Internship@1"
     URL_TO_ADD = "https://gist.githubusercontent.com/SyedAdnanAijaz/1d6b26defc4bb3743567f976d5c0c8fa/raw"
 
@@ -197,13 +207,19 @@ def run_bot():
 
         sign_in_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="sign-in-submit-button"]')))
         sign_in_button.click()
+        time.sleep(6)
+    
+        driver.refresh()
+        print("🔄 Page refreshed")
+        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        time.sleep(3)
 
         wait.until(EC.url_contains("/app"))
         conversational_ai = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[aria-label="Conversational AI"]')))
         conversational_ai.click()
 
         time.sleep(3)
-        driver.get("https://elevenlabs.io/app/conversational-ai/agents/agent_7501k10x367febz9c5sajvk088hh")
+        driver.get("https://elevenlabs.io/app/conversational-ai/agents/agent_4001k1b6f2kefwmtn30k4jcc8gjt")
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         time.sleep(3)
 
@@ -260,6 +276,11 @@ async def startup_event():
 @app.get("/")
 async def root():
     return {"message": "Meeting Bot API is running"}
+
+@app.get("/cors-test")
+async def cors_test():
+    """Test endpoint to verify CORS is working"""
+    return {"message": "CORS test successful", "timestamp": datetime.now().isoformat()}
 
 @app.post("/start")
 def start():
@@ -380,6 +401,73 @@ def get_summaries():
     data = fetch_all_summaries()
     return {"status": "success", "data": data}
 
+@app.post("/add-project")
+def add_project(payload: ProjectPayload):
+    data = load_gist()
+ 
+    for project in data.get("projects", []):
+        if project["id"] == payload.id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"❌ Project with ID '{payload.id}' already exists."
+            )
+ 
+    new_project = {
+        "id": payload.id,
+        "projectTitle": payload.projectTitle,
+        "description": payload.description,
+        "freelancersId": [],
+        "freelancersAssigned": []
+    }
+ 
+    data.setdefault("projects", []).append(new_project)
+    update_gist(data)
+ 
+    return {"message": f"✅ Project '{payload.projectTitle}' added."}
+ 
+# -------------------- API: Add Meeting --------------------
+@app.post("/add-meeting")
+def add_meeting(payload: MeetingPayload):
+    data = load_gist()
+ 
+    timestamp = payload.datetime or datetime.now().strftime("%Y-%m-%d %H:%M")
+ 
+    new_meeting = {
+        "datetime": timestamp,
+        "transcript": payload.transcript.strip()
+    }
+ 
+    data.setdefault("meetings", []).append(new_meeting)
+    update_gist(data)
+ 
+    return {"message": f"✅ Meeting added at {timestamp}."}
+ 
+# -------------------- API: Assign Freelancer --------------------
+@app.post("/assign-freelancer")
+def assign_freelancer(payload: AssignFreelancerPayload):
+    data = load_gist()
+ 
+    for project in data.get("projects", []):
+        if project["id"] == payload.id:
+            # Check if freelancer already assigned
+            if payload.freelancerId in project["freelancersId"]:
+                return {
+                    "message": f"⚠️ Freelancer ID '{payload.freelancerId}' already assigned to project '{payload.id}'."
+                }
+           
+            project["freelancersId"].append(payload.freelancerId)
+            project["freelancersAssigned"].append({
+                "id": payload.freelancerId,
+                "name": payload.freelancerName
+            })
+ 
+            update_gist(data)
+            return {
+                "message": f"✅ Freelancer '{payload.freelancerName}' assigned to project '{payload.id}'."
+            }
+ 
+    raise HTTPException(status_code=404, detail=f"❌ Project with ID '{payload.id}' not found.")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

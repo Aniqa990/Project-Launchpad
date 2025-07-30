@@ -8,7 +8,7 @@ import { Project } from '@/types';
 export function AdminViewProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'open' | 'active' | 'closed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -33,17 +33,16 @@ export function AdminViewProjects() {
 
   const tabs = [
     { id: 'all', label: 'All Projects', count: projects.length },
+    { id: 'open', label: 'Open', count: projects.filter((p: Project) => p.status === 'open').length },
     { id: 'active', label: 'Active', count: projects.filter((p: Project) => p.status === 'active').length },
-    { id: 'completed', label: 'Completed', count: projects.filter((p: Project) => p.status === 'completed').length },
-    { id: 'cancelled', label: 'Cancelled', count: projects.filter((p: Project) => p.status === 'cancelled').length }
+    { id: 'closed', label: 'Closed', count: projects.filter((p: Project) => p.status === 'closed').length },
   ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'open': return 'bg-gray-100 text-gray-800';
       case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'closed': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };

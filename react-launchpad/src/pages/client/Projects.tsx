@@ -22,6 +22,7 @@ export function ClientProjects() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'active' | 'closed'>('all');
+  const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,16 +42,13 @@ export function ClientProjects() {
       setLoading(true);
       setError('');
       try {
-        let data = [];
         if (user && user.id) {
-          data = await getClientProjects(user.id);
+          const data = await getClientProjects(user.id);
+          setProjects(data);
           console.log(data);
         } else {
           setProjects([]);
-          setLoading(false);
-          return;
         }
-        setProjects(data);
       } catch (err) {
         setError('Failed to load projects.');
       } finally {
@@ -62,10 +60,11 @@ export function ClientProjects() {
 
   const filteredProjects = projects.filter(project => {
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+    const matchesApproval = approvalFilter === 'all' || project.approvalStatus === approvalFilter;
     const matchesSearch = searchTerm === '' || 
       (project.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       (project.categoryOrDomain?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesApproval && matchesSearch;
   });
 
   // getStatusColor is not needed, use Badge variant prop
@@ -79,7 +78,17 @@ export function ClientProjects() {
     };
   };
 
+  const getApprovalCounts = () => {
+    return {
+      all: projects.length,
+      pending: projects.filter((p: Project) => p.approvalStatus === 'pending').length,
+      approved: projects.filter((p: Project) => p.approvalStatus === 'approved').length,
+      rejected: projects.filter((p: Project) => p.approvalStatus === 'rejected').length,
+    };
+  };
+
   const statusCounts = getStatusCounts();
+  const approvalCounts = getApprovalCounts();
 
   // // Remove modal logic and use navigation for viewDetails
   // const viewDetails = (projectId: number) => {
@@ -193,6 +202,24 @@ export function ClientProjects() {
               ))}
             </div>
 
+            {/* Approval Status Filter Tabs */}
+            <div className="flex space-x-2">
+              {(['all', 'pending', 'approved', 'rejected'] as const).map((approval) => (
+                <button
+                  key={approval}
+                  onClick={() => setApprovalFilter(approval)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    approvalFilter === approval
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {approval === 'all' ? 'All Approval' : approval} 
+                  {approval !== 'all' && ` (${approvalCounts[approval]})`}
+                </button>
+              ))}
+            </div>
+
             {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
@@ -220,17 +247,24 @@ export function ClientProjects() {
               <div key={project.id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="font-semibold text-gray-900">{project.projectTitle}</h4>
-                      <Badge variant={
-                        project.status === 'open' ? 'warning' :
-                        project.status === 'active' ? 'info' :
-                        project.status === 'closed' ? 'success' :
-                        project.status === '' ? 'destructive' : 'default'
-                      }>
-                        {project.status}
-                      </Badge>
-                    </div>
+                                    <div className="flex items-center space-x-3 mb-2">
+                  <h4 className="font-semibold text-gray-900">{project.projectTitle}</h4>
+                  <Badge variant={
+                    project.status === 'open' ? 'warning' :
+                    project.status === 'active' ? 'info' :
+                    project.status === 'closed' ? 'success' :
+                    project.status === '' ? 'destructive' : 'default'
+                  }>
+                    {project.status || 'No Status'}
+                  </Badge>
+                  <Badge variant={
+                    project.approvalStatus === 'pending' ? 'warning' :
+                    project.approvalStatus === 'approved' ? 'success' :
+                    project.approvalStatus === 'rejected' ? 'destructive' : 'default'
+                  }>
+                    {project.approvalStatus}
+                  </Badge>
+                </div>
                     
                     <p className="text-sm text-gray-600 mb-3">{project.description}</p>
                     
@@ -261,8 +295,64 @@ export function ClientProjects() {
                         )}
                         </div>
                     </div>
+
+                    {/* Rejection Reason */}
+                    {project.approvalStatus === 'rejected' && project.rejectionReason && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <div className="flex-shrink-0">
+                            <div className="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-red-800">Rejection Reason:</p>
+                            <p className="text-sm text-red-700 mt-1">{project.rejectionReason}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
+                  {/* Action Buttons */}
+                  <div className="flex flex-col space-y-2 ml-4">
+                    <Button
+                      onClick={() => navigate(`/client/project-details/${project.id}`)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      View Details
+                    </Button>
+                    
+                    {project.approvalStatus === 'approved' && project.status === 'open' && (
+                      <Button
+                        onClick={() => navigate(`/client/freelancer-suggestions?projectId=${project.id}`)}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        Find Freelancers
+                      </Button>
+                    )}
+                    
+                    {project.approvalStatus === 'rejected' && (
+                      <Button
+                        onClick={() => navigate(`/client/update-project/${project.id}`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                      >
+                        Update Project
+                      </Button>
+                    )}
+                    
+                    {project.status === 'open' && (
+                      <Button
+                        onClick={() => navigate(`/client/update-project/${project.id}`)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
+                      >
+                        Update Start Date and Details
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

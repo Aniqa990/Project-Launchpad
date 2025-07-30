@@ -72,7 +72,7 @@ export function MeetingSummaries() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [projects, setProjects] = useState<Project[]>([]);
   
-  const agentId = 'agent_7501k10x367febz9c5sajvk088hh';
+  const agentId = 'agent_4001k1b6f2kefwmtn30k4jcc8gjt';
   const conversation = useConversation({
     onConnect: () => setConvStarted(true),
     onDisconnect: () => setConvStarted(false),
@@ -154,7 +154,7 @@ export function MeetingSummaries() {
     setConvError(null);
     setShowConversationUI(true);
     try {
-      const response = await fetch('http://localhost:8000/start-project-meeting', {
+      const response = await fetch('http://localhost:8001/start-project-meeting', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -190,7 +190,7 @@ export function MeetingSummaries() {
     stopRecording();
  
     try {
-      const response = await fetch('http://localhost:8000/stop', {
+      const response = await fetch('http://localhost:8001/stop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -206,7 +206,7 @@ export function MeetingSummaries() {
     }
  
     try {
-      await fetch('http://localhost:8000/run-elevenlabs-bot', {
+      await fetch('http://localhost:8001/run-elevenlabs-bot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
