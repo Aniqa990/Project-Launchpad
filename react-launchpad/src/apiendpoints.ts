@@ -723,6 +723,15 @@ export async function fetchPlatformProfile(id:number) {
   return lowercaseFirstLetterKeys(data);
 }
 
+export const getMeetingsByProjectId = async (projectId: number) => {
+  try {
+    const response = await api.get(`/projects/${projectId}/meetings`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch project meetings');
+  }
+};
+
 export async function updatePlatformProfile(id:number, updates: Partial<User>) {
   const { data } = await api.patch(`/platform/profile/${id}`, updates);
   return data;
@@ -739,15 +748,7 @@ export async function getUnallocatedResources() {
   return data;
 }
 
-// AI Task Generation APIs
-export const getMeetingsByProjectId = async (projectId: number) => {
-  try {
-    const response = await api.get(`/projects/${projectId}/meetings`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch project meetings');
-  }
-};
+
 
 export const getMeetingDetails = async (meetingId: number) => {
   try {
@@ -767,14 +768,6 @@ export const getAudioByMeetingId = async (meetingId: number) => {
   }
 };
 
-export const syncTasksFromAI = async (tasks: any[]) => {
-  try {
-    const response = await api.post('/tasks/ai/sync', { tasks });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to sync AI tasks');
-  }
-};
 
 // Get logs by freelancer ID
 export const getLogsByFreelancerId = async (freelancerId: number): Promise<any[]> => {
@@ -783,6 +776,15 @@ export const getLogsByFreelancerId = async (freelancerId: number): Promise<any[]
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch logs by freelancer');
+  }
+};
+
+export const syncTasksFromAI = async (tasks: any[]) => {
+  try {
+    const response = await api.post('/tasks/ai/sync', { tasks });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to sync AI tasks');
   }
 };
 

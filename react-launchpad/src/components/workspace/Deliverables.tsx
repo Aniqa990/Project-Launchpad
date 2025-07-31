@@ -6,6 +6,7 @@ import { FileText, Download, Upload } from 'lucide-react';
 import { Deliverable } from '../../types';
 import { Modal } from '../ui/Modal';
 
+
 export default function Deliverables({
   deliverables,
   deliverablesLoading,

@@ -133,8 +133,8 @@ namespace ProjectLaunchpad.Functions
 
             return req.CreateResponse(HttpStatusCode.NoContent);
         }
-
-
+    
+    
         [Function("SyncTasksFromAI")]
         public async Task<HttpResponseData> SyncTasksFromAI(
 [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "tasks/ai/sync")] HttpRequestData req)
@@ -311,3 +311,5 @@ namespace ProjectLaunchpad.Functions
 
     }
 }
+
+
