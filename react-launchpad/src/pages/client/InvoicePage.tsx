@@ -28,7 +28,7 @@ export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: a
           setFreelancers(data);
           // Auto-select first freelancer if none selected
           if (!selectedFreelancerId && data.length > 0) {
-            setSelectedFreelancerId(data[0].Id);
+            setSelectedFreelancerId(data[0].id);
           }
         } catch (err) {
           toast.error('Failed to fetch freelancers');

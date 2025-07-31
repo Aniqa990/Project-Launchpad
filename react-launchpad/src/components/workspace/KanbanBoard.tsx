@@ -17,7 +17,7 @@ import {
   Brain
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask, Project, User } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById } from '../../apiendpoints';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById, getTasksByProjectId } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
@@ -696,9 +696,10 @@ export function KanbanBoard() {
       setLoadingTasks(true);
       setMessage('');
       try {
-        const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
-        setTasks(res.data);
-        if (res.data.length === 0) {
+        if (!selectedProjectId) return;
+        const res = await getTasksByProjectId(selectedProjectId);
+        setTasks(res);
+        if (res.length === 0) {
           setMessage('No tasks for this project yet.');
         }
       } catch (e) {
@@ -771,11 +772,11 @@ export function KanbanBoard() {
     setLoadingTasks(true);
     setMessage('');
     try {
-      const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
-      console.log('🔄 KanbanBoard - Fetched tasks:', res.data);
-      console.log('🔄 KanbanBoard - Task count:', res.data.length);
-      setTasks(res.data);
-      if (res.data.length === 0) {
+      const res = await getTasksByProjectId(selectedProjectId);
+      console.log('🔄 KanbanBoard - Fetched tasks:', res);
+      console.log('🔄 KanbanBoard - Task count:', res.length);
+      setTasks(res);
+      if (res.length === 0) {
         setMessage('No tasks for this project yet.');
       }
     } catch (e) {

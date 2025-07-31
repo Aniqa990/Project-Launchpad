@@ -462,13 +462,13 @@ export function ClientPayments() {
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
             <Button
-              variant={viewMode === 'milestones' ? 'default' : 'outline'}
+              variant={viewMode === 'milestones' ? 'primary' : 'outline'}
               onClick={() => setViewMode('milestones')}
             >
               Milestones
             </Button>
             <Button
-              variant={viewMode === 'payments' ? 'default' : 'outline'}
+              variant={viewMode === 'payments' ? 'primary' : 'outline'}
               onClick={() => setViewMode('payments')}
             >
               Payment History
@@ -623,7 +623,7 @@ export function ClientPayments() {
                           // All freelancers are paid
                           return (
                             <div className="flex flex-col items-end space-y-2">
-                              <Badge variant="success" className="text-sm">
+                              <Badge variant="success" size="sm">
                                 All Paid
                               </Badge>
                               <p className="text-xs text-gray-500">
@@ -635,7 +635,7 @@ export function ClientPayments() {
                           // Some freelancers paid, some pending
                           return (
                             <div className="flex flex-col items-end space-y-2">
-                              <Badge variant="warning" className="text-sm">
+                              <Badge variant="warning" size="sm">
                                 Partial Payment
                               </Badge>
                               <p className="text-xs text-gray-500">
@@ -654,7 +654,7 @@ export function ClientPayments() {
                           // All freelancers are pending
                           return (
                             <div className="flex flex-col items-end space-y-2">
-                              <Badge variant="warning" className="text-sm">
+                              <Badge variant="warning" size="sm">
                                 Payment Pending
                               </Badge>
                               <p className="text-xs text-gray-500">
@@ -685,7 +685,7 @@ export function ClientPayments() {
                   )}
                   {(milestone.Status || milestone.status) === 1 && (
                     <div className="flex flex-col items-end space-y-2">
-                      <Badge variant="warning" className="text-sm">
+                      <Badge variant="warning" size="sm">
                         In Progress
                       </Badge>
                       <p className="text-xs text-gray-500">Awaiting completion</p>
@@ -693,7 +693,7 @@ export function ClientPayments() {
                   )}
                   {(milestone.Status || milestone.status) === 0 && (
                     <div className="flex flex-col items-end space-y-2">
-                      <Badge variant="default" className="text-sm">
+                      <Badge variant="default" size="sm">
                         Not Started
                       </Badge>
                       <p className="text-xs text-gray-500">Awaiting selection</p>
