@@ -179,11 +179,14 @@ function KanbanTaskCard({ task, onClick }: { task: KanbanTask; onClick: () => vo
     transition,
     isDragging,
   } = useSortable({ id: task.Id });
+  
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   };
+  
   const priorityLabel = task.Priority === KanbanTaskPriorityLevel.Urgent
     ? 'Critical'
     : task.Priority === KanbanTaskPriorityLevel.High
@@ -191,65 +194,131 @@ function KanbanTaskCard({ task, onClick }: { task: KanbanTask; onClick: () => vo
     : task.Priority === KanbanTaskPriorityLevel.Medium
     ? 'Medium'
     : 'Low';
+    
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Critical': return 'bg-red-100 text-red-800';
-      case 'High': return 'bg-orange-100 text-orange-800';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800';
-      case 'Low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Critical': return 'bg-red-100 text-red-700 border-red-200';
+      case 'High': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'Low': return 'bg-green-100 text-green-700 border-green-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
+  
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'Critical': return '🔴';
+      case 'High': return '🟠';
+      case 'Medium': return '🟡';
+      case 'Low': return '🟢';
+      default: return '⚪';
+    }
+  };
+  
   const createdBy = task.CreatedByUser?.FirstName + (task.CreatedByUser?.LastName ? ' ' + task.CreatedByUser.LastName : '');
   const assignedTo = task.AssignedToUser?.FirstName + (task.AssignedToUser?.LastName ? ' ' + task.AssignedToUser.LastName : '');
   const assignedAvatar = task.AssignedToUser?.AvatarUrl;
   const clickGuard = usePointerClickGuard(onClick);
+  
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="mb-3 cursor-pointer"
+      className="mb-4 cursor-grab active:cursor-grabbing"
     >
-      <div className="hover:shadow-md transition-shadow cursor-pointer bg-white rounded-lg border p-4 space-y-3"
+      <div 
+        className={`
+          group relative bg-white rounded-xl border border-gray-200 p-5 shadow-sm
+          hover:shadow-lg hover:shadow-blue-100/50 hover:border-blue-200 
+          transition-all duration-200 ease-in-out transform hover:scale-[1.02]
+          ${isDragging ? 'shadow-2xl shadow-blue-200/50 rotate-2' : ''}
+        `}
         onPointerDown={clickGuard.onPointerDown}
         onPointerUp={clickGuard.onPointerUp}
         role="button"
         tabIndex={0}
       >
-        <div className="flex items-start justify-between">
-          <h4 className="font-semibold text-gray-900 text-sm">{task.Title}</h4>
-          <span className={`rounded px-2 py-1 text-xs font-medium ${getPriorityColor(priorityLabel)}`}>{priorityLabel}</span>
-        </div>
-        <p className="text-xs text-gray-600 line-clamp-2">{task.Description}</p>
-        <div className="mt-2 space-y-1">
-          <div className="flex items-center text-xs">
-            <span className="text-gray-500 mr-1">Assigned to:</span>
-            {assignedAvatar && <img src={assignedAvatar} alt={assignedTo} className="inline-block w-5 h-5 rounded-full" />}
-            <span className="ml-1 font-medium text-blue-600">{assignedTo}</span>
+        {/* Priority indicator line */}
+        <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
+          priorityLabel === 'Critical' ? 'bg-red-500' :
+          priorityLabel === 'High' ? 'bg-orange-500' :
+          priorityLabel === 'Medium' ? 'bg-yellow-500' :
+          'bg-green-500'
+        }`} />
+        
+        <div className="space-y-4">
+          {/* Header with title and priority */}
+          <div className="flex items-start justify-between">
+            <h4 className="font-semibold text-gray-900 text-sm leading-tight pr-2 line-clamp-2">
+              {task.Title}
+            </h4>
+            <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${getPriorityColor(priorityLabel)} flex-shrink-0`}>
+              <span className="text-xs">{getPriorityIcon(priorityLabel)}</span>
+              {priorityLabel}
+            </span>
           </div>
-          <div className="text-xs">
-            <span className="text-gray-500 mr-1">Created by:</span>
-            <span className="font-medium text-gray-900">{createdBy}</span>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center text-xs text-gray-500">
-            <Calendar className="w-3 h-3 mr-1" />
-            Due: {task.EstimatedDeadline ? new Date(task.EstimatedDeadline).toLocaleDateString() : 'No deadline'}
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              {assignedAvatar && <img src={assignedAvatar} alt={assignedTo} className="inline-block w-5 h-5 rounded-full" />}
-              <span className="text-xs text-gray-600">{assignedTo}</span>
+          
+          {/* Description */}
+          {task.Description && (
+            <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+              {task.Description}
+            </p>
+          )}
+          
+          {/* Assignment info */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-gray-500">Assigned to:</span>
+                {assignedAvatar ? (
+                  <img src={assignedAvatar} alt={assignedTo} className="w-4 h-4 rounded-full border border-gray-200" />
+                ) : (
+                  <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-xs text-blue-600 font-medium">
+                      {assignedTo?.charAt(0)?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <span className="font-medium text-blue-700">{assignedTo}</span>
+              </div>
             </div>
-            <div className="text-xs text-gray-500">ID: {task.CreatedByUserId}</div>
+            
+            <div className="flex items-center gap-1.5 text-xs">
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <span className="text-gray-500">Created by:</span>
+              <span className="font-medium text-gray-700">{createdBy}</span>
+            </div>
+          </div>
+          
+          {/* Due date */}
+          {task.EstimatedDeadline && (
+            <div className="flex items-center gap-2 text-xs">
+              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-gray-500">Due:</span>
+              <span className={`font-medium ${
+                new Date(task.EstimatedDeadline) < new Date() 
+                  ? 'text-red-600' 
+                  : 'text-gray-700'
+              }`}>
+                {new Date(task.EstimatedDeadline).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+          
+          {/* Footer with creation date */}
+          <div className="pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between text-xs text-gray-400">
+              <span>Created: {task.CreatedAt ? new Date(task.CreatedAt).toLocaleDateString() : 'N/A'}</span>
+              <span className="bg-gray-100 px-2 py-0.5 rounded-full">#{task.Id}</span>
+            </div>
           </div>
         </div>
-        <div className="text-xs text-gray-400 border-t pt-2">
-          Created: {task.CreatedAt ? new Date(task.CreatedAt).toLocaleDateString() : ''}
-        </div>
+        
+        {/* Hover overlay effect */}
+        <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-200" />
       </div>
     </div>
   );
@@ -259,26 +328,60 @@ function KanbanTaskCard({ task, onClick }: { task: KanbanTask; onClick: () => vo
 function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, subtasks, setEditSubtask }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id: `column-${status}` });
   const sortableIds = tasks.map(t => t.Id);
+  
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'done': return <CheckCircle className="w-4 h-4" />;
-      case 'inprogress': return <PlayCircle className="w-4 h-4" />;
-      case 'todo': return <Clock className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      case 'done': return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'inprogress': return <PlayCircle className="w-5 h-5 text-blue-600" />;
+      case 'todo': return <Clock className="w-5 h-5 text-gray-600" />;
+      default: return <Clock className="w-5 h-5 text-gray-600" />;
     }
   };
+  
+  const getColumnColor = (status: string) => {
+    switch (status) {
+      case 'done': return 'bg-green-50 border-green-200';
+      case 'inprogress': return 'bg-blue-50 border-blue-200';
+      case 'todo': return 'bg-gray-50 border-gray-200';
+      default: return 'bg-gray-50 border-gray-200';
+    }
+  };
+  
+  const getHeaderColor = (status: string) => {
+    switch (status) {
+      case 'done': return 'bg-green-100 text-green-800';
+      case 'inprogress': return 'bg-blue-100 text-blue-800';
+      case 'todo': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          {getStatusIcon(status)}
-          {title}
-        </h3>
-        <span className="rounded px-2 py-1 text-xs font-medium bg-gray-200">{tasks.length}</span>
+    <div className="flex flex-col h-full">
+      {/* Column Header */}
+      <div className={`sticky top-0 z-10 p-4 rounded-t-xl ${getHeaderColor(status)} border-b border-gray-200 shadow-sm`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {getStatusIcon(status)}
+            <h3 className="text-lg font-bold text-gray-900">
+              {title}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-semibold text-gray-700 shadow-sm">
+              {tasks.length}
+            </span>
+          </div>
+        </div>
       </div>
-      <div ref={setNodeRef} className="rounded-xl p-4 border border-gray-200 shadow-sm">
+      
+      {/* Column Content */}
+      <div 
+        ref={setNodeRef} 
+        className={`flex-1 p-4 ${getColumnColor(status)} rounded-b-xl min-h-[calc(100vh-300px)] max-h-[calc(100vh-200px)] overflow-y-auto`}
+      >
         <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3 min-h-96">
+          <div className="space-y-4">
             {tasks.map((task) => (
               <KanbanTaskCard
                 key={task.Id}
@@ -287,9 +390,12 @@ function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, 
               />
             ))}
             {tasks.length === 0 && (
-              <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm">No {title.toLowerCase()} tasks</p>
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400 border-2 border-dashed border-gray-300 rounded-xl bg-white/50">
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                  {getStatusIcon(status)}
+                </div>
+                <p className="text-sm font-medium text-gray-500">No {title.toLowerCase()} tasks</p>
+                <p className="text-xs text-gray-400 mt-1">Tasks will appear here</p>
               </div>
             )}
           </div>
@@ -1200,6 +1306,7 @@ export function KanbanBoard() {
           </div>
         </div>
       </Card>
+      
       {/* No tasks found */}
       {filteredTasks.length === 0 && (
         <div className="text-center py-12">
@@ -1213,6 +1320,7 @@ export function KanbanBoard() {
           </p>
         </div>
       )}
+      
       {/* Task Detail Modal */}
       {showTaskModal && selectedTask ? (
         <EditTaskModal
@@ -1227,6 +1335,7 @@ export function KanbanBoard() {
           validateTaskDeadline={validateTaskDeadline}
         />
       ) : null}
+      
       {/* Add Task Modal */}
       <AddTaskModal
         isOpen={showAddTaskModal}
@@ -1238,6 +1347,7 @@ export function KanbanBoard() {
         projectDetails={projectDetails}
         validateTaskDeadline={validateTaskDeadline}
       />
+      
       {/* Edit Subtask Modal */}
       {selectedSubtask && (
         <EditSubtaskModal
@@ -1248,6 +1358,7 @@ export function KanbanBoard() {
           subtask={selectedSubtask}
         />
       )}
+      </div>
     </div>
   );
 }

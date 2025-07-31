@@ -96,15 +96,15 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetTimeSheetsByFreelancer")]
         public async Task<HttpResponseData> GetTimeSheetsByFreelancer(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "timesheets/freelancer/{name}")] HttpRequestData req, int freelancerId)
+                    [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "timesheets/freelancer/{freelancerId:int}")] HttpRequestData req, int freelancerId)
         {
             var timesheets = await _unitOfWork.TimeSheet.GetTimeSheetsByFreelancerAsync(freelancerId);
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(timesheets);
             return response;
-        }
 
-        [Function("ApproveTimeSheet")]
+        }
+            [Function("ApproveTimeSheet")]
         public async Task<HttpResponseData> ApproveTimeSheet(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "timesheets/{id:int}/approve")] HttpRequestData req, int id)
         {
