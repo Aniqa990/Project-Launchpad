@@ -55,7 +55,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                     Budget = pr.Project.Budget,
                     PaymentType = pr.Project.PaymentType,
                     AttachedDocumentPath = pr.Project.AttachedDocumentPath,
-                    Budget = pr.Project.Budget,
                     ClientId = pr.Project.ClientId,
                     ClientName = pr.Project.Client.User.FirstName + " " + pr.Project.Client.User.LastName,
                     ClientEmail = pr.Project.Client.User.Email,

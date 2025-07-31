@@ -143,6 +143,7 @@ export interface MilestoneWithPayment {
   paymentDate?: string;
   transactionReference?: string;
   submittedFileUrls?: string[];
+  paymentId?: number; // Add payment ID for release functionality
 }
 
 export interface MilestoneWithUsers {

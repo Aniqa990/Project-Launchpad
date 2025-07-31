@@ -43,20 +43,44 @@ import {
 } from 'lucide-react';
 
 interface Project {
-  Id: number;
-  ProjectTitle: string;
-  Description: string;
-  PaymentType: string;
-  CategoryOrDomain: string;
-  Deadline: string;
-  Duration: string;
-  RequiredSkills: string;
-  Budget: number;
-  NumberOfFreelancers: number;
-  Status: string;
-  ApprovalStatus: string;
-  RejectionReason: string | null;
-  ClientId: number;
+  Id?: number;
+  id?: number;
+  ProjectTitle?: string;
+  projectTitle?: string;
+  Description?: string;
+  description?: string;
+  PaymentType?: string;
+  paymentType?: string;
+  CategoryOrDomain?: string;
+  categoryOrDomain?: string;
+  Deadline?: string;
+  deadline?: string;
+  Duration?: string;
+  duration?: string;
+  RequiredSkills?: string;
+  requiredSkills?: string;
+  Budget?: number;
+  budget?: number;
+  NumberOfFreelancers?: number;
+  numberOfFreelancers?: number;
+  Status?: string;
+  status?: string;
+  ApprovalStatus?: string;
+  approvalStatus?: string;
+  RejectionReason?: string | null;
+  rejectionReason?: string | null;
+  ClientId?: number;
+  clientId?: number;
+  StartDate?: string;
+  startDate?: string;
+  AttachedDocumentPath?: string | null;
+  attachedDocumentPath?: string | null;
+  Client?: any;
+  client?: any;
+  Team?: any[];
+  team?: any[];
+  Progress?: number;
+  progress?: number;
 }
 
 interface Milestone {
@@ -127,9 +151,12 @@ const ClientMilestones: React.FC = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
+        console.log('Fetching projects for client ID:', clientId);
         const data = await getClientProjects(clientId);
+        console.log('Projects fetched:', data);
         setProjects(data);
       } catch (error) {
+        console.error('Error fetching projects:', error);
         handleError(error, 'fetchProjects');
       } finally {
         setLoading(false);
@@ -139,20 +166,35 @@ const ClientMilestones: React.FC = () => {
     fetchProjects();
   }, [clientId]);
 
-  // Set default project when projects are loaded
+  // Set default project when projects are loaded (only on initial load)
   useEffect(() => {
     if (projects.length > 0 && selectedProject === 'All') {
-      const firstProject = projects.find(project => project && project.Id);
+      const firstProject = projects.find(project => project && (project.Id || project.id));
       if (firstProject) {
-        setSelectedProject(firstProject.Id.toString());
+        const projectId = firstProject.Id || firstProject.id;
+        const projectTitle = firstProject.ProjectTitle || firstProject.projectTitle;
+        if (projectId) {
+          console.log('Auto-selecting project:', projectId, projectTitle);
+          setSelectedProject(projectId.toString());
+        } else {
+          console.log('Project found but no valid ID:', firstProject);
+        }
+      } else {
+        console.log('No valid projects found:', projects);
       }
+    } else if (projects.length === 0 && selectedProject === 'All') {
+      console.log('No projects found for client. This could mean:');
+      console.log('1. Client has no projects');
+      console.log('2. API call failed');
+      console.log('3. Client ID is incorrect');
     }
-  }, [projects, selectedProject]);
+  }, [projects]); // Removed selectedProject from dependencies
 
   // Fetch milestones when project is selected
   useEffect(() => {
     const fetchMilestones = async () => {
       if (!selectedProject || selectedProject === 'All') {
+        console.log('No project selected, clearing milestones');
         setMilestones([]);
         setMilestoneAssignments({});
         setMilestonePayments({});
@@ -161,56 +203,53 @@ const ClientMilestones: React.FC = () => {
 
       try {
         setLoading(true);
-        const data = await getMilestonesByProjectId(Number(selectedProject));
-        setMilestones(data);
+                 console.log('Fetching milestones for project:', selectedProject);
+         const data = await getMilestonesByProjectId(Number(selectedProject));
+         console.log('Milestones fetched:', data);
+         
+         // Transform milestone data to handle both PascalCase and camelCase
+         const transformedMilestones = data.map((milestone: any) => ({
+           Id: milestone.Id || milestone.id,
+           Title: milestone.Title || milestone.title,
+           Description: milestone.Description || milestone.description,
+           DueDate: milestone.DueDate || milestone.dueDate,
+           Amount: milestone.Amount || milestone.amount,
+           Status: milestone.Status || milestone.status,
+           SubmissionDate: milestone.SubmissionDate || milestone.submissionDate,
+           FreelancerComments: milestone.FreelancerComments || milestone.freelancerComments,
+           IsApproved: milestone.IsApproved || milestone.isApproved,
+           HandoverStatus: milestone.HandoverStatus || milestone.handoverStatus,
+           ProjectId: milestone.ProjectId || milestone.projectId,
+           project: milestone.project,
+           Deliverables: milestone.Deliverables || milestone.deliverables || [],
+           AssignedFreelancers: milestone.AssignedFreelancers || milestone.assignedFreelancers
+         }));
+         
+         setMilestones(transformedMilestones);
         
-        // Fetch existing assignments for each milestone
-        const assignments: {[milestoneId: number]: Freelancer[]} = {};
-        const payments: {[milestoneId: number]: any} = {};
-        
-        for (const milestone of data) {
-          try {
-            const freelancersData = await getMilestoneFreelancers(milestone.Id);
-            if (freelancersData && freelancersData.length > 0) {
-              // Transform the API response to match our Freelancer interface
-              assignments[milestone.Id] = freelancersData.map((f: any) => ({
-                Id: f.FreelancerId,
-                FirstName: f.FirstName,
-                LastName: f.LastName,
-                Email: '', // API doesn't provide email
-                PhoneNo: '',
-                Gender: '',
-                ProfilePicture: null,
-                Role: '',
-                CreatedAt: '',
-                Skills: '',
-                Experience: '',
-                HourlyRate: 0, // API doesn't provide hourly rate
-                AvgRating: 0,
-                Availability: '',
-                WorkingHours: '',
-                Summary: '',
-                Projects: ''
-              }));
+                           // Fetch payment status for all milestones
+          const payments: {[milestoneId: number]: any} = {};
+          
+          for (const milestone of data) {
+            const milestoneId = milestone.Id || milestone.id;
+            if (!milestoneId) {
+              console.error('Milestone has no valid ID:', milestone);
+              continue;
             }
             
-            // Fetch payment status for completed milestones
-            if (milestone.Status === 2) {
-              try {
-                const paymentData = await getPaymentByMilestone(milestone.Id);
-                if (paymentData && paymentData.length > 0) {
-                  payments[milestone.Id] = paymentData[0]; // Take the first payment
-                }
-              } catch (error) {
-                console.error(`Failed to fetch payment for milestone ${milestone.Id}:`, error);
+            // Fetch payment status for all milestones
+            try {
+              const paymentData = await getPaymentByMilestone(milestoneId);
+              if (paymentData && paymentData.length > 0) {
+                payments[milestoneId] = paymentData[0]; // Take the first payment
               }
+            } catch (error) {
+              console.error(`Failed to fetch payment for milestone ${milestoneId}:`, error);
             }
-          } catch (error) {
-            console.error(`Failed to fetch freelancers for milestone ${milestone.Id}:`, error);
           }
-        }
-        setMilestoneAssignments(assignments);
-        setMilestonePayments(payments);
+         
+         setMilestoneAssignments({}); // Clear assignments - will be populated when freelancers are assigned
+         setMilestonePayments(payments);
               } catch (error) {
           handleError(error, 'fetchMilestones');
           setMilestones([]);
@@ -224,25 +263,49 @@ const ClientMilestones: React.FC = () => {
     fetchMilestones();
   }, [selectedProject]);
 
-  // Fetch freelancers when project is selected
-  useEffect(() => {
-    const fetchFreelancers = async () => {
-      if (!selectedProject || selectedProject === 'All') {
-        setFreelancers([]);
-        return;
-      }
+     // Fetch freelancers when project is selected
+   useEffect(() => {
+     const fetchFreelancers = async () => {
+       if (!selectedProject || selectedProject === 'All') {
+         setFreelancers([]);
+         return;
+       }
 
-      try {
-        const data = await getProjectFreelancers(Number(selectedProject));
-        setFreelancers(data);
-      } catch (error) {
-        handleError(error, 'fetchFreelancers');
-        setFreelancers([]);
-      }
-    };
+       try {
+         console.log('Fetching freelancers for project:', selectedProject);
+         const data = await getProjectFreelancers(Number(selectedProject));
+         console.log('Freelancers fetched:', data);
+         
+         // Transform FreelancerProfile to Freelancer interface
+         const transformedData = data.map((f: any) => ({
+           Id: f.id || f.Id,
+           FirstName: f.firstName || f.FirstName || '',
+           LastName: f.lastName || f.LastName || '',
+           Email: f.email || f.Email || '',
+           PhoneNo: f.phoneNo || f.PhoneNo || '',
+           Gender: f.gender || f.Gender || '',
+           ProfilePicture: f.profilePicture || f.ProfilePicture || null,
+           Role: f.role || f.Role || '',
+           CreatedAt: f.createdAt || f.CreatedAt || '',
+           Skills: f.skills || f.Skills || '',
+           Experience: f.experience || f.Experience || '',
+           HourlyRate: f.hourlyRate || f.HourlyRate || 0,
+           AvgRating: f.avgRating || f.AvgRating || 0,
+           Availability: f.availability || f.Availability || '',
+           WorkingHours: f.workingHours || f.WorkingHours || '',
+           Summary: f.summary || f.Summary || '',
+           Projects: f.projects || f.Projects || ''
+         }));
+         setFreelancers(transformedData);
+       } catch (error) {
+         console.error('Error fetching freelancers:', error);
+         handleError(error, 'fetchFreelancers');
+         setFreelancers([]);
+       }
+     };
 
-    fetchFreelancers();
-  }, [selectedProject]);
+     fetchFreelancers();
+   }, [selectedProject]);
 
   // Handle assign freelancer to milestone
   const handleAssignFreelancer = async () => {
@@ -335,8 +398,7 @@ const ClientMilestones: React.FC = () => {
 
   // Get payment status badge
   const getPaymentStatusBadge = (milestone: Milestone) => {
-    if (milestone.Status !== 2) return null; // Only show for completed milestones
-    
+    // Show payment status for all milestones, not just completed ones
     const payment = milestonePayments[milestone.Id];
     if (!payment) {
       return (
@@ -380,8 +442,7 @@ const ClientMilestones: React.FC = () => {
 
   // Handle download deliverables
   const handleDownloadDeliverables = (milestone: Milestone) => {
-    const payment = milestonePayments[milestone.Id];
-    if (payment && payment.PaymentStatus === 'Released') {
+    if (milestone.HandoverStatus?.toLowerCase() === 'completed') {
       // Here you would implement the actual download logic
       // For now, we'll just show an alert
       alert(`Downloading deliverables for milestone: ${milestone.Title}`);
@@ -392,19 +453,23 @@ const ClientMilestones: React.FC = () => {
   const canDownloadDeliverables = (milestone: Milestone) => {
     if (milestone.Status !== 2) return false; // Only for completed milestones
     
-    const payment = milestonePayments[milestone.Id];
-    return payment && payment.PaymentStatus === 'Released';
+    // Enable download when handover status is "completed"
+    return milestone.HandoverStatus?.toLowerCase() === 'completed';
   };
 
-  // Filter milestones
-  const filteredMilestones = milestones.filter(milestone => {
-    const statusMatch = statusFilter === 'All' || 
-                       (statusFilter === 'not-started' && milestone.Status === 0) ||
-                       (statusFilter === 'in-progress' && milestone.Status === 1) ||
-                       (statusFilter === 'completed' && milestone.Status === 2);
-    
-    return statusMatch;
-  });
+     // Filter milestones
+   const filteredMilestones = milestones.filter(milestone => {
+     const statusMatch = statusFilter === 'All' || 
+                        (statusFilter === 'not-started' && milestone.Status === 0) ||
+                        (statusFilter === 'in-progress' && milestone.Status === 1) ||
+                        (statusFilter === 'completed' && milestone.Status === 2);
+     
+     return statusMatch;
+   });
+   
+   console.log('Filtered milestones:', filteredMilestones);
+   console.log('Selected project:', selectedProject);
+   console.log('Loading state:', loading);
 
   // Get available freelancers for a specific milestone (excluding already assigned ones)
   const getAvailableFreelancers = (milestoneId: number) => {
@@ -444,17 +509,24 @@ const ClientMilestones: React.FC = () => {
           </div>
           <div className="flex items-center space-x-2">
             <label className="text-sm text-gray-600">Project:</label>
-            <select
-              value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="All">All Projects</option>
-              {projects.filter(project => project && project.Id).map((project) => (
-                <option key={project.Id} value={project.Id.toString()}>
-                  {project.ProjectTitle}
-                </option>
-              ))}
+                         <select
+               value={selectedProject}
+               onChange={(e) => {
+                 console.log('Project selection changed to:', e.target.value);
+                 setSelectedProject(e.target.value);
+               }}
+               className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             >
+                             <option value="All">All Projects</option>
+               {projects.filter(project => project && (project.Id || project.id)).map((project) => {
+                 const projectId = project.Id || project.id;
+                 const projectTitle = project.ProjectTitle || project.projectTitle;
+                 return projectId ? (
+                   <option key={projectId} value={projectId.toString()}>
+                     {projectTitle || 'Untitled Project'}
+                   </option>
+                 ) : null;
+               })}
             </select>
           </div>
         </div>
@@ -634,7 +706,7 @@ const ClientMilestones: React.FC = () => {
                       className={canDownloadDeliverables(milestone) ? 'text-green-600 hover:text-green-700' : 'text-gray-400'}
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      {canDownloadDeliverables(milestone) ? 'Download Deliverables' : 'Payment Not Released'}
+                      {canDownloadDeliverables(milestone) ? 'Download Deliverables' : 'Handover Not Completed'}
                     </Button>
                   )}
                 </div>

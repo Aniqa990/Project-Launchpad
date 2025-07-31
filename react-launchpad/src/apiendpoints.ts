@@ -4,7 +4,7 @@ import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst";
 import { handleError, getErrorType, ErrorType } from "@/utils/errorHandler";
 
 const api = axios.create({
-  baseURL: "http://localhost:7071/api",
+  baseURL: "http://localhost:7053/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -208,6 +208,51 @@ export const getMilestones = async (): Promise<any[]> => {
 export const getMilestonesByHandoverStatus = async(status: string) =>{
   const response = await api.get(`/platform/milestones/handover/${status}`);
   return lowercaseFirstLetterKeys(response.data);
+}
+
+export const getMilestonesWithPaymentInfo = async(status: string) =>{
+  const response = await api.get(`/platform/milestones/handover/${status}`);
+  const milestones = lowercaseFirstLetterKeys(response.data);
+  
+  // For each milestone, fetch payment information
+  const milestonesWithPayments = await Promise.all(
+    milestones.map(async (milestone: any) => {
+      try {
+        const payments = await getPaymentByMilestone(milestone.id);
+        
+        // If there are multiple payments, find the one that's not released or take the first one
+        let payment = null;
+        if (payments.length > 0) {
+          // Try to find a payment that's not released
+          payment = payments.find((p: any) => p.paymentStatus !== 'released') || payments[0];
+        }
+        
+        return {
+          ...milestone,
+          paymentStatus: payment?.paymentStatus || null,
+          paymentDate: payment?.paymentDate || null,
+          transactionReference: payment?.transactionReference || null,
+          paymentId: payment?.id || null
+        };
+      } catch (error) {
+        console.error(`Error fetching payment for milestone ${milestone.id}:`, error);
+        return {
+          ...milestone,
+          paymentStatus: null,
+          paymentDate: null,
+          transactionReference: null,
+          paymentId: null
+        };
+      }
+    })
+  );
+  
+  // Remove duplicates based on milestone ID
+  const uniqueMilestones = milestonesWithPayments.filter((milestone: any, index: number, self: any[]) => 
+    index === self.findIndex((m: any) => m.id === milestone.id)
+  );
+  
+  return uniqueMilestones;
 }
 
 export const updateHandoverStatus = async(milestoneId: number, handoverStatus: string) => {
@@ -521,7 +566,7 @@ export const createStripePaymentIntent = async (params: {
 }): Promise<{ clientSecret: string }> => {
   // Note: This uses the backend port 7053
   const response = await axios.post(
-    'http://localhost:7071/api/payments/create-intent',
+    'http://localhost:7053/api/payments/create-intent',
     params,
     { headers: { 'Content-Type': 'application/json' } }
   );
@@ -560,7 +605,7 @@ export const createMultiFreelancerCheckoutSession = async (params: {
   }>;
 }): Promise<{ url: string }> => {
   const response = await axios.post(
-    'http://localhost:7071/api/payments/create-multi-freelancer-checkout-session',
+    'http://localhost:7053/api/payments/create-multi-freelancer-checkout-session',
     params,
     { headers: { 'Content-Type': 'application/json' } }
   );
@@ -638,9 +683,16 @@ export const releasePayment = async (paymentId: number) => {
     const response = await api.post(`/payments/release/${paymentId}`);
     return response.data;
   } catch (error: any) {
-    // Mock success for now since endpoint might not exist
-    console.warn('Backend endpoint not found, simulating success');
-    return { success: true, message: 'Payment released successfully' };
+    throw new Error(error.response?.data?.message || 'Failed to release payment');
+  }
+};
+
+export const adminReleasePaymentAndApproveMilestone = async (paymentId: number) => {
+  try {
+    const response = await api.post(`/payments/admin-release/${paymentId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to release payment and approve milestone');
   }
 };
 

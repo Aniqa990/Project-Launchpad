@@ -30,7 +30,6 @@ namespace ProjectLaunchpad.DataAccess.Data
         public DbSet<Payment> payments { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<Logs> logs { get; set; }
-        public DbSet<ResumeProject> resumeProjects { get; set; }
         public DbSet<Project> projects { get; set; }
         public DbSet<Notification> notifications { get; set; }
 

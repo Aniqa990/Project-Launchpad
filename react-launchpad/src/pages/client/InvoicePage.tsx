@@ -3,6 +3,8 @@ import { getProjectFreelancers } from '../../apiendpoints';
 import toast from 'react-hot-toast';
 
 export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: any, onPayNow: (data: any) => void, onClose?: () => void }) => {
+  console.log('InvoicePage rendered with invoiceData:', invoiceData);
+  
   // Allow editing of user details
   const [userDetails, setUserDetails] = useState({
     name: invoiceData.name || '',
@@ -23,18 +25,24 @@ export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: a
     const fetchFreelancers = async () => {
       if (invoiceData.projectId) {
         try {
+          console.log('InvoicePage: Fetching freelancers for projectId:', invoiceData.projectId);
           setLoading(true);
           const data = await getProjectFreelancers(invoiceData.projectId);
+          console.log('InvoicePage: Freelancers fetched:', data);
           setFreelancers(data);
           // Auto-select first freelancer if none selected
           if (!selectedFreelancerId && data.length > 0) {
+            console.log('InvoicePage: Auto-selecting first freelancer:', data[0]);
             setSelectedFreelancerId(data[0].id);
           }
         } catch (err) {
+          console.error('InvoicePage: Error fetching freelancers:', err);
           toast.error('Failed to fetch freelancers');
         } finally {
           setLoading(false);
         }
+      } else {
+        console.log('InvoicePage: No projectId provided:', invoiceData);
       }
     };
 
