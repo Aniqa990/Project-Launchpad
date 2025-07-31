@@ -13,11 +13,10 @@ import {
   Trash2,
   CheckCircle,
   PlayCircle,
-  AlertCircle,
-  Brain
+  AlertCircle
 } from 'lucide-react';
 import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask, Project, User } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById, getTasksByProjectId } from '../../apiendpoints';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById } from '../../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
@@ -26,7 +25,51 @@ import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Avatar } from '../ui/avatar';
 import { Modal } from '../ui/Modal';
-import { AITaskGenerator } from '../ui/AITaskGenerator';
+
+// Custom CSS animations
+const customStyles = `
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+  
+  .kanban-card {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .kanban-column {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .kanban-column:hover {
+    transform: translateY(-1px);
+  }
+  
+  .priority-indicator {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .task-card-dragging {
+    transform: rotate(2deg) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+`;
+
 // Remove import { mockSubtasks } from '../../utils/mockData';
 
 interface KanbanColumnProps {
@@ -182,9 +225,9 @@ function KanbanTaskCard({ task, onClick }: { task: KanbanTask; onClick: () => vo
   
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'none' : transition,
-    opacity: isDragging ? 0.8 : 1,
-    zIndex: isDragging ? 1000 : 'auto',
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
   };
   
   const priorityLabel = task.Priority === KanbanTaskPriorityLevel.Urgent
@@ -197,43 +240,44 @@ function KanbanTaskCard({ task, onClick }: { task: KanbanTask; onClick: () => vo
     
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Critical': return 'bg-red-100 text-red-700 border-red-200';
-      case 'High': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'Low': return 'bg-green-100 text-green-700 border-green-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'Critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'High': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-  
-  const getPriorityIcon = (priority: string) => {
+
+  const getPriorityIndicator = (priority: string) => {
     switch (priority) {
-      case 'Critical': return '🔴';
-      case 'High': return '🟠';
-      case 'Medium': return '🟡';
-      case 'Low': return '🟢';
-      default: return '⚪';
+      case 'Critical': return 'bg-red-500';
+      case 'High': return 'bg-orange-500';
+      case 'Medium': return 'bg-yellow-500';
+      case 'Low': return 'bg-green-500';
+      default: return 'bg-gray-500';
     }
   };
-  
+
   const createdBy = task.CreatedByUser?.FirstName + (task.CreatedByUser?.LastName ? ' ' + task.CreatedByUser.LastName : '');
   const assignedTo = task.AssignedToUser?.FirstName + (task.AssignedToUser?.LastName ? ' ' + task.AssignedToUser.LastName : '');
   const assignedAvatar = task.AssignedToUser?.AvatarUrl;
-  const clickGuard = usePointerClickGuard(onClick);
   
+  const isOverdue = task.EstimatedDeadline && new Date(task.EstimatedDeadline) < new Date();
+  
+  const clickGuard = usePointerClickGuard(onClick);
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="mb-4 cursor-grab active:cursor-grabbing"
+      className="mb-4 cursor-pointer group"
     >
       <div 
         className={`
-          group relative bg-white rounded-xl border border-gray-200 p-5 shadow-sm
-          hover:shadow-lg hover:shadow-blue-100/50 hover:border-blue-200 
-          transition-all duration-200 ease-in-out transform hover:scale-[1.02]
-          ${isDragging ? 'shadow-2xl shadow-blue-200/50 rotate-2' : ''}
+          relative bg-white rounded-xl border border-gray-200 p-4 shadow-sm kanban-card
+          ${isDragging ? 'task-card-dragging' : ''}
         `}
         onPointerDown={clickGuard.onPointerDown}
         onPointerUp={clickGuard.onPointerUp}
@@ -241,84 +285,78 @@ function KanbanTaskCard({ task, onClick }: { task: KanbanTask; onClick: () => vo
         tabIndex={0}
       >
         {/* Priority indicator line */}
-        <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
-          priorityLabel === 'Critical' ? 'bg-red-500' :
-          priorityLabel === 'High' ? 'bg-orange-500' :
-          priorityLabel === 'Medium' ? 'bg-yellow-500' :
-          'bg-green-500'
-        }`} />
+        <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl priority-indicator ${getPriorityIndicator(priorityLabel)}`} />
         
-        <div className="space-y-4">
-          {/* Header with title and priority */}
-          <div className="flex items-start justify-between">
-            <h4 className="font-semibold text-gray-900 text-sm leading-tight pr-2 line-clamp-2">
-              {task.Title}
-            </h4>
-            <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${getPriorityColor(priorityLabel)} flex-shrink-0`}>
-              <span className="text-xs">{getPriorityIcon(priorityLabel)}</span>
-              {priorityLabel}
-            </span>
+        {/* Header with title and priority badge */}
+        <div className="flex items-start justify-between mb-3">
+          <h4 className="font-semibold text-gray-900 text-sm leading-tight pr-2">
+            {task.Title}
+          </h4>
+          <span className={`rounded-full px-2 py-1 text-xs font-medium border ${getPriorityColor(priorityLabel)} flex-shrink-0`}>
+            {priorityLabel === 'Critical' && '🔴'}
+            {priorityLabel === 'High' && '🟠'}
+            {priorityLabel === 'Medium' && '🟡'}
+            {priorityLabel === 'Low' && '🟢'}
+            {priorityLabel}
+          </span>
+        </div>
+        
+        {/* Description */}
+        {task.Description && (
+          <p className="text-xs text-gray-600 line-clamp-2 mb-3 leading-relaxed">
+            {task.Description}
+          </p>
+        )}
+        
+        {/* Assigned and Created by info */}
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center text-xs">
+            <span className="text-gray-500 mr-2">Assigned:</span>
+            <div className="flex items-center">
+              {assignedAvatar ? (
+                <img src={assignedAvatar} alt={assignedTo} className="w-4 h-4 rounded-full mr-1" />
+              ) : (
+                <div className="w-4 h-4 rounded-full bg-blue-500 mr-1 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {assignedTo?.charAt(0)?.toUpperCase() || '?'}
+                  </span>
+                </div>
+              )}
+              <span className="font-medium text-blue-600">{assignedTo || 'Unassigned'}</span>
+            </div>
           </div>
           
-          {/* Description */}
-          {task.Description && (
-            <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-              {task.Description}
-            </p>
-          )}
-          
-          {/* Assignment info */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-500">Assigned to:</span>
-                {assignedAvatar ? (
-                  <img src={assignedAvatar} alt={assignedTo} className="w-4 h-4 rounded-full border border-gray-200" />
-                ) : (
-                  <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-blue-600 font-medium">
-                      {assignedTo?.charAt(0)?.toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <span className="font-medium text-blue-700">{assignedTo}</span>
+          <div className="flex items-center text-xs">
+            <span className="text-gray-500 mr-2">Created by:</span>
+            <div className="flex items-center">
+              <div className="w-4 h-4 rounded-full bg-gray-500 mr-1 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">
+                  {createdBy?.charAt(0)?.toUpperCase() || '?'}
+                </span>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-              <span className="text-gray-500">Created by:</span>
-              <span className="font-medium text-gray-700">{createdBy}</span>
-            </div>
-          </div>
-          
-          {/* Due date */}
-          {task.EstimatedDeadline && (
-            <div className="flex items-center gap-2 text-xs">
-              <Calendar className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-gray-500">Due:</span>
-              <span className={`font-medium ${
-                new Date(task.EstimatedDeadline) < new Date() 
-                  ? 'text-red-600' 
-                  : 'text-gray-700'
-              }`}>
-                {new Date(task.EstimatedDeadline).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-          
-          {/* Footer with creation date */}
-          <div className="pt-3 border-t border-gray-100">
-            <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>Created: {task.CreatedAt ? new Date(task.CreatedAt).toLocaleDateString() : 'N/A'}</span>
-              <span className="bg-gray-100 px-2 py-0.5 rounded-full">#{task.Id}</span>
+              <span className="font-medium text-gray-900">{createdBy || 'Unknown'}</span>
             </div>
           </div>
         </div>
         
-        {/* Hover overlay effect */}
-        <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-200" />
+        {/* Due date */}
+        <div className="flex items-center text-xs text-gray-500 mb-3">
+          <Calendar className="w-3 h-3 mr-1" />
+          <span className={isOverdue ? 'text-red-600 font-medium' : ''}>
+            Due: {task.EstimatedDeadline ? new Date(task.EstimatedDeadline).toLocaleDateString() : 'No deadline'}
+            {isOverdue && ' (Overdue)'}
+          </span>
+        </div>
+        
+        {/* Footer with creation date and task ID */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="text-xs text-gray-400">
+            Created: {task.CreatedAt ? new Date(task.CreatedAt).toLocaleDateString() : 'Unknown'}
+          </div>
+          <div className="text-xs text-gray-400 font-mono">
+            #{task.Id}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -337,51 +375,60 @@ function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, 
       default: return <Clock className="w-5 h-5 text-gray-600" />;
     }
   };
-  
-  const getColumnColor = (status: string) => {
+
+  const getColumnStyles = (status: string) => {
     switch (status) {
-      case 'done': return 'bg-green-50 border-green-200';
-      case 'inprogress': return 'bg-blue-50 border-blue-200';
-      case 'todo': return 'bg-gray-50 border-gray-200';
-      default: return 'bg-gray-50 border-gray-200';
+      case 'todo':
+        return {
+          header: 'bg-gray-100 border-gray-200',
+          content: 'bg-gray-50',
+          title: 'text-gray-700'
+        };
+      case 'inprogress':
+        return {
+          header: 'bg-blue-100 border-blue-200',
+          content: 'bg-blue-50',
+          title: 'text-blue-700'
+        };
+      case 'done':
+        return {
+          header: 'bg-green-100 border-green-200',
+          content: 'bg-green-50',
+          title: 'text-green-700'
+        };
+      default:
+        return {
+          header: 'bg-gray-100 border-gray-200',
+          content: 'bg-gray-50',
+          title: 'text-gray-700'
+        };
     }
   };
-  
-  const getHeaderColor = (status: string) => {
-    switch (status) {
-      case 'done': return 'bg-green-100 text-green-800';
-      case 'inprogress': return 'bg-blue-100 text-blue-800';
-      case 'todo': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-  
+
+  const styles = getColumnStyles(status);
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Column Header */}
-      <div className={`sticky top-0 z-10 p-4 rounded-t-xl ${getHeaderColor(status)} border-b border-gray-200 shadow-sm`}>
+    <div className="flex flex-col h-full kanban-column">
+      {/* Sticky Column Header */}
+      <div className={`sticky top-0 z-10 p-4 rounded-t-xl border-b ${styles.header} shadow-sm`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <h3 className={`text-lg font-bold flex items-center gap-2 ${styles.title}`}>
             {getStatusIcon(status)}
-            <h3 className="text-lg font-bold text-gray-900">
-              {title}
-            </h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-semibold text-gray-700 shadow-sm">
-              {tasks.length}
-            </span>
-          </div>
+            {title}
+          </h3>
+          <span className="rounded-full px-3 py-1 text-sm font-bold bg-white shadow-sm border">
+            {tasks.length}
+          </span>
         </div>
       </div>
       
       {/* Column Content */}
       <div 
         ref={setNodeRef} 
-        className={`flex-1 p-4 ${getColumnColor(status)} rounded-b-xl min-h-[calc(100vh-300px)] max-h-[calc(100vh-200px)] overflow-y-auto`}
+        className={`flex-1 p-4 rounded-b-xl ${styles.content} min-h-[600px] max-h-[800px] overflow-y-auto`}
       >
         <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {tasks.map((task) => (
               <KanbanTaskCard
                 key={task.Id}
@@ -390,12 +437,20 @@ function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, 
               />
             ))}
             {tasks.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-400 border-2 border-dashed border-gray-300 rounded-xl bg-white/50">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                  {getStatusIcon(status)}
+              <div className="text-center py-12 text-gray-500">
+                <div className="mb-4">
+                  {status === 'todo' && <Clock className="w-12 h-12 text-gray-300 mx-auto" />}
+                  {status === 'inprogress' && <PlayCircle className="w-12 h-12 text-blue-300 mx-auto" />}
+                  {status === 'done' && <CheckCircle className="w-12 h-12 text-green-300 mx-auto" />}
                 </div>
-                <p className="text-sm font-medium text-gray-500">No {title.toLowerCase()} tasks</p>
-                <p className="text-xs text-gray-400 mt-1">Tasks will appear here</p>
+                <p className="text-sm font-medium text-gray-400 mb-1">
+                  No {title.toLowerCase()} tasks
+                </p>
+                <p className="text-xs text-gray-400">
+                  {status === 'todo' && 'Tasks will appear here when created'}
+                  {status === 'inprogress' && 'Drag tasks here to start working'}
+                  {status === 'done' && 'Completed tasks will appear here'}
+                </p>
               </div>
             )}
           </div>
@@ -427,6 +482,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, pro
     status: task.Status,
   } : {});
   const [deadlineError, setDeadlineError] = React.useState('');
+  
   useEffect(() => {
     if (task) {
       setForm({
@@ -440,7 +496,9 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, pro
       });
     }
   }, [task]);
-  if (!isOpen || !task) return null;
+  
+  if (!isOpen || !task) return <></>;
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
@@ -451,6 +509,7 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, pro
       setDeadlineError(error);
     }
   };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -471,69 +530,156 @@ function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, pro
       status: Number(form.status),
     });
   };
+  
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-      <div className="bg-white p-8 rounded shadow-lg w-full max-w-lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-title">Title</label>
-          <input id="edit-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-description">Description</label>
-          <textarea id="edit-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-estimatedDeadline">Estimated Deadline</label>
-          <input 
-            id="edit-estimatedDeadline" 
-            name="estimatedDeadline" 
-            type="date" 
-            value={form.estimatedDeadline} 
-            onChange={handleChange} 
-            className={`w-full border p-2 rounded ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
-            min={new Date().toISOString().split('T')[0]}
-            max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
-          />
-          {deadlineError && (
-            <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
-          )}
-          {projectDetails?.Deadline && (
-            <p className="text-gray-500 text-sm mt-1">
-              Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
-            </p>
-          )}
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-priority">Priority</label>
-          <select id="edit-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
-            <option value={0}>Low</option>
-            <option value={1}>Medium</option>
-            <option value={2}>High</option>
-            <option value={3}>Urgent</option>
-          </select>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-createdByUserId">Created By</label>
-          <select id="edit-createdByUserId" name="createdByUserId" value={form.createdByUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
-            <option value="">Select a freelancer</option>
-            {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.id} value={freelancer.id}>
-                {freelancer.firstName} {freelancer.lastName}
-              </option>
-            ))}
-          </select>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-assignedToUserId">Assigned To</label>
-          <select id="edit-assignedToUserId" name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
-            <option value="">Select a freelancer</option>
-            {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.id} value={freelancer.id}>
-                {freelancer.firstName} {freelancer.lastName}
-              </option>
-            ))}
-          </select>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-status">Status</label>
-          <select id="edit-status" name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
-            <option value={0}>To Do</option>
-            <option value={1}>In Progress</option>
-            <option value={2}>Done</option>
-          </select>
-          <div className="flex justify-between mt-6">
-            <button type="button" onClick={() => onDelete(task.Id)} className="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
-            <div className="flex gap-2">
-              <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 text-gray-800 rounded">Cancel</button>
-              <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Saving...' : 'Save Changes'}</button>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-2xl p-6 border-b border-blue-200">
+          <h2 className="text-xl font-bold text-gray-900">Edit Task</h2>
+          <p className="text-gray-600 mt-1">Update task details and assignments</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-title">Title</label>
+            <input 
+              id="edit-title" 
+              name="title" 
+              value={form.title} 
+              onChange={handleChange} 
+              placeholder="Task title" 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+              required 
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-description">Description</label>
+            <textarea 
+              id="edit-description" 
+              name="description" 
+              value={form.description} 
+              onChange={handleChange} 
+              placeholder="Task description" 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none" 
+              rows={3}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-estimatedDeadline">Estimated Deadline</label>
+            <input 
+              id="edit-estimatedDeadline" 
+              name="estimatedDeadline" 
+              type="date" 
+              value={form.estimatedDeadline} 
+              onChange={handleChange} 
+              className={`w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
+              min={new Date().toISOString().split('T')[0]}
+              max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
+            />
+            {deadlineError && (
+              <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
+            )}
+            {projectDetails?.Deadline && (
+              <p className="text-gray-500 text-sm mt-1">
+                Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-priority">Priority</label>
+            <select 
+              id="edit-priority" 
+              name="priority" 
+              value={form.priority} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            >
+              <option value={0}>Low</option>
+              <option value={1}>Medium</option>
+              <option value={2}>High</option>
+              <option value={3}>Urgent</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-createdByUserId">Created By</label>
+            <select 
+              id="edit-createdByUserId" 
+              name="createdByUserId" 
+              value={form.createdByUserId} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+              required
+            >
+              <option value="">Select a freelancer</option>
+              {projectFreelancers.map((freelancer) => (
+                <option key={freelancer.id} value={freelancer.id}>
+                  {freelancer.firstName} {freelancer.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-assignedToUserId">Assigned To</label>
+            <select 
+              id="edit-assignedToUserId" 
+              name="assignedToUserId" 
+              value={form.assignedToUserId} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+              required
+            >
+              <option value="">Select a freelancer</option>
+              {projectFreelancers.map((freelancer) => (
+                <option key={freelancer.id} value={freelancer.id}>
+                  {freelancer.firstName} {freelancer.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-status">Status</label>
+            <select 
+              id="edit-status" 
+              name="status" 
+              value={form.status} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            >
+              <option value={0}>To Do</option>
+              <option value={1}>In Progress</option>
+              <option value={2}>Done</option>
+            </select>
+          </div>
+          
+          <div className="flex justify-between pt-4 border-t border-gray-200">
+            <button 
+              type="button" 
+              onClick={() => onDelete(task.Id)} 
+              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
+            >
+              Delete
+            </button>
+            <div className="flex gap-3">
+              <button 
+                type="button" 
+                onClick={onClose} 
+                className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors duration-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
           </div>
         </form>
@@ -556,6 +702,7 @@ function EditSubtaskModal({ isOpen, onClose, onSubmit, loading, subtask }: {
     dueDate: subtask.DueDate ? subtask.DueDate.split('T')[0] : '',
     status: subtask.Status,
   } : {});
+  
   useEffect(() => {
     if (subtask) {
       setForm({
@@ -566,10 +713,13 @@ function EditSubtaskModal({ isOpen, onClose, onSubmit, loading, subtask }: {
       });
     }
   }, [subtask]);
-  if (!subtask) return null;
+  
+  if (!subtask) return <></>;
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(subtask.Id, {
@@ -577,25 +727,84 @@ function EditSubtaskModal({ isOpen, onClose, onSubmit, loading, subtask }: {
       status: Number(form.status),
     });
   };
+  
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-      <div className="bg-white p-8 rounded shadow-lg w-full max-w-lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-title">Title</label>
-          <input id="edit-subtask-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-description">Description</label>
-          <textarea id="edit-subtask-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-dueDate">Due Date</label>
-          <input id="edit-subtask-dueDate" name="dueDate" type="date" value={form.dueDate} onChange={handleChange} className="w-full border p-2 rounded" />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-subtask-status">Status</label>
-          <select id="edit-subtask-status" name="status" value={form.status} onChange={handleChange} className="w-full border p-2 rounded">
-            <option value={0}>To Do</option>
-            <option value={1}>In Progress</option>
-            <option value={2}>Done</option>
-          </select>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 text-gray-800 rounded">Cancel</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Saving...' : 'Save Changes'}</button>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
+        <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-t-2xl p-6 border-b border-purple-200">
+          <h2 className="text-xl font-bold text-gray-900">Edit Subtask</h2>
+          <p className="text-gray-600 mt-1">Update subtask details</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-title">Title</label>
+            <input 
+              id="edit-subtask-title" 
+              name="title" 
+              value={form.title} 
+              onChange={handleChange} 
+              placeholder="Subtask title" 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+              required 
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-description">Description</label>
+            <textarea 
+              id="edit-subtask-description" 
+              name="description" 
+              value={form.description} 
+              onChange={handleChange} 
+              placeholder="Subtask description" 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none" 
+              rows={3}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-dueDate">Due Date</label>
+            <input 
+              id="edit-subtask-dueDate" 
+              name="dueDate" 
+              type="date" 
+              value={form.dueDate} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-status">Status</label>
+            <select 
+              id="edit-subtask-status" 
+              name="status" 
+              value={form.status} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            >
+              <option value={0}>To Do</option>
+              <option value={1}>In Progress</option>
+              <option value={2}>Done</option>
+            </select>
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
           </div>
         </form>
       </div>
@@ -624,7 +833,7 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, p
   });
   const [deadlineError, setDeadlineError] = React.useState('');
   
-  if (!isOpen) return null;
+  if (!isOpen) return <></>;
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -657,61 +866,135 @@ function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, p
       ProjectId: selectedProjectId,
     });
   };
+  
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-      <div className="bg-white p-8 rounded shadow-lg w-full max-w-md">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-title">Title</label>
-          <input id="add-title" name="title" value={form.title} onChange={handleChange} placeholder="Title" className="w-full border p-2 rounded" required />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-description">Description</label>
-          <textarea id="add-description" name="description" value={form.description} onChange={handleChange} placeholder="Description" className="w-full border p-2 rounded" />
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-estimatedDeadline">Estimated Deadline</label>
-          <input 
-            id="add-estimatedDeadline" 
-            name="estimatedDeadline" 
-            type="date" 
-            value={form.estimatedDeadline} 
-            onChange={handleChange} 
-            className={`w-full border p-2 rounded ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
-            min={new Date().toISOString().split('T')[0]}
-            max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
-          />
-          {deadlineError && (
-            <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
-          )}
-          {projectDetails?.Deadline && (
-            <p className="text-gray-500 text-sm mt-1">
-              Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
-            </p>
-          )}
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-priority">Priority</label>
-          <select id="add-priority" name="priority" value={form.priority} onChange={handleChange} className="w-full border p-2 rounded">
-            <option value={0}>Low</option>
-            <option value={1}>Medium</option>
-            <option value={2}>High</option>
-            <option value={3}>Urgent</option>
-          </select>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-createdByUserId">Created By</label>
-          <select id="add-createdByUserId" name="createdByUserId" value={form.createdByUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
-            <option value="">Select a freelancer</option>
-            {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.id} value={freelancer.id}>
-                {freelancer.firstName} {freelancer.lastName}
-              </option>
-            ))}
-          </select>
-          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="add-assignedToUserId">Assigned To</label>
-          <select id="add-assignedToUserId" name="assignedToUserId" value={form.assignedToUserId} onChange={handleChange} className="w-full border p-2 rounded" required>
-            <option value="">Select a freelancer</option>
-            {projectFreelancers.map((freelancer) => (
-              <option key={freelancer.id} value={freelancer.id}>
-                {freelancer.firstName} {freelancer.lastName}
-              </option>
-            ))}
-          </select>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
+        <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-t-2xl p-6 border-b border-green-200">
+          <h2 className="text-xl font-bold text-gray-900">Create New Task</h2>
+          <p className="text-gray-600 mt-1">Add a new task to the project</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-title">Title</label>
+            <input 
+              id="add-title" 
+              name="title" 
+              value={form.title} 
+              onChange={handleChange} 
+              placeholder="Task title" 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+              required 
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-description">Description</label>
+            <textarea 
+              id="add-description" 
+              name="description" 
+              value={form.description} 
+              onChange={handleChange} 
+              placeholder="Task description" 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none" 
+              rows={3}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-estimatedDeadline">Estimated Deadline</label>
+            <input 
+              id="add-estimatedDeadline" 
+              name="estimatedDeadline" 
+              type="date" 
+              value={form.estimatedDeadline} 
+              onChange={handleChange} 
+              className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
+              min={new Date().toISOString().split('T')[0]}
+              max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
+            />
+            {deadlineError && (
+              <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
+            )}
+            {projectDetails?.Deadline && (
+              <p className="text-gray-500 text-sm mt-1">
+                Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-priority">Priority</label>
+            <select 
+              id="add-priority" 
+              name="priority" 
+              value={form.priority} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            >
+              <option value={0}>Low</option>
+              <option value={1}>Medium</option>
+              <option value={2}>High</option>
+              <option value={3}>Urgent</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-createdByUserId">Created By</label>
+            <select 
+              id="add-createdByUserId" 
+              name="createdByUserId" 
+              value={form.createdByUserId} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+              required
+            >
+              <option value="">Select a freelancer</option>
+              {projectFreelancers.map((freelancer) => (
+                <option key={freelancer.id} value={freelancer.id}>
+                  {freelancer.firstName} {freelancer.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-assignedToUserId">Assigned To</label>
+            <select 
+              id="add-assignedToUserId" 
+              name="assignedToUserId" 
+              value={form.assignedToUserId} 
+              onChange={handleChange} 
+              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+              required
+            >
+              <option value="">Select a freelancer</option>
+              {projectFreelancers.map((freelancer) => (
+                <option key={freelancer.id} value={freelancer.id}>
+                  {freelancer.firstName} {freelancer.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+          
           <input type="hidden" name="ProjectId" value={selectedProjectId ?? ''} />
-          <div className="flex justify-end">
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'Adding...' : 'Add Task'}</button>
+          
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors duration-200 font-medium"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Adding...' : 'Add Task'}
+            </button>
           </div>
         </form>
       </div>
@@ -739,7 +1022,6 @@ export function KanbanBoard() {
 
   const [projectDetails, setProjectDetails] = useState<any>(null);
   const [loadingProjectDetails, setLoadingProjectDetails] = useState(false);
-  const [showAITaskGenerator, setShowAITaskGenerator] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -802,10 +1084,9 @@ export function KanbanBoard() {
       setLoadingTasks(true);
       setMessage('');
       try {
-        if (!selectedProjectId) return;
-        const res = await getTasksByProjectId(selectedProjectId);
-        setTasks(res);
-        if (res.length === 0) {
+        const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
+        setTasks(res.data);
+        if (res.data.length === 0) {
           setMessage('No tasks for this project yet.');
         }
       } catch (e) {
@@ -874,19 +1155,15 @@ export function KanbanBoard() {
   // 2. After drag, add, or update, re-fetch only the selected project's tasks
   const fetchProjectTasks = async () => {
     if (!selectedProjectId) return;
-    console.log('🔄 KanbanBoard - fetchProjectTasks called for project:', selectedProjectId);
     setLoadingTasks(true);
     setMessage('');
     try {
-      const res = await getTasksByProjectId(selectedProjectId);
-      console.log('🔄 KanbanBoard - Fetched tasks:', res);
-      console.log('🔄 KanbanBoard - Task count:', res.length);
-      setTasks(res);
-      if (res.length === 0) {
+      const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
+      setTasks(res.data);
+      if (res.data.length === 0) {
         setMessage('No tasks for this project yet.');
       }
     } catch (e) {
-      console.error('🔄 KanbanBoard - Error fetching tasks:', e);
       setMessage('Could not fetch tasks for this project.');
     } finally {
       setLoadingTasks(false);
@@ -1117,247 +1394,265 @@ export function KanbanBoard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Project Tasks</h1>
-          <p className="text-gray-600 mt-1">
-            {user?.role === 'freelancer' 
-              ? 'View and track project tasks' 
-              : 'Monitor and track project progress'
-            }
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          {user?.role === 'freelancer' && (
-            <Button icon={Plus} onClick={handleCreateTaskButton} variant="primary">
-              Create Task
-            </Button>
-          )}
-          {selectedProjectId && (
-            <Button 
-              onClick={() => setShowAITaskGenerator(!showAITaskGenerator)}
-              variant="secondary"
-              className="flex items-center space-x-2"
-            >
-              <Brain className="w-4 h-4" />
-              <span>Generate AI Task Result</span>
-            </Button>
-          )}
-        </div>
-      </div>
-      {(user?.role === 'freelancer' || user?.role === 'client') && (
-        <div className="mb-4">
-          <label className="block mb-2 font-medium">
-            {user?.role === 'freelancer' ? 'Select Project:' : 'Select Your Project:'}
-          </label>
-          {loadingProjects ? (
-            <div>Loading projects...</div>
-          ) : projects.length === 0 ? (
-            <div>{message}</div>
-          ) : (
-            <select
-              className="border rounded p-2"
-              value={selectedProjectId ?? ''}
-              onChange={e => setSelectedProjectId(Number(e.target.value) || null)}
-            >
-              <option value="">-- Select a project --</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.projectTitle && p.projectTitle !== 'na'
-                    ? p.projectTitle
-                    : (p.description && p.description !== 'na'
-                        ? p.description
-                        : (p.projectTitle === 'na' && p.description === 'na' ? 'na' : `Project #${p.id}`))}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-      )}
-      
-      {/* Filters Section */}
-      {selectedProjectId && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Status:</label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="border rounded px-3 py-1 text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="To Do">To Do</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Done">Done</option>
-              </select>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <style>{customStyles}</style>
+      <div className="max-w-7xl mx-auto space-y-8 p-6">
+        {/* Enhanced Header */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
+                Project Tasks
+              </h1>
+              <p className="text-gray-600 mt-2 text-lg">
+                {user?.role === 'freelancer' 
+                  ? 'View and track project tasks' 
+                  : 'Monitor and track project progress'
+                }
+              </p>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700">Freelancer:</label>
-              <select
-                value={selectedFreelancer}
-                onChange={(e) => setSelectedFreelancer(e.target.value)}
-                className="border rounded px-3 py-1 text-sm"
+            {user?.role === 'freelancer' && (
+              <Button 
+                icon={Plus} 
+                onClick={handleCreateTaskButton} 
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                variant="primary"
               >
-                <option value="all">All Freelancers</option>
-                {uniqueFreelancers.map((freelancer) => (
-                  <option key={freelancer} value={freelancer}>
-                    {freelancer}
+                Create Task
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Project Selection */}
+        {(user?.role === 'freelancer' || user?.role === 'client') && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <label className="block mb-3 font-semibold text-gray-700 text-lg">
+              {user?.role === 'freelancer' ? 'Select Project:' : 'Select Your Project:'}
+            </label>
+            {loadingProjects ? (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span>Loading projects...</span>
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="text-gray-500 bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-200">
+                {message}
+              </div>
+            ) : (
+              <select
+                className="w-full lg:w-96 border border-gray-300 rounded-xl p-3 text-gray-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                value={selectedProjectId ?? ''}
+                onChange={e => setSelectedProjectId(Number(e.target.value) || null)}
+              >
+                <option value="">-- Select a project --</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.projectTitle && p.projectTitle !== 'na'
+                      ? p.projectTitle
+                      : (p.description && p.description !== 'na'
+                          ? p.description
+                          : (p.projectTitle === 'na' && p.description === 'na' ? 'na' : `Project #${p.id}`))}
                   </option>
                 ))}
               </select>
-            </div>
-            
-            <button
-              onClick={clearFilters}
-              className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-            >
-              Clear Filters
-            </button>
+            )}
           </div>
-        </div>
-      )}
-      
-
-
-      {/* AI Task Generator Section */}
-      {selectedProjectId && showAITaskGenerator && (
-        <Card className="mb-6">
-          <AITaskGenerator 
-            projectId={selectedProjectId}
-            onTasksGenerated={fetchProjectTasks}
-          />
-        </Card>
-      )}
-
-      {/* Only show Kanban board if a project is selected */}
-      {selectedProjectId ? (
-        loadingTasks ? (
-          <div>Loading tasks...</div>
-        ) : message ? (
-          <div>{message}</div>
+        )}
+        
+        {/* Enhanced Filters Section */}
+        {selectedProjectId && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Filter Tasks</h3>
+            <div className="flex flex-wrap gap-4 items-center">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Status:</label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="all">All Status</option>
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Done">Done</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Freelancer:</label>
+                <select
+                  value={selectedFreelancer}
+                  onChange={(e) => setSelectedFreelancer(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                >
+                  <option value="all">All Freelancers</option>
+                  {uniqueFreelancers.map((freelancer) => (
+                    <option key={freelancer} value={freelancer}>
+                      {freelancer}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Enhanced Kanban Board */}
+        {selectedProjectId ? (
+          loadingTasks ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading tasks...</p>
+            </div>
+          ) : message ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">{message}</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                  <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+                    <KanbanColumn
+                      title="To Do"
+                      status="todo"
+                      tasks={tasksByStatus['To Do']}
+                      onTaskClick={handleTaskClick}
+                      setShowAddTaskModal={setShowAddTaskModal}
+                      subtasks={subtasks}
+                      setEditSubtask={setSelectedSubtask}
+                    />
+                  </div>
+                  <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                    <KanbanColumn
+                      title="In Progress"
+                      status="inprogress"
+                      tasks={tasksByStatus['In Progress']}
+                      onTaskClick={handleTaskClick}
+                      setShowAddTaskModal={setShowAddTaskModal}
+                      subtasks={subtasks}
+                      setEditSubtask={setSelectedSubtask}
+                    />
+                  </div>
+                  <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                    <KanbanColumn
+                      title="Done"
+                      status="done"
+                      tasks={tasksByStatus['Done']}
+                      onTaskClick={handleTaskClick}
+                      setShowAddTaskModal={setShowAddTaskModal}
+                      subtasks={subtasks}
+                      setEditSubtask={setSelectedSubtask}
+                    />
+                  </div>
+                </div>
+              </DndContext>
+            </div>
+          )
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <KanbanColumn
-                title="To Do"
-                status="todo"
-                tasks={tasksByStatus['To Do']}
-                onTaskClick={handleTaskClick}
-                setShowAddTaskModal={setShowAddTaskModal}
-                subtasks={subtasks}
-                setEditSubtask={setSelectedSubtask}
-              />
-              <KanbanColumn
-                title="In Progress"
-                status="inprogress"
-                tasks={tasksByStatus['In Progress']}
-                onTaskClick={handleTaskClick}
-                setShowAddTaskModal={setShowAddTaskModal}
-                subtasks={subtasks}
-                setEditSubtask={setSelectedSubtask}
-              />
-              <KanbanColumn
-                title="Done"
-                status="done"
-                tasks={tasksByStatus['Done']}
-                onTaskClick={handleTaskClick}
-                setShowAddTaskModal={setShowAddTaskModal}
-                subtasks={subtasks}
-                setEditSubtask={setSelectedSubtask}
-              />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="mb-4">
+              <Clock className="w-16 h-16 text-gray-300 mx-auto" />
             </div>
-          </DndContext>
-        )
-      ) : (
-        <div className="text-center text-gray-500 py-12">Please select a project to view its tasks.</div>
-      )}
-      {/* Summary Stats */}
-      <Card>
-        <div className="border-b p-4">
-          <div className="font-semibold text-lg">Task Summary</div>
-          <div className="text-gray-500 text-sm">Overview of all project tasks</div>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-gray-900">{filteredTasks.length}</div>
-              <div className="text-sm text-gray-600">Total Tasks</div>
-            </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{tasksByStatus['In Progress'].length}</div>
-              <div className="text-sm text-blue-700">In Progress</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{tasksByStatus['Done'].length}</div>
-              <div className="text-sm text-green-700">Completed</div>
-            </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">{filteredTasks.filter(t => t.Priority === KanbanTaskPriorityLevel.Urgent || t.Priority === KanbanTaskPriorityLevel.High).length}</div>
-              <div className="text-sm text-yellow-700">High Priority</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Select a Project</h3>
+            <p className="text-gray-500">Please select a project to view its tasks.</p>
+          </div>
+        )}
+
+        {/* Enhanced Summary Stats */}
+        <Card className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-blue-50/50 border-b border-gray-200 p-6">
+            <div className="font-bold text-xl text-gray-900">Task Summary</div>
+            <div className="text-gray-600">Overview of all project tasks</div>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="text-center p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                <div className="text-3xl font-bold text-gray-900 mb-2">{filteredTasks.length}</div>
+                <div className="text-sm font-medium text-gray-600">Total Tasks</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                <div className="text-3xl font-bold text-blue-600 mb-2">{tasksByStatus['In Progress'].length}</div>
+                <div className="text-sm font-medium text-blue-700">In Progress</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                <div className="text-3xl font-bold text-green-600 mb-2">{tasksByStatus['Done'].length}</div>
+                <div className="text-sm font-medium text-green-700">Completed</div>
+              </div>
+              <div className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl border border-yellow-200">
+                <div className="text-3xl font-bold text-yellow-600 mb-2">
+                  {filteredTasks.filter(t => t.Priority === KanbanTaskPriorityLevel.Urgent || t.Priority === KanbanTaskPriorityLevel.High).length}
+                </div>
+                <div className="text-sm font-medium text-yellow-700">High Priority</div>
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
-      
-      {/* No tasks found */}
-      {filteredTasks.length === 0 && (
-        <div className="text-center py-12">
-          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
-          <p className="text-gray-600">
-            {user?.role === 'freelancer' 
-              ? 'Tasks will appear here when you create them.' 
-              : 'Tasks will appear here when freelancers create them.'
-            }
-          </p>
-        </div>
-      )}
-      
-      {/* Task Detail Modal */}
-      {showTaskModal && selectedTask ? (
-        <EditTaskModal
-          isOpen={showTaskModal}
-          onClose={() => setShowTaskModal(false)}
-          task={selectedTask}
-          onUpdate={handleEditTask}
-          onDelete={handleDeleteTask}
-          loading={formLoading}
-          projectFreelancers={getProjectFreelancers()}
-          projectDetails={projectDetails}
-          validateTaskDeadline={validateTaskDeadline}
-        />
-      ) : null}
-      
-      {/* Add Task Modal */}
-      <AddTaskModal
-        isOpen={showAddTaskModal}
-        onClose={() => setShowAddTaskModal(false)}
-        onSubmit={handleAddTask}
-        loading={formLoading}
-        selectedProjectId={selectedProjectId}
-        projectFreelancers={getProjectFreelancers()}
-        projectDetails={projectDetails}
-        validateTaskDeadline={validateTaskDeadline}
-      />
-      
-      {/* Edit Subtask Modal */}
-      {selectedSubtask && (
-        <EditSubtaskModal
-          isOpen={!!selectedSubtask}
-          onClose={() => setSelectedSubtask(null)}
-          onSubmit={handleEditSubtask}
-          loading={formLoading}
-          subtask={selectedSubtask}
-        />
-      )}
+        </Card>
+
+        {/* Enhanced No tasks found */}
+        {filteredTasks.length === 0 && selectedProjectId && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No tasks found</h3>
+            <p className="text-gray-600">
+              {user?.role === 'freelancer' 
+                ? 'Tasks will appear here when you create them.' 
+                : 'Tasks will appear here when freelancers create them.'
+              }
+            </p>
+          </div>
+        )}
+
+        {/* Modals */}
+        {showTaskModal && selectedTask && (
+          <EditTaskModal
+            isOpen={showTaskModal}
+            onClose={() => setShowTaskModal(false)}
+            task={selectedTask}
+            onUpdate={handleEditTask}
+            onDelete={handleDeleteTask}
+            loading={formLoading}
+            projectFreelancers={getProjectFreelancers()}
+            projectDetails={projectDetails}
+            validateTaskDeadline={validateTaskDeadline}
+          />
+        )}
+        
+        {showAddTaskModal && (
+          <AddTaskModal
+            isOpen={showAddTaskModal}
+            onClose={() => setShowAddTaskModal(false)}
+            onSubmit={handleAddTask}
+            loading={formLoading}
+            selectedProjectId={selectedProjectId}
+            projectFreelancers={getProjectFreelancers()}
+            projectDetails={projectDetails}
+            validateTaskDeadline={validateTaskDeadline}
+          />
+        )}
+        
+        {selectedSubtask && (
+          <EditSubtaskModal
+            isOpen={!!selectedSubtask}
+            onClose={() => setSelectedSubtask(null)}
+            onSubmit={handleEditSubtask}
+            loading={formLoading}
+            subtask={selectedSubtask}
+          />
+        )}
       </div>
     </div>
   );

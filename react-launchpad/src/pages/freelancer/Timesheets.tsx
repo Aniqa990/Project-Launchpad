@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getFreelancerProjects, createTimesheet, getTimesheets } from '../../apiendpoints';
-import { Play, Square, Clock, Filter, Calendar } from 'lucide-react';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { getFreelancerProjects, createTimesheet, getTimesheets, getFreelancerById } from '../../apiendpoints';
+import { 
+  Play, 
+  Square, 
+  Clock, 
+  Filter, 
+  Calendar, 
+  Plus, 
+  DollarSign, 
+  CheckCircle, 
+  AlertCircle, 
+  XCircle,
+  TrendingUp,
+  CalendarDays,
+  Timer,
+  FileText,
+  Users,
+  Target,
+  Zap
+} from 'lucide-react';
 
 interface Project {
   id: number;
@@ -130,7 +147,8 @@ const FreelancerTimesheets: React.FC = () => {
           }))
         );
       } catch (error) {
-        handleError(error, 'fetchProjects');
+        console.error('Error fetching projects:', error);
+        setError('Failed to fetch projects');
         setProjects([]);
       } finally {
         setProjectsLoading(false);
@@ -211,7 +229,8 @@ const FreelancerTimesheets: React.FC = () => {
         // Filter timesheets for this freelancer
         setTimesheets(data.filter((t: any) => t.FreelancerId === user.id));
       } catch (error) {
-        handleError(error, 'fetchTimesheets');
+        console.error('Error fetching timesheets:', error);
+        setError('Failed to fetch timesheets');
         setTimesheets([]);
       } finally {
         setLoading(false);
@@ -288,9 +307,9 @@ const FreelancerTimesheets: React.FC = () => {
         // Refresh timesheets
         const data = await getTimesheets();
         setTimesheets(data.filter((t: any) => t.FreelancerId === user.id));
-        showSuccessToast('Timesheet submitted successfully');
+        setError(''); // Clear any previous errors
       } catch (e) {
-        handleError(e, 'submitTimesheet');
+        console.error('Error submitting timesheet:', e);
         setError('Failed to submit timesheet.');
       } finally {
         setSubmitting(false);
