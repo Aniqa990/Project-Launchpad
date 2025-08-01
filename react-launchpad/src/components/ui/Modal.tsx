@@ -27,22 +27,24 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     sm: 'max-w-md',
     md: 'max-w-lg',
     lg: 'max-w-2xl',
-    xl: 'max-w-4xl'
+    xl: 'max-w-5xl'
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75">
-      <div className={`relative bg-white rounded-lg shadow-xl w-full mx-4 p-6 ${sizeClasses[size]}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-75 p-4">
+      <div className={`relative bg-white rounded-lg shadow-xl w-full max-h-[90vh] flex flex-col ${sizeClasses[size]}`}>
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
         >
           <X className="w-6 h-6" />
         </button>
-        {title && (
-          <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
-        )}
-        <div>
+        <div className="p-6 pb-4">
+          {title && (
+            <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
+          )}
+        </div>
+        <div className="flex-1 overflow-hidden px-6 pb-6">
           {children}
         </div>
       </div>
