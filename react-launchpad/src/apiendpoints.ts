@@ -4,7 +4,7 @@ import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst";
 import { handleError, getErrorType, ErrorType } from "@/utils/errorHandler";
 
 const api = axios.create({
-  baseURL: "http://localhost:7053/api",
+  baseURL: "http://localhost:7071/api",
   headers: {
     "Content-Type": "application/json",
   },

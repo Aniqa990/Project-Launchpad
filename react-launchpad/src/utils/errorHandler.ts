@@ -62,6 +62,9 @@ const OPERATION_ERROR_MESSAGES = {
   updateProject: 'Failed to update project. Please try again.',
   deleteProject: 'Failed to delete project. Please try again.',
   fetchProjects: 'Failed to load projects. Please refresh the page.',
+  updateStartDate: 'Failed to update start date. Please try again.',
+  fetchProjectDetails: 'Failed to load project details. Please try again.',
+  validationError: 'Please fix the validation errors before proceeding.',
   
   // Milestones
   createMilestone: 'Failed to create milestone. Please try again.',

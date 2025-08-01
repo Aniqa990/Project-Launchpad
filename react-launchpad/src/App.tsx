@@ -30,7 +30,6 @@ import { MilestonePayments } from './pages/platform/Payments';
 import { AdminViewProjects } from './pages/platform/ViewProjects';
 import { AdminProjectApprovals } from './pages/platform/Projects';
 import { PlatformSettings } from './pages/platform/Settings';
-import { ProjectWorkspace } from './components/workspace/ProjectWorkspace';
 import ForgotPasswordPage from './pages/ForgotPassword';
 import TimesheetApproval from './pages/client/TimesheetApproval';
 import Meetings from './pages/client/MeetingRoom';
@@ -178,13 +177,6 @@ const AppRoutes = () => {
         <Route path="settings" element={<PlatformSettings />} />
       </Route>
 
-      <Route path="/workspace/:projectId" element={
-        <ProtectedRoute>
-          <AppShell />
-        </ProtectedRoute>
-      }>
-        <Route path="" element={<ProjectWorkspace />} />
-      </Route>
 
       {/* Redirect authenticated users */}
       <Route path="*" element={

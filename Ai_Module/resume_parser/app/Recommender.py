@@ -91,12 +91,19 @@ def recommend_freelancers(project_summary, collection_list, top_n=10):
     top_freelancers = []
     for res in reranked[:top_n]:
         meta = res["meta"]
+        
+        # Filter out freelancers who are not available
+        availability = meta.get("availability")
+        if availability != "Available":
+            continue
+            
         top_freelancers.append({
             "name": meta.get("name"),
             "skills": meta.get("skills", []),
             "summary": meta.get("summary"),
             "freelancer_id": meta.get("freelancer_id", "Unknown"),
-            "score": res["score"]
+            "score": res["score"],
+            "availability": availability
         })
     return top_freelancers
 

@@ -5,7 +5,7 @@ export interface User {
   email?: string;
   password?: string;
   newPassword?: string;
-  phone: string;
+  phoneNo: string;
   profilePicture?: string;
   role?: string;
   gender: string;

@@ -84,7 +84,8 @@ async def suggest_freelancers(
             {
                 "summary": r.get("summary"),
                 "freelancer_id": r.get("freelancer_id"),
-                "skills": r.get("skills", [])
+                "skills": r.get("skills", []),
+                "availability": r.get("availability")
             }
             for r in results
         ]
