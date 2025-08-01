@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Clock, DollarSign, Download, User, Calendar, Upload, FileText, AlertCircle, Send } from 'lucide-react';
-import { getMilestonesByHandoverStatus, updateHandoverStatus } from '../../apiendpoints';
+import { CheckCircle, Clock, DollarSign, Download, User, Calendar, Upload, FileText, AlertCircle, Send, CreditCard } from 'lucide-react';
+import { getMilestonesWithPaymentInfo, updateHandoverStatus, adminReleasePaymentAndApproveMilestone, releasePayment, getPaymentByMilestone } from '../../apiendpoints';
 import type { MilestoneWithPayment } from '../../types';
 import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
@@ -8,11 +8,13 @@ export function MilestonePayments() {
   const [milestones, setMilestones] = useState<MilestoneWithPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [releasingPaymentId, setReleasingPaymentId] = useState<number | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    getMilestonesByHandoverStatus('pending')
-      .then((data) => {
+    getMilestonesWithPaymentInfo('pending')
+      .then((data: any[]) => {
+        console.log('Raw milestones data:', data);
         // Ensure submittedFileUrls is always an array
         const normalized = data.map((m: any) => ({
           ...m,
@@ -22,9 +24,10 @@ export function MilestonePayments() {
               ? m.submittedFileUrls.split(',').map((s: string) => s.trim())
               : [],
         }));
+        console.log('Normalized milestones:', normalized);
         setMilestones(normalized);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         handleError(err, 'fetchMilestones');
         setError('Failed to fetch milestones');
       })
@@ -33,12 +36,74 @@ export function MilestonePayments() {
 
   const handleReleasePaymentAndHandover = async (milestoneId: number) => {
     try {
+      // Find the milestone to get its payment ID
+      const milestone = milestones.find(m => m.id === milestoneId);
+      
       await updateHandoverStatus(milestoneId, 'completed');
-      setMilestones((prev) => prev.filter((m) => Number(m.id) !== milestoneId));
+      
+      // Get all payments for this milestone and release them
+      if (milestone?.paymentId) {
+        try {
+          // Release the main payment
+          await releasePayment(milestone.paymentId);
+          
+          // Also try to get all payments for this milestone and release them
+          // This handles cases where multiple freelancers are assigned to the same milestone
+          const allPayments = await getPaymentByMilestone(milestoneId);
+          if (allPayments && Array.isArray(allPayments)) {
+            for (const payment of allPayments) {
+              if (payment.id && payment.paymentStatus !== 'released') {
+                try {
+                  await releasePayment(payment.id);
+                } catch (paymentErr: any) {
+                  console.error(`Failed to release payment ${payment.id}:`, paymentErr);
+                }
+              }
+            }
+          }
+        } catch (paymentErr: any) {
+          console.error('Failed to release payment:', paymentErr);
+          // Don't fail the entire operation if payment release fails
+        }
+      }
+      
+      // Update the milestone in the local state to reflect both handover and payment status changes
+      setMilestones((prev) => prev.map((m) => 
+        m.id === milestoneId 
+          ? { ...m, handoverStatus: 'completed', paymentStatus: 'released' }
+          : m
+      ));
+      
       showSuccessToast('Milestone released and handed over successfully');
     } catch (err: any) {
       handleError(err, 'updateHandoverStatus');
       setError('Failed to update handover status');
+    }
+  };
+
+  const handleReleasePaymentAndApproveMilestone = async (milestoneId: number, paymentId?: number) => {
+    try {
+      if (!paymentId) {
+        setError('Payment ID not found for this milestone');
+        return;
+      }
+      
+      setReleasingPaymentId(paymentId);
+      await adminReleasePaymentAndApproveMilestone(paymentId);
+      
+      // Update the milestone in the local state
+      setMilestones((prev) => prev.map((m) => 
+        m.id === milestoneId 
+          ? { ...m, paymentStatus: 'released', isApproved: true }
+          : m
+      ));
+      
+      showSuccessToast('Payment released and milestone approved successfully');
+    } catch (err: any) {
+      handleError(err, 'adminReleasePaymentAndApproveMilestone');
+      setError('Failed to release payment and approve milestone');
+    } finally {
+      setReleasingPaymentId(null);
     }
   };
 
@@ -67,10 +132,11 @@ export function MilestonePayments() {
   };
 
   const getPaymentStatusColor = (status?: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'pending': return 'bg-orange-100 text-orange-800';
       case 'processing': return 'bg-blue-100 text-blue-800';
       case 'paid': return 'bg-green-100 text-green-800';
+      case 'released': return 'bg-purple-100 text-purple-800';
       case 'failed': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -105,8 +171,9 @@ export function MilestonePayments() {
                   <span>{milestone.isApproved ? 'Client Approved' : 'Client Pending Review'}</span>
                 </span>
                 {milestone.paymentStatus && (
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(milestone.paymentStatus)}`}>
-                    Payment: {milestone.paymentStatus}
+                  <span className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(milestone.paymentStatus)}`}>
+                    <CreditCard className="w-3 h-3" />
+                    <span>Payment: {milestone.paymentStatus}</span>
                   </span>
                 )}
               </div>
@@ -168,14 +235,33 @@ export function MilestonePayments() {
                 </div>
               </div>
             )}
-            <div className="flex items-center justify-end">
-              <button
-                onClick={() => handleReleasePaymentAndHandover(milestone.id)}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Send className="w-4 h-4" />
-                <span>Release & Handover</span>
-              </button>
+            <div className="flex items-center justify-end space-x-2">
+              {/* Show Release & Approve button only when payment is paid but not released */}
+              {milestone.paymentStatus?.toLowerCase() === 'paid' && (
+                <button
+                  onClick={() => handleReleasePaymentAndApproveMilestone(milestone.id, milestone.paymentId)}
+                  disabled={releasingPaymentId === milestone.paymentId}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    releasingPaymentId === milestone.paymentId
+                      ? 'bg-blue-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white`}
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>{releasingPaymentId === milestone.paymentId ? 'Releasing...' : 'Release & Approve'}</span>
+                </button>
+              )}
+              
+              {/* Show Release & Handover button for other cases */}
+              {milestone.paymentStatus?.toLowerCase() !== 'paid' && (
+                <button
+                  onClick={() => handleReleasePaymentAndHandover(milestone.id)}
+                  className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Release & Handover</span>
+                </button>
+              )}
             </div>
           </div>
         ))}

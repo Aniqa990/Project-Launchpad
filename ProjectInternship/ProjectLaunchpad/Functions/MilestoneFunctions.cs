@@ -242,9 +242,9 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> GetMilestonesWithPaymentByHandoverStatusAsync(
     [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "platform/milestones/handover/{status}")] HttpRequestData req, string status)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+            //(bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
+            //if (!isAuthorized)
+            //    return unauthorizedResponse!;
 
             var result = await _unitOfWork.MilestoneRepository.GetMilestonesByHandoverStatusAsync(status);
 
@@ -257,9 +257,9 @@ namespace ProjectLaunchpad.Functions
         public async Task<HttpResponseData> UpdateHandoverStatusAsync(
             [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "platform/handover/{id:int}")] HttpRequestData req, int id)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+            //(bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "admin");
+            //if (!isAuthorized)
+            //    return unauthorizedResponse!;
             var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(id);
             if (milestone == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
@@ -281,9 +281,9 @@ namespace ProjectLaunchpad.Functions
     int milestoneId,
     int userId)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+            //(bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            //if (!isAuthorized)
+            //    return unauthorizedResponse!;
 
             var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(milestoneId);
             if (milestone == null)
@@ -302,9 +302,9 @@ namespace ProjectLaunchpad.Functions
     [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "milestones/freelancer/{userId:int}")] HttpRequestData req,
     int userId)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer", "client", "admin");
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+            //(bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "freelancer", "client", "admin");
+            //if (!isAuthorized)
+            //    return unauthorizedResponse!;
 
             var milestones = await _unitOfWork.MilestoneRepository.GetMilestonesByFreelancerIdAsync(userId);
             if (milestones == null || !milestones.Any())
@@ -321,9 +321,9 @@ namespace ProjectLaunchpad.Functions
     int milestoneId,
     int userId)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+            //(bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            //if (!isAuthorized)
+            //    return unauthorizedResponse!;
 
             await _unitOfWork.MilestoneRepository.UnassignMilestoneFromFreelancerAsync(milestoneId, userId);
             await _unitOfWork.SaveAsync();
@@ -333,13 +333,13 @@ namespace ProjectLaunchpad.Functions
 
         [Function("GetMilestoneFreelancers")]
         public async Task<HttpResponseData> GetMilestoneFreelancersAsync(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "milestones/{milestoneId:int}/freelancers")] HttpRequestData req, int milestoneID)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "milestones/{milestoneId:int}/freelancers")] HttpRequestData req, int milestoneId)
         {
-            (bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
-            if (!isAuthorized)
-                return unauthorizedResponse!;
+            //(bool isAuthorized, ClaimsPrincipal? user, HttpResponseData? unauthorizedResponse) = await _auth.AuthorizeAsync(req, "client");
+            //if (!isAuthorized)
+            //    return unauthorizedResponse!;
 
-            var freelancers = await _unitOfWork.MilestoneRepository.getMilestoneFreelancers(milestoneID);
+            var freelancers = await _unitOfWork.MilestoneRepository.getMilestoneFreelancers(milestoneId);
             if (freelancers == null || !freelancers.Any())
                 return req.CreateResponse(HttpStatusCode.NotFound);
 

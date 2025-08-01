@@ -404,6 +404,60 @@ namespace ProjectLaunchpad.Functions
             }
         }
 
+        [Function("AdminReleasePaymentAndApproveMilestone")]
+        public async Task<HttpResponseData> AdminReleasePaymentAndApproveMilestone(
+    [HttpTrigger(AuthorizationLevel.Function, "post", Route = "payments/admin-release/{paymentId:int}")] HttpRequestData req,
+    int paymentId)
+        {
+            var response = req.CreateResponse();
+
+            try
+            {
+                // Fetch payment by ID
+                var payment = await _unitOfWork.PaymentRepository.GetPaymentByIdAsync(paymentId);
+                if (payment == null)
+                {
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    await response.WriteStringAsync("Payment not found.");
+                    return response;
+                }
+
+                if (payment.PaymentStatus == "Released")
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    await response.WriteStringAsync("Payment is already released.");
+                    return response;
+                }
+
+                // Release payment
+                payment.PaymentStatus = "Released";
+                await _unitOfWork.PaymentRepository.UpdateAsync(payment);
+
+                // Check if it's a milestone payment and update milestone status
+                if (payment.PaymentType == "Milestone" && payment.MilestoneId.HasValue)
+                {
+                    var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(payment.MilestoneId.Value);
+                    if (milestone != null)
+                    {
+                        await _unitOfWork.MilestoneRepository.UpdateHandoverStatusAsync(payment.MilestoneId.Value, "Approved");
+                    }
+                }
+
+                await _unitOfWork.SaveAsync();
+
+                response.StatusCode = HttpStatusCode.OK;
+                await response.WriteStringAsync("Payment released and milestone approved (if applicable).");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                await response.WriteStringAsync($"Error: {ex.Message}");
+                return response;
+            }
+        }
+
+
 
 
 

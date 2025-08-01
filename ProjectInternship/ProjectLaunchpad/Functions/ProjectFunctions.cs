@@ -529,5 +529,93 @@ namespace ProjectLaunchpad.Functions
             await response.WriteAsJsonAsync(projectDTOs);
             return response;
         }
+
+        [Function("GetProjectClosureSummary")]
+        public async Task<HttpResponseData> GetProjectClosureSummary(
+      [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "projects/{projectId:int}/closure-summary")] HttpRequestData req,
+      int projectId)
+        {
+            var project = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(projectId);
+            if (project == null)
+                return req.CreateResponse(HttpStatusCode.NotFound);
+
+            // Project-level freelancers
+            var projectFreelancers = await _unitOfWork.ProjectFreelancers.GetFreelancersByProjectAsync(projectId);
+
+            // Milestones for the project
+            var milestones = await _unitOfWork.MilestoneRepository.GetMilestonesByProjectIdAsync(projectId);
+
+            var milestoneDetails = new List<object>();
+            foreach (var milestone in milestones)
+            {
+                // Deliverables under this milestone
+                var deliverables = await _unitOfWork.DeliverablesRepository.GetByMilestoneIdAsync(milestone.Id);
+
+                // Freelancers working on this milestone
+                var milestoneFreelancers = await _unitOfWork.MilestoneRepository.getMilestoneFreelancers(milestone.Id);
+
+                // Payments associated with this milestone
+                var payments = await _unitOfWork.PaymentRepository.GetPaymentsByMilestoneIdAsync(milestone.Id);
+
+                milestoneDetails.Add(new
+                {
+                    milestone.Id,
+                    milestone.Title,
+                    milestone.Status,
+                    milestone.DueDate,
+                    milestone.Amount,
+                    Deliverables = deliverables.Select(d => new
+                    {
+                        d.Id,
+                        d.uploadFiles,
+                        d.comment,
+                        d.Status
+                    }),
+                    AssignedFreelancers = milestoneFreelancers.Select(f => new
+                    {
+                        f.FreelancerId,
+                        f.FirstName,
+                        f.LastName
+                    }),
+                    Payments = payments.Select(p => new
+                    {
+                        p.Id,
+                        p.FreelancerId,
+                        p.Amount,
+                        p.PaymentDate,
+                        p.PaymentStatus
+                    })
+                });
+            }
+
+            var responseObject = new
+            {
+                Project = new
+                {
+                    project.Id,
+                    project.ProjectTitle,
+                    project.Status,
+                    project.StartDate,
+                    project.Deadline,
+                    project.PaymentType,
+                    project.CategoryOrDomain,
+                    project.ApprovalStatus,
+                    Freelancers = projectFreelancers.Select(f => new
+                    {
+                        f.Id,
+                        f.FirstName,
+                        f.LastName,
+                        f.Email
+                    })
+                },
+                Milestones = milestoneDetails
+            };
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(responseObject);
+            return response;
+        }
+
+
     }
 }

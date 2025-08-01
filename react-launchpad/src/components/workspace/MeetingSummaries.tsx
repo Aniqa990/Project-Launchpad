@@ -34,7 +34,7 @@ import toast from 'react-hot-toast';
 import { useConversation } from '@elevenlabs/react';
 
 interface MeetingSummary {
-  id: number;
+  id: number; 
   freelancerId: number;
   projectId: number;
   freelancerName: string;

@@ -22,9 +22,14 @@ import { MultiFreelancerPaymentModal } from './MultiFreelancerPaymentModal';
 import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers } from '../../apiendpoints';
 import PaymentForm from './PaymentForm'; // Added import for PaymentForm
 import { validatePaymentData, formatPaymentAmount, calculatePlatformFee, calculateFreelancerAmount, getPaymentStatusColor, formatPaymentDate } from '../../utils/paymentHelpers';
+import { useAuth } from '../../contexts/AuthContext'; // Add auth context import
 // REMOVE: import StripeWrapper from './StripeWrapper';
 
 export function ClientPayments() {
+  // Get clientId from auth context
+  const { user } = useAuth();
+  const clientId = user?.id || 5; // Use auth context instead of hardcoding
+
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'notStarted' |'inProgress' | 'completed'>('all');
@@ -42,16 +47,36 @@ export function ClientPayments() {
   const [showMultiFreelancerModal, setShowMultiFreelancerModal] = useState(false);
   const [selectedMilestoneForMultiPayment, setSelectedMilestoneForMultiPayment] = useState<any>(null);
 
-  // Hardcoded clientId for now; replace with auth context if available
-  const clientId = 1;
-
   useEffect(() => {
     // Fetch projects for the current client
     const fetchProjects = async () => {
       try {
         setLoading(true);
         const data = await getClientProjects(clientId);
-        setProjects(data);
+        
+        // Transform project data to handle both PascalCase and camelCase
+        const transformedProjects = data.map((project: any) => ({
+          Id: project.Id || project.id,
+          ProjectTitle: project.ProjectTitle || project.projectTitle,
+          Description: project.Description || project.description,
+          Status: project.Status || project.status,
+          Budget: project.Budget || project.budget,
+          StartDate: project.StartDate || project.startDate,
+          Deadline: project.Deadline || project.deadline,
+          ClientId: project.ClientId || project.clientId,
+          CategoryOrDomain: project.CategoryOrDomain || project.categoryOrDomain,
+          PaymentType: project.PaymentType || project.paymentType,
+          NumberOfFreelancers: project.NumberOfFreelancers || project.numberOfFreelancers,
+          AttachedDocumentPath: project.AttachedDocumentPath || project.attachedDocumentPath,
+          Client: project.Client || project.client,
+          RequiredSkills: project.RequiredSkills || project.requiredSkills,
+          Team: project.Team || project.team || [],
+          Progress: project.Progress || project.progress,
+          ApprovalStatus: project.ApprovalStatus || project.approvalStatus,
+          RejectionReason: project.RejectionReason || project.rejectionReason
+        }));
+        
+        setProjects(transformedProjects);
       } catch (err) {
         handleError(err, 'fetchProjects');
       } finally {
@@ -59,7 +84,31 @@ export function ClientPayments() {
       }
     };
     fetchProjects();
-  }, []);
+  }, [clientId, user]); // Add clientId and user to dependencies
+
+  // Set default project when projects are loaded (only on initial load)
+  useEffect(() => {
+    if (projects.length > 0 && selectedProjectId === 'all') {
+      const firstProject = projects.find(project => project && (project.Id || project.id));
+      if (firstProject) {
+        const projectId = firstProject.Id || firstProject.id;
+        const projectTitle = firstProject.ProjectTitle || firstProject.projectTitle;
+        if (projectId) {
+          console.log('Auto-selecting project:', projectId, projectTitle);
+          setSelectedProjectId(projectId.toString());
+        } else {
+          console.log('Project found but no valid ID:', firstProject);
+        }
+      } else {
+        console.log('No valid projects found:', projects);
+      }
+    } else if (projects.length === 0 && selectedProjectId === 'all') {
+      console.log('No projects found for client. This could mean:');
+      console.log('1. Client has no projects');
+      console.log('2. API call failed');
+      console.log('3. Client ID is incorrect');
+    }
+  }, [projects]); // Only depend on projects, not selectedProjectId
 
   useEffect(() => {
     // Fetch payments for the current client
@@ -351,17 +400,29 @@ export function ClientPayments() {
   // Handle milestone payment (single or multi-freelancer)
   const handleMilestonePayment = async (milestone: any) => {
     try {
+      console.log('Pay Now clicked for milestone:', milestone);
       const hasMultipleFreelancers = await checkMilestoneFreelancers(milestone);
+      console.log('Has multiple freelancers:', hasMultipleFreelancers);
       
       if (hasMultipleFreelancers) {
         // Show multi-freelancer payment modal
+        console.log('Opening multi-freelancer modal');
         setSelectedMilestoneForMultiPayment(milestone);
         setShowMultiFreelancerModal(true);
       } else {
-        // Use existing single freelancer logic
-        await handleStripeCheckout(milestone);
+        // Open InvoicePage for single freelancer
+        console.log('Opening InvoicePage for single freelancer');
+        setPayingMilestone({
+          Title: milestone.Title || milestone.title,
+          ProjectId: milestone.ProjectId || milestone.projectId,
+          Amount: milestone.Amount || milestone.amount,
+          PaymentType: 'Milestone',
+          MilestoneId: milestone.Id || milestone.id
+        });
+        setShowInvoiceModal(true);
       }
     } catch (error) {
+      console.error('Error in handleMilestonePayment:', error);
       handleError(error, 'processPayment');
     }
   };
@@ -480,6 +541,10 @@ export function ClientPayments() {
       {/* Filters */}
       <Card className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+          {/* Debug info */}
+          <div className="text-xs text-gray-500">
+            Projects: {projects.length} | Selected: {selectedProjectId}
+          </div>
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -496,11 +561,15 @@ export function ClientPayments() {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Projects</option>
-            {projects.map((project: any) => (
-              <option key={project.Id || project.id} value={project.Id || project.id}>
-                {project.ProjectTitle || project.projectTitle || project.Title || project.title || `Project #${project.Id || project.id}`}
-              </option>
-            ))}
+            {projects.filter(project => project && (project.Id || project.id)).map((project: any) => {
+              const projectId = project.Id || project.id;
+              const projectTitle = project.ProjectTitle || project.projectTitle;
+              return projectId ? (
+                <option key={projectId} value={projectId.toString()}>
+                  {projectTitle || 'Untitled Project'}
+                </option>
+              ) : null;
+            })}
           </select>
           {viewMode === 'payments' && (
             <select
@@ -899,36 +968,30 @@ export function ClientPayments() {
           </div>
         )}
       </Modal>
-      {/* Invoice Modal for Pay Now */}
-      <Modal
-        isOpen={showInvoiceModal}
-        onClose={() => setShowInvoiceModal(false)}
-        title="Invoice"
-        size="md"
-      >
-        {payingMilestone && (
-          <div className="space-y-6">
-            <InvoicePage
-              invoiceData={{
-                milestoneTitle: payingMilestone.Title || payingMilestone.title,
-                projectTitle: projects.find(p => (p.Id || p.id) === (payingMilestone.ProjectId || payingMilestone.projectId))?.Title || '',
-                projectId: payingMilestone.ProjectId || payingMilestone.projectId,
-                amount: payingMilestone.Amount || payingMilestone.amount,
-                paymentType: payingMilestone.PaymentType || 'Milestone',
-                // Add more fields as needed
-              }}
-              onPayNow={(data) => {
-                if (payingMilestone.PaymentType === 'Fixed') {
-                  handleFixedProjectPaymentWithFreelancer(payingMilestone, data.selectedFreelancerId);
-                } else {
-                  handleStripeCheckoutWithFreelancer(payingMilestone, data.selectedFreelancerId);
-                }
-              }}
-              onClose={() => setShowInvoiceModal(false)}
-            />
-          </div>
-        )}
-      </Modal>
+             {/* Invoice Modal for Pay Now */}
+             {showInvoiceModal && payingMilestone && (
+               <InvoicePage
+                 invoiceData={{
+                   milestoneTitle: payingMilestone.Title || payingMilestone.title,
+                   projectTitle: projects.find(p => (p.Id || p.id) === (payingMilestone.ProjectId || payingMilestone.projectId))?.ProjectTitle || projects.find(p => (p.Id || p.id) === (payingMilestone.ProjectId || payingMilestone.projectId))?.projectTitle || '',
+                   projectId: payingMilestone.ProjectId || payingMilestone.projectId,
+                   amount: payingMilestone.Amount || payingMilestone.amount,
+                   paymentType: payingMilestone.PaymentType || 'Milestone',
+                   milestoneId: payingMilestone.MilestoneId || payingMilestone.Id || payingMilestone.id,
+                   // Add more fields as needed
+                 }}
+                 onPayNow={(data) => {
+                   console.log('InvoicePage onPayNow called with data:', data);
+                   if (payingMilestone.PaymentType === 'Fixed') {
+                     handleFixedProjectPaymentWithFreelancer(payingMilestone, data.selectedFreelancerId);
+                   } else {
+                     handleStripeCheckoutWithFreelancer(payingMilestone, data.selectedFreelancerId);
+                   }
+                   setShowInvoiceModal(false);
+                 }}
+                 onClose={() => setShowInvoiceModal(false)}
+               />
+             )}
 
       {/* Multi-Freelancer Payment Modal */}
       {showMultiFreelancerModal && selectedMilestoneForMultiPayment && (
