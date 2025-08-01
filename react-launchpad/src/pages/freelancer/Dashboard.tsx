@@ -19,7 +19,7 @@ import {
   CheckCircle,
   TrendingUp
 } from 'lucide-react';
-import { handleError } from '@/utils/errorHandler';
+import { handleApiError } from '@/utils/errorHandler';
 
 export function FreelancerDashboard() {
   const navigate = useNavigate();
@@ -117,7 +117,7 @@ export function FreelancerDashboard() {
       });
 
     } catch (error) {
-      handleError(error, 'fetchDashboardData');
+      handleApiError(error, 'fetchDashboardData');
     } finally {
       setLoading(false);
     }

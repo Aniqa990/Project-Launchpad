@@ -9,7 +9,7 @@ import {
   Search, 
   MoreVertical,
   Paperclip,
-  Trash2,
+  Trash2, 
   Check,
   CheckCheck,
   ArrowLeft,
@@ -17,7 +17,7 @@ import {
   Clock
 } from 'lucide-react';
 import { getUserMessages, getConversationMessages, sendMessage, markMessageRead, deleteMessage } from '../../apiendpoints';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
 interface Message {
   id: number;
@@ -105,7 +105,7 @@ export function FreelancerMessages() {
       
       setConversations(Array.from(conversationMap.values()));
     } catch (error) {
-      handleError(error, 'fetchMessages');
+      handleApiError(error, 'fetchMessages');
     } finally {
       setLoading(false);
     }
@@ -121,7 +121,7 @@ export function FreelancerMessages() {
         .filter((msg: Message) => msg.senderId !== currentUserId && !msg.isRead)
         .forEach((msg: Message) => { markMessageRead(msg.id); });
     } catch (error) {
-      handleError(error, 'fetchMessages');
+      handleApiError(error, 'fetchMessages');
     }
   };
 
@@ -148,7 +148,7 @@ export function FreelancerMessages() {
           : conv
       ));
     } catch (error) {
-      handleError(error, 'sendMessage');
+      handleApiError(error, 'sendMessage');
     } finally {
       setSending(false);
     }
@@ -161,7 +161,7 @@ export function FreelancerMessages() {
         msg.id === messageId ? { ...msg, isRead: true } : msg
       ));
     } catch (error) {
-      handleError(error, 'markMessageRead');
+      handleApiError(error, 'markMessageRead');
     }
   };
 
@@ -171,7 +171,7 @@ export function FreelancerMessages() {
       setMessages(prev => prev.filter((msg: Message) => msg.id !== messageId));
       showSuccessToast('Message deleted');
     } catch (error) {
-      handleError(error, 'deleteMessage');
+      handleApiError(error, 'deleteMessage');
     }
   };
 

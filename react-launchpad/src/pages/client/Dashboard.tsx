@@ -16,7 +16,7 @@ import {
 import { getClientProjects } from '../../apiendpoints';
 import {Project} from '@/types';
 import { useAuth } from '../../contexts/AuthContext';
-import { handleError } from '@/utils/errorHandler';
+import { handleApiError } from '@/utils/errorHandler';
 
 export function ClientDashboard() {
   const navigate = useNavigate();
@@ -111,7 +111,7 @@ export function ClientDashboard() {
         }
         setProjects(data);
       } catch (err) {
-        handleError(err, 'fetchProjects');
+        handleApiError(err, 'fetchProjects');
         setError('Failed to load projects.');
       } finally {
         setLoading(false);

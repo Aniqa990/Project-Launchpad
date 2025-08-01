@@ -13,7 +13,7 @@ import {
   Send,
   Save
 } from 'lucide-react';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
 import { getProjectById, updateProject, getMilestonesByProjectId } from '../../apiendpoints';
 import { Project } from '@/types';
 
@@ -219,7 +219,7 @@ export function UpdateProject() {
           }
         }
       } catch (error) {
-        handleError(error, 'fetchProjectDetails');
+        handleApiError(error, 'fetchProjectDetails');
         navigate('/client/projects');
       } finally {
         setLoading(false);
@@ -281,7 +281,7 @@ export function UpdateProject() {
         handleInputChange('CloudinaryUrl', url);
         showSuccessToast('File uploaded successfully');
       } catch (error) {
-        handleError(error, 'uploadFile');
+        handleApiError(error, 'uploadFile');
       } finally {
         setUploading(false);
       }
@@ -297,15 +297,15 @@ export function UpdateProject() {
   const handleNextStep = () => {
     if (step === 4) {
       if (dateValidation.startDateError) {
-        handleError(new Error('Please fix the start date validation error before proceeding'), 'validation');
+        showErrorToast(dateValidation.startDateError);
         return;
       }
       if (dateValidation.deadlineError) {
-        handleError(new Error('Please fix the deadline validation error before proceeding'), 'validation');
+        showErrorToast(dateValidation.deadlineError);
         return;
       }
       if (dateValidation.budgetError) {
-        handleError(new Error('Please fix the budget validation error before proceeding'), 'validation');
+        showErrorToast(dateValidation.budgetError);
         return;
       }
       
@@ -316,7 +316,7 @@ export function UpdateProject() {
       }
     } else if (step === 5) {
       if (budgetValidation.budgetExceeded) {
-        handleError(new Error('Please fix the budget validation error before proceeding'), 'validation');
+        showErrorToast('Please fix the budget validation error before proceeding');
         return;
       }
       setStep(step + 1);
@@ -378,20 +378,20 @@ export function UpdateProject() {
 
   const handleSubmitProject = async () => {
     if (dateValidation.startDateError) {
-      handleError(new Error('Please fix the start date validation error before submitting'), 'validationError');
+      showErrorToast(dateValidation.startDateError);
       return;
     }
     if (dateValidation.deadlineError) {
-      handleError(new Error('Please fix the deadline validation error before submitting'), 'validationError');
+      showErrorToast(dateValidation.deadlineError);
       return;
     }
     if (dateValidation.budgetError) {
-      handleError(new Error('Please fix the budget validation error before submitting'), 'validationError');
+      showErrorToast(dateValidation.budgetError);
       return;
     }
     
     if (budgetDivision === 'milestone' && budgetValidation.budgetExceeded) {
-      handleError(new Error('Please fix the budget validation error before submitting'), 'validationError');
+      showErrorToast('Please fix the budget validation error before submitting');
       return;
     }
     
@@ -459,7 +459,7 @@ export function UpdateProject() {
       showSuccessToast('Project updated successfully! It will be reviewed by admin.');
       navigate('/client/projects');
     } catch (error) {
-      handleError(error, 'updateProject');
+      handleApiError(error, 'updateProject');
     } finally {
       setSaving(false);
     }

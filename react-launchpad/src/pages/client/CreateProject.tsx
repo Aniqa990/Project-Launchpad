@@ -15,7 +15,7 @@ import {
   CheckCircle,
   Briefcase,
 } from 'lucide-react';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
 import toast from 'react-hot-toast';
 import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest, addProjectToGist } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
@@ -244,11 +244,11 @@ export function CreateProject() {
         return;
       }
       if (dateValidation.deadlineError) {
-        handleError(new Error('Please fix the deadline validation error before proceeding'), 'validation');
+        showErrorToast('Please fix the deadline validation error before proceeding');
         return;
       }
       if (budgetValidation.budgetError) {
-        handleError(new Error('Please fix the budget validation error before proceeding'), 'validation');
+        showErrorToast('Please fix the budget validation error before proceeding');
         return;
       }
       
@@ -257,7 +257,7 @@ export function CreateProject() {
     } else if (step === 5) {
       // Validate milestones before proceeding (only for milestone-based projects)
       if (budgetDivision === 'milestone' && budgetValidation.budgetExceeded) {
-        handleError(new Error('Please fix the budget validation error before proceeding'), 'validation');
+        showErrorToast('Please fix the budget validation error before proceeding');
         return;
       }
       setStep(step + 1);
@@ -309,16 +309,16 @@ export function CreateProject() {
       return;
     }
     if (dateValidation.deadlineError) {
-      handleError(new Error('Please fix the deadline validation error before submitting'), 'validation');
+      showErrorToast('Please fix the deadline validation error before submitting');
       return;
     }
     if (budgetValidation.budgetError) {
-      handleError(new Error('Please fix the budget validation error before submitting'), 'validation');
+      showErrorToast('Please fix the budget validation error before submitting');
       return;
     }
     
     if (budgetDivision === 'milestone' && budgetValidation.budgetExceeded) {
-      handleError(new Error('Please fix the budget validation error before submitting'), 'validation');
+      showErrorToast('Please fix the budget validation error before submitting');
       return;
     }
     setSubmitted(true);
@@ -375,7 +375,7 @@ export function CreateProject() {
       
       showSuccessToast('Project created successfully!');
     } catch (err) {
-      handleError(err, 'createProject');
+      handleApiError(err, 'createProject');
       setSubmitted(false);
     }
   };

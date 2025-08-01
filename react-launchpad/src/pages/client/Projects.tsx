@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { getClientProjects, getProjectById, updateProject } from '../../apiendpoints';
 import { Project } from '@/types';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
 
 export function ClientProjects() {
   const navigate = useNavigate();
@@ -61,7 +61,7 @@ export function ClientProjects() {
           setProjects([]);
         }
       } catch (err) {
-        handleError(err, 'fetchProjects');
+        handleApiError(err, 'fetchProjects');
         setError('Failed to load projects.');
       } finally {
         setLoading(false);
@@ -166,7 +166,7 @@ export function ClientProjects() {
         setProjects(data);
       }
     } catch (error) {
-      handleError(error, 'updateStartDate');
+      handleApiError(error, 'updateStartDate');
     } finally {
       setStartDateModal(prev => ({ ...prev, isUpdating: false }));
     }

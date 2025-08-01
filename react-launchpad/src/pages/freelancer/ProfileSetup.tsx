@@ -32,7 +32,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { ProjectModal } from '@/components/ui/ProjectModal';
 import { ExperienceModal } from '@/components/ui/ExperienceModal';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
 
 export function ProfileSetup() {
@@ -159,7 +159,7 @@ export function ProfileSetup() {
             showSuccessToast(`Resume ${file.name} parsed successfully!`);
           } catch (error: any) {
             setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'error', error: error.message } : r));
-            handleError(error, 'uploadFile');
+            handleApiError(error, 'uploadFile');
           }
           setParsing(false);
         } finally {
@@ -312,7 +312,7 @@ export function ProfileSetup() {
       showSuccessToast('Profile saved successfully!');
       navigate('/freelancer/dashboard');
     } catch (error: any) {
-      handleError(error, 'updateProfile');
+      handleApiError(error, 'updateProfile');
     }
   };
 

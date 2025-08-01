@@ -7,7 +7,7 @@ import { Textarea } from '../../components/ui/textarea';
 import { User, Phone, Camera, Save, Briefcase, DollarSign, Clock, Edit2, Eye, EyeOff, Lock, X, Plus, Trash2, Pencil } from 'lucide-react';
 import { getFreelancerById, updateFreelancerProfile, deleteFreelancerProfile } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 import toast from 'react-hot-toast';
 import { Modal } from '../../components/ui/Modal';
 import { ParsedResumeData } from '@/types';
@@ -320,7 +320,7 @@ const handleSave = async () => {
     setIsEditing(false);
     showSuccessToast('Profile updated successfully!');
   } catch (err: any) {
-    handleError(err, 'updateProfile');
+    handleApiError(err, 'updateProfile');
   } finally {
     setLoading(false);
   }
@@ -422,7 +422,7 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
   const handleSavePassword = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
-      handleError(new Error('Passwords do not match'), 'validation');
+      handleApiError(new Error('Passwords do not match'), 'validation');
       return;
     }
     if (!profileData) return;
@@ -455,7 +455,7 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       console.log('Form cleared');
     } catch (err: any) {
-      handleError(err, 'updatePassword');
+      handleApiError(err, 'updatePassword');
     }
   };
 
@@ -519,10 +519,10 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           }
         }
       } else {
-        handleError(new Error('Failed to upload image'), 'uploadImage');
+        handleApiError(new Error('Failed to upload image'), 'uploadImage');
       }
     } catch (err) {
-      handleError(err, 'uploadImage');
+      handleApiError(err, 'uploadImage');
     }
   };
 
