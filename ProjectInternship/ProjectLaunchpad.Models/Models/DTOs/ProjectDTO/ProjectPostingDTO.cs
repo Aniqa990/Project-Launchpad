@@ -30,7 +30,7 @@ namespace ProjectLaunchpad.Models.Models.DTOs.ProjectDTO
 
         public int NumberOfFreelancers { get; set; }
 
-        public string? Status { get; set; } = "open"; // Open, Closed, In Progress
+        public string? Status { get; set; } = "open"; // Open, Closed, active
 
         public string? AttachedDocumentPath { get; set; }
 

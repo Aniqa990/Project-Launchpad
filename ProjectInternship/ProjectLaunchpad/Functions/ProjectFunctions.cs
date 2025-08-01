@@ -83,7 +83,7 @@ namespace ProjectLaunchpad.Functions
                 RequiredSkills = projectDto.RequiredSkills,
                 Budget = projectDto.Budget,
                 NumberOfFreelancers = projectDto.NumberOfFreelancers,
-                Status = "", // Empty string initially
+                Status = "open",
                 ApprovalStatus = "pending", // Set to pending for admin approval
                 AttachedDocumentPath = projectDto.AttachedDocumentPath,
                 ClientId = clientId
@@ -341,31 +341,60 @@ namespace ProjectLaunchpad.Functions
             if (project == null)
                 return req.CreateResponse(HttpStatusCode.NotFound);
 
-            var updateData = await req.ReadFromJsonAsync<Project>();
+            var updateData = await req.ReadFromJsonAsync<ProjectUpdateDTO>();
             if (updateData == null)
                 return req.CreateResponse(HttpStatusCode.BadRequest);
 
-            // Update only the fields that are provided
+            // Update project fields
             if (!string.IsNullOrEmpty(updateData.ProjectTitle))
                 project.ProjectTitle = updateData.ProjectTitle;
             if (!string.IsNullOrEmpty(updateData.Description))
                 project.Description = updateData.Description;
             if (!string.IsNullOrEmpty(updateData.CategoryOrDomain))
                 project.CategoryOrDomain = updateData.CategoryOrDomain;
-            if (updateData.Budget>0)
-                project.Budget = updateData.Budget;
-            if (updateData.Deadline!=default(DateTime))
-                project.Deadline = updateData.Deadline;
+            if (updateData.Budget.HasValue && updateData.Budget.Value > 0)
+                project.Budget = updateData.Budget.Value;
+            if (updateData.Deadline.HasValue && updateData.Deadline.Value != default(DateTime))
+                project.Deadline = updateData.Deadline.Value;
             if (!string.IsNullOrEmpty(updateData.RequiredSkills))
                 project.RequiredSkills = updateData.RequiredSkills;
-            if (updateData.NumberOfFreelancers>0)
-                project.NumberOfFreelancers = updateData.NumberOfFreelancers;
+            if (updateData.NumberOfFreelancers.HasValue && updateData.NumberOfFreelancers.Value > 0)
+                project.NumberOfFreelancers = updateData.NumberOfFreelancers.Value;
             if (!string.IsNullOrEmpty(updateData.AttachedDocumentPath))
                 project.AttachedDocumentPath = updateData.AttachedDocumentPath;
             if (!string.IsNullOrEmpty(updateData.ApprovalStatus))
                 project.ApprovalStatus = updateData.ApprovalStatus;
-            if (updateData.StartDate != default(DateTime))
-                project.StartDate = updateData.StartDate;
+            if (updateData.StartDate.HasValue && updateData.StartDate.Value != default(DateTime))
+                project.StartDate = updateData.StartDate.Value;
+
+            // Handle milestone operations
+            if (updateData.MilestoneIdsToDelete != null && updateData.MilestoneIdsToDelete.Any())
+            {
+                Console.WriteLine($"Deleting {updateData.MilestoneIdsToDelete.Count} milestones: {string.Join(", ", updateData.MilestoneIdsToDelete)}");
+                foreach (var milestoneId in updateData.MilestoneIdsToDelete)
+                {
+                    await _unitOfWork.MilestoneRepository.DeleteMilestoneAsync(milestoneId);
+                }
+            }
+
+            if (updateData.MilestonesToAdd != null && updateData.MilestonesToAdd.Any())
+            {
+                Console.WriteLine($"Adding {updateData.MilestonesToAdd.Count} new milestones");
+                foreach (var milestoneDto in updateData.MilestonesToAdd)
+                {
+                    Console.WriteLine($"Adding milestone: {milestoneDto.Title} - ${milestoneDto.Amount}");
+                    var milestone = new Milestone
+                    {
+                        Title = milestoneDto.Title,
+                        Description = milestoneDto.Description,
+                        Amount = milestoneDto.Amount,
+                        DueDate = milestoneDto.DueDate,
+                        ProjectId = id,
+                        Status = MilestoneStatus.NotStarted
+                    };
+                    await _unitOfWork.MilestoneRepository.AddMilestoneAsync(milestone);
+                }
+            }
 
             await _unitOfWork.ProjectRepository.UpdateProjectAsync(project);
             await _unitOfWork.SaveAsync();
