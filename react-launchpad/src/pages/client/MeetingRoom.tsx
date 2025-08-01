@@ -303,9 +303,8 @@ export default function Meetings() {
     setUploadTranscriptError(null);
     try {
       // 1. Upload transcript to Cloudinary
-      const cloudName = 'depfyzzad';
-      const unsignedPreset = 'projectLaunchpad';
-      const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+      const unsignedPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+      const url = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/auto/upload`;
       const transcriptBlob = new Blob([transcript], { type: 'text/plain' });
       const cloudForm = new FormData();
       cloudForm.append('file', transcriptBlob, `transcript-${meetingId}-user-${user.id}.txt`);

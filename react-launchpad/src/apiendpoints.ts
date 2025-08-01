@@ -633,51 +633,6 @@ export const getFreelancerFeedbacks = async (
   return lowercaseFirstLetterKeys(response.data);
 };
 
-// // Freelancer Profile Setup API functions
-// export const getProfileSetupData = async (): Promise<ProfileSetupData> => {
-//   const response = await api.get('/freelancer/profile-setup');
-//   return response.data;
-// };
-
-// export const saveProfileSetupData = async (data: {
-//   firstName: string;
-//   lastName: string;
-//   phone: string;
-//   hourlyRate: number;
-//   availability: string;
-//   workingHours: string;
-//   profileData: ProfileSetupData;
-// }): Promise<void> => {
-//   await api.post('/freelancer/profile-setup', data);
-// };
-
-// export const updateProfileSetupData = async (data: {
-//   firstName: string;
-//   lastName: string;
-//   phone: string;
-//   hourlyRate: number;
-//   availability: string;
-//   workingHours: string;
-//   profilePicture: string;
-//   profileData: ProfileSetupData;
-//   password?: string;
-//   newPassword?: string;
-// }): Promise<void> => {
-//   await api.put('/freelancer/profile-setup', data);
-// };
-
-// export const getCurrentUserFreelancerProfile = async (userId: number): Promise<FreelancerProfile> => {
-//   try {
-//     if (!userId) {
-//       throw new Error('User ID is required');
-//     }
-//     const response = await api.get(`/freelancer/${userId}`);
-//     return response.data;
-//   } catch (error: any) {
-//     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer profile');
-//   }
-// };
-
 // Stripe Payment API
 export const createStripePaymentIntent = async (params: {
   clientId: number;
@@ -688,9 +643,8 @@ export const createStripePaymentIntent = async (params: {
   timesheetId: number | null;
   amount: number;
 }): Promise<{ clientSecret: string }> => {
-  // Note: This uses the backend port 7053
-  const response = await axios.post(
-    "http://localhost:7053/api/payments/create-intent",
+  const response = await api.post(
+    "/payments/create-intent",
     params,
     { headers: { "Content-Type": "application/json" } }
   );
@@ -726,8 +680,8 @@ export const createMultiFreelancerCheckoutSession = async (params: {
     amount: number;
   }>;
 }): Promise<{ url: string }> => {
-  const response = await axios.post(
-    "http://localhost:7053/api/payments/create-multi-freelancer-checkout-session",
+  const response = await api.post(
+    "/payments/create-multi-freelancer-checkout-session",
     params,
     { headers: { "Content-Type": "application/json" } }
   );
@@ -753,15 +707,6 @@ export const getDeliverablesByMilestoneId = async (
   }
 };
 
-// Get projects by client id
-// export const getClientProjects = async (clientId: number) => {
-//   try {
-//     const response = await api.get(`/clients/${clientId}/projects`);
-//     return response.data;
-//   } catch (error: any) {
-//     throw new Error(error.response?.data?.message || 'Failed to fetch client projects');
-//   }
-// };
 
 // NOTIFICATIONS
 export const getNotifications = async (userId: number) => {

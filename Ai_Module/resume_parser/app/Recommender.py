@@ -13,7 +13,10 @@ EMBEDDING_FUNCTION = HuggingFaceEmbeddings(
     model_name="all-MiniLM-L6-v2"
 )
 
-VECTOR_FOLDER = "C:/Users/aniqa/OneDrive/Desktop/Resume-parser/Project-Launchpad/resume_parser/embedding_vectors_fl"
+VECTOR_FOLDER = os.getenv("VECTOR_FOLDER_PATH")
+if not VECTOR_FOLDER:
+    raise ValueError("VECTOR_FOLDER_PATH not found in .env!")
+
 LEN_OF_CHUNKS = 10  # Top K from FAISS
 
 def load_faiss_collections(collection_list, return_as_retriever=True):
