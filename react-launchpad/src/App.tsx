@@ -173,7 +173,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<PlatformDashboard />} />
         <Route path="payments" element={<MilestonePayments />} />
         <Route path="projects" element={<AdminProjectApprovals />} />
-        <Route path="project-details/:projectId" element={<ProjectDetails />} />
+        <Route path="projects/project-details/:projectId" element={<ProjectDetails />} />
         <Route path="view-projects" element={<AdminViewProjects />} />
         <Route path="settings" element={<PlatformSettings />} />
       </Route>

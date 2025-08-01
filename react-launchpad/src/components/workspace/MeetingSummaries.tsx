@@ -154,7 +154,7 @@ export function MeetingSummaries() {
     setConvError(null);
     setShowConversationUI(true);
     try {
-      const response = await fetch('http://localhost:8001/start-project-meeting', {
+      const response = await fetch('http://localhost:8001/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
