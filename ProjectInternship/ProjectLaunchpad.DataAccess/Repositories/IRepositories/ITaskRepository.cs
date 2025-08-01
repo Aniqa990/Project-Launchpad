@@ -20,7 +20,5 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
 
         void Delete(TaskItem task);
 
-        Task<TaskItem?> FindTaskByTitleAndProjectAsync(string title, int projectId);
-
     }
 }

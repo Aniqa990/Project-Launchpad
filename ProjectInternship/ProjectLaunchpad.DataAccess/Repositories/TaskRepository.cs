@@ -112,12 +112,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return taskDtos;
         }
 
-        public async Task<TaskItem?> FindTaskByTitleAndProjectAsync(string title, int projectId)
-        {
-            return await _db.taskItems
-                .FirstOrDefaultAsync(t => t.Title == title && t.projectId == projectId);
-        }
-
 
         public async Task<TaskItem?> GetByIdAsync(int id)
         {
