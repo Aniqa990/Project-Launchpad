@@ -131,7 +131,7 @@ export function AdminProjectApprovals() {
               <div className="flex space-x-2 mt-auto">
                 <Button
                   variant="outline"
-                  onClick={() => navigate(`admin/project-details/${project.id}`)}
+                  onClick={() => navigate(`project-details/${project.id}`)}
                   size="sm"
                 >
                   View Details

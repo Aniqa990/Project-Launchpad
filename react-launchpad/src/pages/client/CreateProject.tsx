@@ -78,7 +78,9 @@ export function CreateProject() {
     deadlineError: '',
     milestoneDateError: ''
   });
+  
   const [budgetValidation, setBudgetValidation] = useState({
+    budgetError: '',
     totalMilestoneAmount: 0,
     budgetExceeded: false,
     budgetExceededAmount: 0
@@ -106,30 +108,45 @@ export function CreateProject() {
     
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1); // One day after today
+
     const deadlineDate = new Date(deadline);
+    const startDate = projectData.StartDate ? new Date(projectData.StartDate) : null;
+
     
-    if (deadlineDate < today) {
-      return 'Project deadline cannot be in the past';
+    if (startDate && deadlineDate <= startDate) {
+      return 'Project deadline must be after project start date';
+    }
+      
+    return '';
+  };
+
+  const validateBudget = (budget: string) => {
+    const budgetNum = parseFloat(budget);
+    if (isNaN(budgetNum) || budgetNum < 0) {
+      return 'Budget cannot be negative';
     }
     return '';
   };
 
-  const validateMilestoneDate = (milestoneDate: string, projectDeadline: string) => {
-    if (!milestoneDate || !projectDeadline) return '';
-    
+  const validateMilestoneDate = (milestoneDate: string, projectStartDate: string, projectDeadline: string) => {
+    if (!milestoneDate || !projectStartDate || !projectDeadline) return '';
     const milestoneDateObj = new Date(milestoneDate);
+    const projectStartDateObj = new Date(projectStartDate);
     const projectDeadlineObj = new Date(projectDeadline);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (milestoneDateObj < today) {
       return 'Milestone due date cannot be in the past';
     }
-    
+    if (milestoneDateObj < projectStartDateObj) {
+      return 'Milestone due date cannot be before project start date';
+    }
     if (milestoneDateObj > projectDeadlineObj) {
       return 'Milestone due date cannot exceed project deadline';
     }
-    
     return '';
   };
 
@@ -146,11 +163,12 @@ export function CreateProject() {
     const budgetExceeded = totalMilestoneAmount > totalBudget;
     const budgetExceededAmount = totalMilestoneAmount - totalBudget;
     
-    setBudgetValidation({
+    setBudgetValidation(prev => ({
+      ...prev,
       totalMilestoneAmount,
       budgetExceeded,
       budgetExceededAmount
-    });
+    }));
   };
 
   // Update budget validation when milestones change
@@ -183,6 +201,9 @@ export function CreateProject() {
     } else if (field === 'Deadline') {
       const deadlineError = validateDeadline(value);
       setDateValidation(prev => ({ ...prev, deadlineError }));
+    } else if (field === 'Budget') {
+      const budgetError = validateBudget(value);
+      setBudgetValidation(prev => ({ ...prev, budgetError }));
     }
   };  
 
@@ -217,7 +238,7 @@ export function CreateProject() {
 
   const handleNextStep = () => {
     if (step === 4) {
-      // Validate start date and deadline before proceeding
+      // Validate start date, deadline, and budget before proceeding
       if (dateValidation.startDateError) {
         toast.error('Please fix the start date validation error before proceeding');
         return;
@@ -226,15 +247,16 @@ export function CreateProject() {
         handleError(new Error('Please fix the deadline validation error before proceeding'), 'validation');
         return;
       }
-      
-      if (budgetDivision === 'fixed') {
-        setStep(6);
-      } else {
-        setStep(step + 1);
+      if (budgetValidation.budgetError) {
+        handleError(new Error('Please fix the budget validation error before proceeding'), 'validation');
+        return;
       }
+      
+      // Always go to next step (step 5 - signature step)
+      setStep(step + 1);
     } else if (step === 5) {
-      // Validate milestones before proceeding
-      if (budgetValidation.budgetExceeded) {
+      // Validate milestones before proceeding (only for milestone-based projects)
+      if (budgetDivision === 'milestone' && budgetValidation.budgetExceeded) {
         handleError(new Error('Please fix the budget validation error before proceeding'), 'validation');
         return;
       }
@@ -245,11 +267,7 @@ export function CreateProject() {
   };
 
   const handlePrevStep = () => {
-    if (step === 6 && budgetDivision === 'fixed') {
-      setStep(4);
-    } else {
       setStep(step - 1);
-    }
   };
 
   const handleAddMilestone = () => {
@@ -258,7 +276,7 @@ export function CreateProject() {
       return;
     }
     // Validate milestone due date does not exceed project deadline
-    const milestoneDateError = validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline);
+    const milestoneDateError = validateMilestoneDate(milestoneInput.dueDate, projectData.StartDate, projectData.Deadline);
     if (milestoneDateError) {
       setMilestoneError(milestoneDateError);
       return;
@@ -292,6 +310,10 @@ export function CreateProject() {
     }
     if (dateValidation.deadlineError) {
       handleError(new Error('Please fix the deadline validation error before submitting'), 'validation');
+      return;
+    }
+    if (budgetValidation.budgetError) {
+      handleError(new Error('Please fix the budget validation error before submitting'), 'validation');
       return;
     }
     
@@ -457,7 +479,7 @@ export function CreateProject() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Create New Project</h1>
-          <p className="text-gray-600">Step {step} of 6: {stepTitles[step - 1]}</p>
+          <p className="text-gray-600">Step {step} of {stepTitles.length}: {stepTitles[step - 1]}</p>
         </div>
       </div>
 
@@ -668,10 +690,18 @@ export function CreateProject() {
                   type="number"
                   value={projectData.Budget}
                   onChange={(e) => handleInputChange('Budget', e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    budgetValidation.budgetError ? 'border-red-500' : 'border-gray-300'
+                  }`}
                   placeholder={projectData.PaymentType === 'fixed' ? '5000' : '75'}
                 />
               </div>
+              {budgetValidation.budgetError && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {budgetValidation.budgetError}
+                </p>
+              )}
               <p className="text-sm text-gray-500 mt-1">
                 Total project budget
               </p>
@@ -788,15 +818,15 @@ export function CreateProject() {
                   value={milestoneInput.dueDate}
                   onChange={e => setMilestoneInput({ ...milestoneInput, dueDate: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline) !== '' ? 'border-red-500' : 'border-gray-300'
+                    validateMilestoneDate(milestoneInput.dueDate, projectData.StartDate, projectData.Deadline) !== '' ? 'border-red-500' : 'border-gray-300'
                   }`}
                   min={new Date().toISOString().split('T')[0]}
                   max={projectData.Deadline || undefined}
                 />
-                {milestoneInput.dueDate && validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline) !== '' && (
+                {milestoneInput.dueDate && validateMilestoneDate(milestoneInput.dueDate, projectData.StartDate, projectData.Deadline) !== '' && (
                   <p className="text-red-500 text-sm mt-1 flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" />
-                    {validateMilestoneDate(milestoneInput.dueDate, projectData.Deadline)}
+                    {validateMilestoneDate(milestoneInput.dueDate, projectData.StartDate, projectData.Deadline)}
                   </p>
                 )}
               </div>
@@ -984,7 +1014,7 @@ export function CreateProject() {
                 disabled={
                   (step === 1 && (!projectData.ProjectTitle || !projectData.Description)) ||
                   (step === 2 && projectData.Skills.length === 0) ||
-                  (step === 4 && (!projectData.Budget || !projectData.Deadline || dateValidation.deadlineError !== ''|| !projectData.StartDate || dateValidation.startDateError !== '')) ||
+                  (step === 4 && (!projectData.Budget || !projectData.Deadline || dateValidation.deadlineError !== ''|| !projectData.StartDate || dateValidation.startDateError !== '' || budgetValidation.budgetError !== '')) ||
                   (step === 5 && budgetDivision === 'milestone' && (milestones.length === 0 || budgetValidation.budgetExceeded))
                 }
               >

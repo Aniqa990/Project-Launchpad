@@ -9,7 +9,7 @@ import { handleError } from '@/utils/errorHandler';
 export function FreelancerProjects() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'draft' | 'active' | 'completed' | 'cancelled'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'open' | 'active' | 'completed' | 'cancelled'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function FreelancerProjects() {
 
   const tabs = [
     { id: 'all', label: 'All Projects', count: projects.length },
-    { id: 'draft', label: 'Draft', count: projects.filter((p: Project) => p.status === 'open').length },
+    { id: 'open', label: 'Open', count: projects.filter((p: Project) => p.status === 'open').length },
     { id: 'active', label: 'Active', count: projects.filter((p: Project) => p.status === 'active').length },
     { id: 'completed', label: 'Completed', count: projects.filter((p: Project) => p.status === 'closed').length },
   ];

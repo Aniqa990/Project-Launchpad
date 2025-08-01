@@ -9,11 +9,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Input } from '../../components/ui/input';
-import { getProjectById, getFreelancerById, getFreelancerProjects, sendProjectRequest } from '@/apiendpoints';
+import { getProjectById, getFreelancerById, getFreelancerProjects, sendProjectRequest, getProjectRequestsByProjectId } from '@/apiendpoints';
 import type { Project, FreelancerProfile } from '@/types';
-import toast from 'react-hot-toast';
+import { handleError, showSuccessToast } from '@/utils/errorHandler';
 
-export const FreelancerSuggestions: React.FC = () => {
+export function FreelancerSuggestions() {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
   const navigate = useNavigate();
@@ -24,6 +24,7 @@ export const FreelancerSuggestions: React.FC = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [expandedSkillsId, setExpandedSkillsId] = useState<string | null>(null);
   const [sendingRequests, setSendingRequests] = useState(false);
+  const [projectRequests, setProjectRequests] = useState<any[]>([]);
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -34,17 +35,28 @@ export const FreelancerSuggestions: React.FC = () => {
     search: ''
   });
 
+  // Check if freelancer has any request (regardless of status)
+  const hasAnyRequest = (freelancerId: number) => {
+    return projectRequests.some(request => request.freelancerId === freelancerId);
+  };
+
   useEffect(() => {
     const fetchFreelancers = async () => {
       setLoading(true);
       try {
         if (!projectId) return;
+        
         // 1. Fetch project details
         const proj: Project = await getProjectById(projectId);
         console.log(proj);
         setProject(proj);
         const summary = proj.description;
-        // 2. Call suggest-freelancers endpoint
+        
+        // 2. Fetch project requests to check status
+        const requests = await getProjectRequestsByProjectId(Number(projectId));
+        setProjectRequests(requests);
+        
+        // 3. Call suggest-freelancers endpoint
         const suggestRes = await fetch("http://localhost:8000/api/suggest-freelancers/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -52,7 +64,8 @@ export const FreelancerSuggestions: React.FC = () => {
         });
         const suggestData = await suggestRes.json();
         const suggestions = suggestData.suggestions || [];
-        // 3. For each suggestion, fetch freelancer profile and active projects
+        
+        // 4. For each suggestion, fetch freelancer profile and active projects
         const freelancerDetails = await Promise.all(
           suggestions.map(async (sugg: any) => {
             try {
@@ -107,10 +120,14 @@ export const FreelancerSuggestions: React.FC = () => {
     setSendingRequests(true);
     try {
       await Promise.all(selectedFreelancers.map(fid => sendProjectRequest(Number(projectId), Number(fid))));
-      toast.success(`Requests sent to ${selectedFreelancers.length} freelancer(s)!`);
+      showSuccessToast(`Requests sent to ${selectedFreelancers.length} freelancer(s)!`);
       setSelectedFreelancers([]);
+      
+      // Refresh project requests after sending
+      const requests = await getProjectRequestsByProjectId(Number(projectId));
+      setProjectRequests(requests);
     } catch (err) {
-      toast.error('Failed to send requests.');
+      handleError(err, 'sendProjectRequest');
     } finally {
       setSendingRequests(false);
     }
@@ -251,6 +268,9 @@ export const FreelancerSuggestions: React.FC = () => {
         {filteredFreelancers.map((freelancer) => {
           const isExpanded = expandedSkillsId === freelancer.id?.toString();
           const skillsToShow = Array.isArray(freelancer.skills) ? (isExpanded ? freelancer.skills : freelancer.skills.slice(0, 5)) : [];
+          const hasExistingRequest = hasAnyRequest(freelancer.id);
+          const requestStatus = projectRequests.find(req => req.freelancerId === freelancer.id)?.status;
+          
           return (
             <Card
               key={freelancer.id}
@@ -283,6 +303,24 @@ export const FreelancerSuggestions: React.FC = () => {
                             }
                           >
                             {freelancer.availability}
+                          </span>
+                        )}
+                        {requestStatus && (
+                          <span
+                            className={
+                              `ml-2 px-2 py-0.5 rounded-full text-xs font-medium ` +
+                              (requestStatus === 'accepted'
+                                ? 'bg-green-100 text-green-800'
+                                : requestStatus === 'replaced'
+                                ? 'bg-orange-100 text-orange-800'
+                                : requestStatus === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : requestStatus === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800')
+                            }
+                          >
+                            {requestStatus}
                           </span>
                         )}
                       </div>
@@ -330,16 +368,22 @@ export const FreelancerSuggestions: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                            </div>
+                </div>
                 <div className="flex justify-end mt-4">
-                          <Button
+                  <Button
                     size="sm"
                     variant={selectedFreelancers.includes(freelancer.id?.toString()) ? 'primary' : 'outline'}
                     className="mt-2"
                     onClick={() => handleSelectFreelancer(freelancer.id?.toString())}
+                    disabled={hasAnyRequest(freelancer.id)}
                   >
-                    {selectedFreelancers.includes(freelancer.id?.toString()) ? 'Selected' : 'Select'}
-                          </Button>
+                    {hasAnyRequest(freelancer.id)
+                      ? (requestStatus ? requestStatus.charAt(0).toUpperCase() + requestStatus.slice(1) : 'Requested')
+                      : selectedFreelancers.includes(freelancer.id?.toString()) 
+                      ? 'Selected' 
+                      : 'Select'
+                    }
+                  </Button>
                 </div>
               </div>
             </Card>
