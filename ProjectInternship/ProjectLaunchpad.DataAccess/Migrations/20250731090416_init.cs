@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class addInitials : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -46,7 +46,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.Id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -63,7 +63,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.Id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -88,7 +88,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.Id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -315,7 +315,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.ClientId,
                         principalTable: "clientProfiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_payments_freelancerProfiles_FreelancerId",
                         column: x => x.FreelancerId,
@@ -405,7 +405,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.projectId,
                         principalTable: "projects",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_taskItems_users_AssignedToUserId",
                         column: x => x.AssignedToUserId,
@@ -473,13 +473,40 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.MilestoneId,
                         principalTable: "milestones",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_deliverables_projects_projectId",
                         column: x => x.projectId,
                         principalTable: "projects",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "freelancerMilestones",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    MilestoneId = table.Column<int>(type: "int", nullable: false),
+                    AssignedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_freelancerMilestones", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_freelancerMilestones_milestones_MilestoneId",
+                        column: x => x.MilestoneId,
+                        principalTable: "milestones",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_freelancerMilestones_users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -529,13 +556,13 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.FreelancerId,
                         principalTable: "freelancerProfiles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_logs_projects_ProjectId",
                         column: x => x.ProjectId,
                         principalTable: "projects",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_logs_taskItems_TaskId",
                         column: x => x.TaskId,
@@ -564,7 +591,7 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                         column: x => x.TaskItemId,
                         principalTable: "taskItems",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(

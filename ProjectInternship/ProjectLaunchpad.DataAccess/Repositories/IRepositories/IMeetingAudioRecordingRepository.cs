@@ -16,7 +16,5 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
 
         Task<IEnumerable<MeetingAudioRecordingResponseDto>> GetByMeetingIdAsync(int meetingId);
 
-
-
     }
 }

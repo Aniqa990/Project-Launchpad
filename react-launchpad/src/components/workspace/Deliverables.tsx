@@ -6,6 +6,7 @@ import { FileText, Download, Upload } from 'lucide-react';
 import { Deliverable } from '../../types';
 import { Modal } from '../ui/Modal';
 
+
 export default function Deliverables({
   deliverables,
   deliverablesLoading,
@@ -52,7 +53,7 @@ export default function Deliverables({
           uploadFiles: deliverable.uploadFiles,
           projectId,
           comment: deliverable.comment,
-          status: deliverable.Status,
+          status: deliverable.status || 'Submitted',
         });
       } else {
         setForm({ uploadFiles: '', projectId, comment: '', status: 'Submitted' });
@@ -101,7 +102,7 @@ export default function Deliverables({
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {deliverables.map((deliverable) => (
-            <Card key={deliverable.Id} hover>
+            <Card key={deliverable.id} hover>
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <FileText className="w-5 h-5 text-blue-600" />
@@ -112,8 +113,8 @@ export default function Deliverables({
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <Badge variant={deliverable.Status === 'Submitted' ? 'warning' : 'success'}>
-                  {deliverable.Status}
+                <Badge variant={deliverable.status === 'Submitted' ? 'warning' : 'success'}>
+                  {deliverable.status}
                 </Badge>
                 <div className="flex space-x-2">
                   <a
@@ -129,7 +130,7 @@ export default function Deliverables({
                     <Button size="sm" variant="outline" onClick={() => { setSelectedDeliverable(deliverable); setDeliverableModalOpen(true); }}>Edit</Button>
                   )}
                   {user?.role === 'freelancer' && (
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteDeliverable(deliverable.Id)}>Delete</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleDeleteDeliverable(deliverable.id)}>Delete</Button>
                   )}
                 </div>
               </div>
@@ -142,7 +143,7 @@ export default function Deliverables({
         onClose={() => { setDeliverableModalOpen(false); setSelectedDeliverable(null); }}
         onSubmit={(form) => {
           if (selectedDeliverable) {
-            handleUpdateDeliverable(selectedDeliverable.Id, form);
+            handleUpdateDeliverable(selectedDeliverable.id, form);
           } else {
             handleCreateDeliverable(form);
           }

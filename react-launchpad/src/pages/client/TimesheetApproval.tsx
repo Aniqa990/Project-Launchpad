@@ -4,7 +4,8 @@ import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { CheckSquare, X, Clock, MessageSquare, User, Calendar, Filter, Search } from 'lucide-react';
-import { getTimesheets, approveTimesheet, rejectTimesheet, getProjectById } from '../../apiendpoints';
+import { getTimesheets, getTimesheetsByFreelancer, approveTimesheet, rejectTimesheet, getProjectById, getProjectsByClient, getFreelancersByProject, getTimesheetsByFreelancerId, getFreelancerById } from '../../apiendpoints';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TimesheetEntry {
   id: string;
@@ -59,13 +60,37 @@ function formatHours(hours: number) {
 }
 
 
-function groupTimesheets(flat: any[]): TimesheetEntry[] {
+async function groupTimesheets(flat: any[]): Promise<TimesheetEntry[]> {
   const grouped: { [key: string]: TimesheetEntry } = {};
-  flat.forEach(entry => {
+  
+  // Create a map to store freelancer profiles to avoid duplicate API calls
+  const freelancerProfiles: { [key: number]: any } = {};
+  
+  const getFreelancerProfile = async (freelancerId: number) => {
+    if (freelancerProfiles[freelancerId]) {
+      return freelancerProfiles[freelancerId];
+    }
+    try {
+      const profile = await getFreelancerById(freelancerId);
+      freelancerProfiles[freelancerId] = profile;
+      return profile;
+    } catch (error) {
+      console.error(`Error fetching freelancer profile for ID ${freelancerId}:`, error);
+      return null;
+    }
+  };
+  
+  // Process all entries and fetch freelancer profiles
+  for (const entry of flat) {
+    const freelancerId = entry.FreelancerId;
+    const freelancerProfile = await getFreelancerProfile(freelancerId);
+    const freelancerHourlyRate = freelancerProfile?.hourlyRate || 0;
+    
     const weekEnding = getWeekEnding(entry.DateOfWork);
     // Use FreelancerId if FreelancerName is not available
     const freelancerName = entry.FreelancerName || `Freelancer ${entry.FreelancerId}`;
     const key = `${freelancerName}|${entry.ProjectName}|${weekEnding}`;
+    
     if (!grouped[key]) {
       grouped[key] = {
         id: key,
@@ -74,7 +99,7 @@ function groupTimesheets(flat: any[]): TimesheetEntry[] {
         projectName: entry.ProjectName,
         weekEnding,
         totalHours: 0,
-        hourlyRate: entry.HourlyRate,
+        hourlyRate: freelancerHourlyRate, // Use freelancer's hourly rate
         totalAmount: 0,
         status: entry.ApprovalStatus,
         tasks: [],
@@ -82,7 +107,8 @@ function groupTimesheets(flat: any[]): TimesheetEntry[] {
       };
     }
     grouped[key].totalHours += entry.TotalHours;
-    grouped[key].totalAmount += entry.CalculatedAmount;
+    // Recalculate total amount using freelancer's hourly rate
+    grouped[key].totalAmount = grouped[key].totalHours * freelancerHourlyRate;
     grouped[key].tasks.push({
       id: String(entry.Id),
       name: entry.WorkDescription.substring(0, 32),
@@ -96,7 +122,8 @@ function groupTimesheets(flat: any[]): TimesheetEntry[] {
     if (new Date(entry.DateOfWork) > new Date(grouped[key].submittedAt)) {
       grouped[key].submittedAt = entry.DateOfWork;
     }
-  });
+  }
+  
   return Object.values(grouped);
 }
 
@@ -113,40 +140,135 @@ const TimesheetApproval: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     setLoading(true);
     
     const fetchData = async () => {
       try {
-        // If projectId is provided, fetch the specific project first
+        if (!user?.id) throw new Error('Client not logged in');
+        
+        let allTimesheets: any[] = [];
+        let targetProject: Project | null = null;
+        
         if (projectId) {
-          const projectData = await getProjectById(projectId);
-          console.log(projectData);
-          setProject(projectData);
+          // If specific projectId is provided, only fetch data for that project
+          console.log('Fetching specific project:', projectId);
+          try {
+            targetProject = await getProjectById(projectId);
+            console.log('Target project:', targetProject);
+            
+            if (targetProject) {
+              // Get freelancers for this specific project
+              const freelancers = await getFreelancersByProject(Number(projectId));
+              console.log('Freelancers for project', projectId, ':', freelancers);
+              
+              // For each freelancer, get their timesheets
+              for (const freelancer of freelancers) {
+                const freelancerId = freelancer.Id || freelancer.id;
+                if (!freelancerId) {
+                  console.warn('Skipping freelancer with missing Id:', freelancer);
+                  continue;
+                }
+                
+                console.log('Fetching timesheets for freelancer:', freelancerId);
+                const freelancerTimesheets = await getTimesheetsByFreelancerId(freelancerId);
+                console.log('Timesheets for freelancer', freelancerId, ':', freelancerTimesheets);
+                if (freelancerTimesheets.length > 0) {
+                  console.log('Sample timesheet structure:', freelancerTimesheets[0]);
+                }
+                
+                // Filter timesheets to only include those for the specific project
+                const projectTimesheets = freelancerTimesheets.filter((ts: any) => {
+                  const timesheetProjectId = ts.projectId || ts.ProjectId;
+                  const matchesProject = timesheetProjectId === Number(projectId);
+                  console.log(`Timesheet ${ts.id}: projectId=${timesheetProjectId}, targetProjectId=${projectId}, matches=${matchesProject}`);
+                  return matchesProject;
+                });
+                
+                // Add project name to each timesheet entry
+                const timesheetsWithProject = projectTimesheets.map((ts: any) => ({ 
+                  ...ts, 
+                  ProjectName: targetProject!.ProjectTitle,
+                  FreelancerName: freelancer.FirstName + ' ' + freelancer.LastName || freelancer.Name || `Freelancer ${freelancerId}`
+                }));
+                
+                allTimesheets.push(...timesheetsWithProject);
+              }
+            }
+          } catch (projectErr) {
+            console.error('Error fetching specific project:', projectErr);
+            setError('Failed to fetch project details');
+            setLoading(false);
+            return;
+          }
+        } else {
+          // If no projectId, fetch all projects and their timesheets
+          console.log('Fetching all projects for client:', user.id);
+          const projects = await getProjectsByClient(user.id);
+          console.log('Projects fetched:', projects);
+          
+          // For each project, get the assigned freelancers
+          for (const project of projects) {
+            console.log('Fetching freelancers for project:', project.Id);
+            const freelancers = await getFreelancersByProject(project.Id);
+            console.log('Freelancers for project', project.Id, ':', freelancers);
+            
+            // For each freelancer, get their timesheets
+            for (const freelancer of freelancers) {
+              const freelancerId = freelancer.Id || freelancer.id;
+              if (!freelancerId) {
+                console.warn('Skipping freelancer with missing Id:', freelancer);
+                continue;
+              }
+              
+              console.log('Fetching timesheets for freelancer:', freelancerId);
+              const freelancerTimesheets = await getTimesheetsByFreelancerId(freelancerId);
+              console.log('Timesheets for freelancer', freelancerId, ':', freelancerTimesheets);
+              if (freelancerTimesheets.length > 0) {
+                console.log('Sample timesheet structure:', freelancerTimesheets[0]);
+              }
+              
+                             // Filter timesheets to only include those for the current project
+               const projectTimesheets = freelancerTimesheets.filter((ts: any) => {
+                 const timesheetProjectId = ts.projectId || ts.ProjectId;
+                 const matchesProject = timesheetProjectId === project.Id;
+                 console.log(`Timesheet ${ts.id}: projectId=${timesheetProjectId}, currentProjectId=${project.Id}, matches=${matchesProject}`);
+                 return matchesProject;
+               });
+              
+              // Add project name to each timesheet entry
+              const timesheetsWithProject = projectTimesheets.map((ts: any) => ({ 
+                ...ts, 
+                ProjectName: project.ProjectTitle,
+                FreelancerName: freelancer.FirstName + ' ' + freelancer.LastName || freelancer.Name || `Freelancer ${freelancerId}`
+              }));
+              
+              allTimesheets.push(...timesheetsWithProject);
+            }
+          }
         }
         
-        // Fetch all timesheets
-        const timesheetData = await getTimesheets();
+        console.log('All timesheets before grouping:', allTimesheets);
+        const groupedTimesheets = await groupTimesheets(allTimesheets);
+        console.log('Grouped timesheets:', groupedTimesheets);
         
-        // Filter timesheets by projectId if it's provided in the URL
-        let filteredData = timesheetData;
-        if (projectId) {
-          filteredData = timesheetData.filter((timesheet: any) => timesheet.ProjectId === parseInt(projectId));
+        setTimesheets(groupedTimesheets);
+        if (targetProject) {
+          setProject(targetProject);
         }
-        
-        setTimesheets(groupTimesheets(filteredData));
         setError(null);
       } catch (err) {
-        setError('Failed to fetch data.');
         console.error('Error fetching data:', err);
+        setError('Failed to fetch data: ' + (err instanceof Error ? err.message : 'Unknown error'));
       } finally {
         setLoading(false);
       }
     };
     
     fetchData();
-  }, [projectId]);
+  }, [user, projectId]);
 
   // Get unique projects from the actual timesheet data
   const projects = [...new Set(timesheets.map(t => t.projectName))];
@@ -475,6 +597,36 @@ const TimesheetApproval: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Approval/Rejection Controls */}
+              {timesheet.status === 'Pending' && (
+                <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+                  <input
+                    type="text"
+                    placeholder="Add a comment (required for rejection)"
+                    value={comments[timesheet.id] || ''}
+                    onChange={e => setComments(prev => ({ ...prev, [timesheet.id]: e.target.value }))}
+                    className="border rounded px-3 py-2 flex-1"
+                    disabled={actionLoading !== null}
+                  />
+                  <Button
+                    variant="primary"
+                    onClick={() => handleApprove(timesheet.id)}
+                    disabled={actionLoading === timesheet.id + '-approve'}
+                    className="min-w-[100px]"
+                  >
+                    {actionLoading === timesheet.id + '-approve' ? 'Approving...' : 'Approve'}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={() => handleReject(timesheet.id)}
+                    disabled={actionLoading === timesheet.id + '-reject'}
+                    className="min-w-[100px]"
+                  >
+                    {actionLoading === timesheet.id + '-reject' ? 'Rejecting...' : 'Reject'}
+                  </Button>
+                </div>
+              )}
             </div>
           </Card>
         ))}

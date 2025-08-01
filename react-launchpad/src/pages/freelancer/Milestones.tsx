@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/badge';
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { Calendar, DollarSign, Upload, MessageSquare, Send, CheckCircle, XCircle, Clock, Filter, Paperclip, X, Target } from 'lucide-react';
-import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable, updateMilestoneHandover, getMilestonesByFreelancerId } from '../../apiendpoints';
+import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable, updateMilestoneHandover, getMilestonesByFreelancerId, updateMilestone } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
 import { handleError } from '@/utils/errorHandler';
 import axios from 'axios';
@@ -197,7 +197,7 @@ export function Milestones() {
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
-      await axios.put(`http://localhost:7071/api/updatemilestone/${milestoneId}`, {
+      await updateMilestone(milestoneId, {
         ...milestone,
         Status: statusMap[newStatus as 'not-started' | 'in-progress' | 'completed']
       });
@@ -225,7 +225,7 @@ export function Milestones() {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         console.log('Using token for updateMilestoneStatus:', token);
       }
-      await axios.put(`http://localhost:7071/api/updatemilestone/${milestone.Id}`, {
+      await updateMilestone(milestone.Id, {
         ...milestone,
         Status: statusMap[status] // send integer value for enum
       });
@@ -269,7 +269,7 @@ export function Milestones() {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
       // 1. Create deliverable
-      await axios.post('http://localhost:7071/api/deliverables', {
+      await createDeliverable({
         UploadFiles: files.map(f => f.name).join(','),
         MilestoneId: milestoneId,
         ProjectId: projectId,
@@ -277,7 +277,7 @@ export function Milestones() {
         Status: 'submitted'
       });
       // 2. Update milestone status to completed
-      await axios.put(`http://localhost:7071/api/updatemilestone/${milestoneId}`, {
+      await updateMilestone(milestoneId, {
         ...milestone,
         Status: statusMap['completed']
       });

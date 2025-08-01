@@ -12,13 +12,8 @@ using ProjectLaunchpad.DataAccess.Data;
 namespace ProjectLaunchpad.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-<<<<<<<< HEAD:ProjectInternship/ProjectLaunchpad.DataAccess/Migrations/20250731090416_init.Designer.cs
-    [Migration("20250731090416_init")]
-    partial class init
-========
-    [Migration("20250731081154_addInitials")]
-    partial class addInitials
->>>>>>>> d458a0e447844788937f3f1ef312344205e95161:ProjectInternship/ProjectLaunchpad.DataAccess/Migrations/20250731081154_addInitials.Designer.cs
+    [Migration("20250729100929_update-projects")]
+    partial class updateprojects
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -150,32 +145,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.HasIndex("FreelancerId");
 
                     b.ToTable("Feedbacks");
-                });
-
-            modelBuilder.Entity("ProjectLaunchpad.Models.Models.FreelancerMilestone", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("MilestoneId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MilestoneId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("freelancerMilestones");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Logs", b =>
@@ -571,6 +540,35 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.ToTable("projectRequests");
                 });
 
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ResumeProject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FreelancerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FreelancerId");
+
+                    b.ToTable("resumeProjects");
+                });
+
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Subtask", b =>
                 {
                     b.Property<int>("Id")
@@ -813,25 +811,6 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("ProjectLaunchpad.Models.Models.FreelancerMilestone", b =>
-                {
-                    b.HasOne("ProjectLaunchpad.Models.Models.Milestone", "Milestone")
-                        .WithMany()
-                        .HasForeignKey("MilestoneId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ProjectLaunchpad.Models.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Milestone");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Logs", b =>
                 {
                     b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
@@ -1004,6 +983,17 @@ namespace ProjectLaunchpad.DataAccess.Migrations
                     b.Navigation("Freelancer");
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("ProjectLaunchpad.Models.Models.ResumeProject", b =>
+                {
+                    b.HasOne("ProjectLaunchpad.Models.FreelancerProfile", "Freelancer")
+                        .WithMany()
+                        .HasForeignKey("FreelancerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Freelancer");
                 });
 
             modelBuilder.Entity("ProjectLaunchpad.Models.Models.Subtask", b =>
