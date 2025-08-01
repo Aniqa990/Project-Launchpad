@@ -3,8 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, 
-  Plus, 
-  Download,
+  Plus,
   Users, 
   Clock, 
   CheckSquare, 
@@ -23,7 +22,6 @@ import {
 export function Sidebar() {
   const { user } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -40,8 +38,6 @@ export function Sidebar() {
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
     { icon: MessageSquare, label: 'Meeting Summaries', path: '/client/meeting-summaries' },
     { icon: Settings, label: 'Settings', path: '/client/settings' },
-    // { icon: MessageSquare, label: 'Messages', path: '/messages' },
-    // { icon: LayoutDashboard, label: 'Meetings', path: '/client/meetings' },
     { icon: Video, label: 'Meetings', path: '/client/meetings' },
   ];
 

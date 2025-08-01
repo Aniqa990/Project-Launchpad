@@ -15,9 +15,7 @@ import { UpdateProject } from './pages/client/UpdateProject';
 import { ProjectDetails } from './components/ProjectDetails';
 import { ClientPayments } from './pages/client/Payments';
 import { ClientProjectRequests } from './pages/client/Requests';
-import { ClientHourlyLogViewer } from './pages/client/HourlyLog';
 import {FreelancerSuggestions} from './pages/client/FreelancerSuggestions';
-import { ClientMessages } from './pages/client/Messages';
 import ClientMilestones from './pages/client/Milestones';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
@@ -36,7 +34,6 @@ import Meetings from './pages/client/MeetingRoom';
 import FreelancerTimesheets from './pages/freelancer/Timesheets';
 import { MeetingSummaries } from './components/workspace/MeetingSummaries';
 
-import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
 import { FreelancerPayments } from './pages/freelancer/Payments';
 import MeetingRoom from './pages/client/MeetingRoom';
@@ -137,12 +134,10 @@ const AppRoutes = () => {
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
         <Route path="milestone-management" element={<ClientMilestones />} />
-        <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
         <Route path="meetings" element={<MeetingRoom />} />
         <Route path="meeting-summaries" element={<MeetingSummaries />} />
-        <Route path="hourly-logs" element={<ClientHourlyLogViewer />} />
       </Route>
       
       <Route path="/freelancer/*" element={
@@ -157,7 +152,6 @@ const AppRoutes = () => {
         <Route path="feedback" element={<Feedback />} />
         <Route path="settings" element={<FreelancerSettings />} />  
         <Route path="timesheets" element={<FreelancerTimesheets />} />
-        <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
         <Route path="payments" element={<FreelancerPayments />} />
         <Route path="meetings" element={<FreelancerMeetingRoom />} />
