@@ -16,7 +16,7 @@ import {
   Eye,
   Upload
 } from 'lucide-react';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 import { ProjectRequest } from '@/types';
 
 export function FreelancerRequests() {
@@ -36,7 +36,7 @@ export function FreelancerRequests() {
           console.log(data);
         }
       } catch (error: any) {
-        handleError(error, 'fetchData');
+        handleApiError(error, 'fetchData');
       }
     };
     fetchRequests();
@@ -83,7 +83,7 @@ export function FreelancerRequests() {
       }
       showSuccessToast('Project request accepted!');
     } catch (err: any) {
-      handleError(err, 'respondToRequest');
+      handleApiError(err, 'respondToRequest');
     } finally {
       setShowDetailDialog(false);
     }
@@ -97,7 +97,7 @@ export function FreelancerRequests() {
       ));
       showSuccessToast('Project request declined');
     } catch (err: any) {
-      handleError(err, 'respondToRequest');
+      handleApiError(err, 'respondToRequest');
     } finally {
       setShowDetailDialog(false);
     }

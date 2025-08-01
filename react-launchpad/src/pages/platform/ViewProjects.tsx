@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getProjects } from '../../apiendpoints';
-import { Calendar, User, ExternalLink, Filter, Search } from 'lucide-react';
+import { Calendar, User, Filter, Search } from 'lucide-react';
 import { Project } from '@/types';
-import { handleError } from '@/utils/errorHandler';
+import { handleApiError } from '@/utils/errorHandler';
 
 export function AdminViewProjects() {
   const { user } = useAuth();
@@ -18,7 +17,7 @@ export function AdminViewProjects() {
         const projectsData = await getProjects();
         setProjects(projectsData);
       } catch (error) {
-        handleError(error, 'fetchProjects');
+        handleApiError(error, 'fetchProjects');
         setProjects([]);
       }
     };

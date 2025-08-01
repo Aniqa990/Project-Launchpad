@@ -112,7 +112,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             return taskDtos;
         }
 
-
         public async Task<TaskItem?> GetByIdAsync(int id)
         {
             return await _db.taskItems.Include(t => t.Subtasks).FirstOrDefaultAsync(t => t.Id == id);

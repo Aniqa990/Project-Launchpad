@@ -14,7 +14,7 @@ import {
   Download,
   Eye
 } from 'lucide-react';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showInfoToast, showSuccessToast } from '@/utils/errorHandler';
 import { getFreelancerPayments, getFreelancerProjects, getClientById } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -46,7 +46,7 @@ export function FreelancerPayments() {
           const clientData = await Promise.all(clientPromises);
           setClients(clientData);
         } catch (err) {
-          handleError(err, 'fetchClientDetails');
+          handleApiError(err, 'fetchClientDetails');
         }
       }
     };
@@ -60,7 +60,7 @@ export function FreelancerPayments() {
       const data = await getFreelancerPayments(freelancerId);
       setPayments(data);
     } catch (err) {
-      handleError(err, 'fetchPayments');
+      handleApiError(err, 'fetchPayments');
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export function FreelancerPayments() {
       const data = await getFreelancerProjects(freelancerId);
       setProjects(data);
     } catch (err) {
-      handleError(err, 'fetchProjects');
+      handleApiError(err, 'fetchProjects');
     }
   };
 
@@ -131,7 +131,7 @@ export function FreelancerPayments() {
 
   const handleViewDetails = (payment: any) => {
     // Implement payment details view
-    toast.info('Payment details feature coming soon');
+    showInfoToast('Payment details feature coming soon');
   };
 
   return (

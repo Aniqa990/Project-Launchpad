@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
+import { Modal } from '../../components/ui/Modal';
 import { 
   FolderOpen, 
   Eye, 
@@ -13,11 +14,11 @@ import {
   Filter,
   Search,
   Plus,
-  Pencil
+  AlertCircle
 } from 'lucide-react';
 import { getClientProjects, getProjectById, updateProject } from '../../apiendpoints';
 import { Project } from '@/types';
-import { handleError } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
 
 export function ClientProjects() {
   const navigate = useNavigate();
@@ -37,6 +38,15 @@ export function ClientProjects() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState('');
   const [updateError, setUpdateError] = useState('');
+  
+  // Start date update modal state
+  const [startDateModal, setStartDateModal] = useState({
+    isOpen: false,
+    selectedProject: null as Project | null,
+    newStartDate: '',
+    error: '',
+    isUpdating: false
+  });
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -51,7 +61,7 @@ export function ClientProjects() {
           setProjects([]);
         }
       } catch (err) {
-        handleError(err, 'fetchProjects');
+        handleApiError(err, 'fetchProjects');
         setError('Failed to load projects.');
       } finally {
         setLoading(false);
@@ -101,6 +111,65 @@ export function ClientProjects() {
 
   const createNewProject = () => {
     navigate('/client/create-project');
+  };
+
+  // Start date validation
+  const validateStartDate = (startDate: string) => {
+    if (!startDate) return 'Start date is required';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const startDateObj = new Date(startDate);
+    
+    if (startDateObj < today) {
+      return 'Start date must not be before today ';
+    }
+    return '';
+  };
+
+  // Open start date update modal
+  const openStartDateModal = (project: Project) => {
+    setStartDateModal({
+      isOpen: true,
+      selectedProject: project,
+      newStartDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+      error: '',
+      isUpdating: false
+    });
+  };
+
+  // Handle start date update
+  const handleStartDateUpdate = async () => {
+
+    const error = validateStartDate(startDateModal.newStartDate);
+    if (error) {
+      setStartDateModal(prev => ({ ...prev, error }));
+      return;
+    }
+    
+    if (!startDateModal.selectedProject) return;
+
+    setStartDateModal(prev => ({ ...prev, isUpdating: true }));
+    try {
+      const payload = {
+        startDate: new Date(startDateModal.newStartDate).toISOString(),
+      };
+
+      await updateProject(startDateModal.selectedProject.id, payload);
+      showSuccessToast('Start date updated successfully!');
+      setStartDateModal(prev => ({ ...prev, isOpen: false }));
+      
+      // Refresh projects list
+      if (user?.id) {
+        const data = await getClientProjects(user.id);
+        setProjects(data);
+      }
+    } catch (error) {
+      handleApiError(error, 'updateStartDate');
+    } finally {
+      setStartDateModal(prev => ({ ...prev, isUpdating: false }));
+    }
   };
 
   if (loading) {
@@ -344,14 +413,14 @@ export function ClientProjects() {
                       </Button>
                     )}
                     
-                    {project.status === 'open' && (
+                    {project.status === 'open' && project.approvalStatus === 'approved' && (
                       <Button
-                        onClick={() => navigate(`/client/update-project/${project.id}`)}
+                        onClick={() => openStartDateModal(project)}
                         variant="outline"
                         size="sm"
                         className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
                       >
-                        Update Start Date and Details
+                        Update Start Date
                       </Button>
                     )}
                   </div>
@@ -374,6 +443,62 @@ export function ClientProjects() {
           </div>
         </div>
       </Card>
+
+      {/* Start Date Update Modal */}
+      <Modal
+        isOpen={startDateModal.isOpen}
+        onClose={() => setStartDateModal(prev => ({ ...prev, isOpen: false }))}
+        title="Update Start Date"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="newStartDate" className="block text-sm font-medium text-gray-700">
+              New Start Date
+            </label>
+            <input
+              type="date"
+              id="newStartDate"
+              value={startDateModal.newStartDate}
+              onChange={(e) => setStartDateModal(prev => ({ ...prev, newStartDate: e.target.value }))}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+            {startDateModal.error && (
+              <p className="mt-2 text-sm text-red-600 flex items-center">
+                <AlertCircle className="w-4 h-4 mr-1" />
+                {startDateModal.error}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setStartDateModal(prev => ({ ...prev, isOpen: false }))}
+              disabled={startDateModal.isUpdating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleStartDateUpdate}
+              disabled={startDateModal.isUpdating || !startDateModal.newStartDate}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {startDateModal.isUpdating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Update Start Date
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

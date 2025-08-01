@@ -32,7 +32,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { ProjectModal } from '@/components/ui/ProjectModal';
 import { ExperienceModal } from '@/components/ui/ExperienceModal';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
 
 export function ProfileSetup() {
@@ -59,7 +59,7 @@ export function ProfileSetup() {
   const [workingHours, setWorkingHours] = useState('10am - 7pm');
   const [fullName, setName] = useState(`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim());
   const [email, setEmail] = useState(user?.email ?? '');
-  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [phoneNo, setPhoneNo] = useState(user?.phoneNo ?? '');
 
   // UI/UX state for modals
   const [showExpModal, setShowExpModal] = useState(false);
@@ -159,7 +159,7 @@ export function ProfileSetup() {
             showSuccessToast(`Resume ${file.name} parsed successfully!`);
           } catch (error: any) {
             setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'error', error: error.message } : r));
-            handleError(error, 'uploadFile');
+            handleApiError(error, 'uploadFile');
           }
           setParsing(false);
         } finally {
@@ -237,7 +237,7 @@ export function ProfileSetup() {
 
     if (fullName) completed++;
     if (email) completed++;
-    if (phone) completed++;
+    if (phoneNo) completed++;
     if (hourlyRate > 0) completed++;
     if (availability) completed++;
     if (workingHours) completed++;
@@ -254,7 +254,7 @@ export function ProfileSetup() {
   const canProceedToNext = () => {
     switch (step) {
       case 1: return resumeUploaded || showParseResults;
-      case 2: return fullName && email && phone && profileData.skills.length && hourlyRate > 0 && availability && workingHours;
+      case 2: return fullName && email && phoneNo && profileData.skills.length && hourlyRate > 0 && availability && workingHours;
       case 3: return true;
       case 4: return true;
       default: return true;
@@ -269,7 +269,7 @@ export function ProfileSetup() {
     const parsedJson = {
       name: fullName,
       email,
-      phone,
+      phoneNo,
       hourly_rate: hourlyRate,
       working_hours: workingHours,
       availability,
@@ -312,7 +312,7 @@ export function ProfileSetup() {
       showSuccessToast('Profile saved successfully!');
       navigate('/freelancer/dashboard');
     } catch (error: any) {
-      handleError(error, 'updateProfile');
+      handleApiError(error, 'updateProfile');
     }
   };
 
@@ -431,13 +431,13 @@ export function ProfileSetup() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number *</Label>
+          <Label htmlFor="phoneNo">Phone Number *</Label>
           <Input
-            id="phone"
+            id="phoneNo"
             type="tel"
             required
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            value={phoneNo}
+            onChange={(e) => setPhoneNo(e.target.value)}
             placeholder="Enter your phone number"
           />
         </div>

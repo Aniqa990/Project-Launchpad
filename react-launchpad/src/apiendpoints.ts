@@ -1,10 +1,9 @@
 import axios from "axios";
 import type {FreelancerProfile, LoginResponse, SignupRequest, User, KanbanTask, KanbanSubtask, KanbanTaskStatus, KanbanTaskPriorityLevel, Deliverable, Feedback, Milestone} from "@/types";
 import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst";
-import { handleError, getErrorType, ErrorType } from "@/utils/errorHandler";
 
 const api = axios.create({
-  baseURL: "http://localhost:7053/api",
+  baseURL: "http://localhost:7071/api",
   headers: {
     "Content-Type": "application/json",
   },

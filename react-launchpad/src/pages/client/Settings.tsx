@@ -8,7 +8,7 @@ import { updateClientProfile, fetchClientProfile, deleteClientProfile } from '..
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { User } from '@/types';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 import { User as UserIcon, Phone, Camera, Save, Eye, EyeOff, Lock } from 'lucide-react';
 
 export function ClientSettings() {
@@ -43,7 +43,7 @@ export function ClientSettings() {
         };
         setProfile(transformData);
       } catch (err: any) {
-        handleError(err, 'fetchProfile');
+        handleApiError(err, 'fetchProfile');
         setProfile(null);
       } finally {
         setLoading(false);
@@ -66,7 +66,7 @@ export function ClientSettings() {
       setIsEditing(false);
       showSuccessToast('Profile updated successfully!');
     } catch (err: any) {
-      handleError(err, 'updateProfile');
+      handleApiError(err, 'updateProfile');
     } finally {
       setLoading(false);
     }
@@ -91,10 +91,10 @@ export function ClientSettings() {
         setIsEditing(true);
         showSuccessToast('Image uploaded!');
       } else {
-        handleError(new Error('Failed to upload image'), 'uploadImage');
+        handleApiError(new Error('Failed to upload image'), 'uploadImage');
       }
     } catch (err) {
-      handleError(err, 'uploadImage');
+      handleApiError(err, 'uploadImage');
     }
   };
 
@@ -110,7 +110,7 @@ export function ClientSettings() {
 
   const handleSavePassword = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
-      handleError(new Error('Passwords do not match'), 'validation');
+      handleApiError(new Error('Passwords do not match'), 'validation');
       return;
     }
     if (!profile) return;
@@ -125,7 +125,7 @@ export function ClientSettings() {
       showSuccessToast('Password updated successfully!');
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err: any) {
-      handleError(err, 'updatePassword');
+      handleApiError(err, 'updatePassword');
     } finally {
       setLoading(false);
     }
@@ -262,8 +262,8 @@ export function ClientSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
             <Input
               type="tel"
-              value={profile?.phone || ''}
-              onChange={(e) => handleProfileChange('phone', e.target.value)}
+              value={profile?.phoneNo || ''}
+              onChange={(e) => handleProfileChange('phoneNo', e.target.value)}
               disabled={!isEditing}
             />
           </div>

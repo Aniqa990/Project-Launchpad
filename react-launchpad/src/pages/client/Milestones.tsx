@@ -26,7 +26,7 @@ import {
   getPaymentStatusColor,
   getMilestonePaymentStatus
 } from '../../utils/paymentHelpers';
-import { handleError, showSuccessToast } from '../../utils/errorHandler';
+import { handleApiError, showSuccessToast } from '../../utils/errorHandler';
 import { 
   Calendar, 
   DollarSign, 
@@ -157,7 +157,7 @@ const ClientMilestones: React.FC = () => {
         setProjects(data);
       } catch (error) {
         console.error('Error fetching projects:', error);
-        handleError(error, 'fetchProjects');
+        handleApiError(error, 'fetchProjects');
       } finally {
         setLoading(false);
       }
@@ -251,7 +251,7 @@ const ClientMilestones: React.FC = () => {
          setMilestoneAssignments({}); // Clear assignments - will be populated when freelancers are assigned
          setMilestonePayments(payments);
               } catch (error) {
-          handleError(error, 'fetchMilestones');
+          handleApiError(error, 'fetchMilestones');
           setMilestones([]);
           setMilestoneAssignments({});
           setMilestonePayments({});
@@ -299,7 +299,7 @@ const ClientMilestones: React.FC = () => {
          setFreelancers(transformedData);
        } catch (error) {
          console.error('Error fetching freelancers:', error);
-         handleError(error, 'fetchFreelancers');
+         handleApiError(error, 'fetchFreelancers');
          setFreelancers([]);
        }
      };
@@ -343,7 +343,7 @@ const ClientMilestones: React.FC = () => {
       setSelectedMilestone(null);
       setSelectedFreelancer(null);
     } catch (error) {
-      handleError(error, 'assignMilestone');
+      handleApiError(error, 'assignMilestone');
     } finally {
       setLoading(false);
     }
@@ -361,7 +361,7 @@ const ClientMilestones: React.FC = () => {
         [milestoneId]: (prev[milestoneId] || []).filter(f => f.Id !== userId)
       }));
     } catch (error) {
-      handleError(error, 'unassignMilestone');
+      handleApiError(error, 'unassignMilestone');
     } finally {
       setLoading(false);
     }
