@@ -3,8 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, 
-  Plus, 
-  Download,
+  Plus,
   Users, 
   Clock, 
   CheckSquare, 
@@ -23,7 +22,6 @@ import {
 export function Sidebar() {
   const { user } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -34,14 +32,11 @@ export function Sidebar() {
     // { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
     { icon: Kanban, label: 'View Tasks', path: '/client/kanban' },
     { icon: Users, label: 'View Project Requests', path: '/client/project-requests' },
-    { icon: Clock, label: 'Time Logs', path: '/client/hourly-logs' },
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
     { icon: CheckSquare, label: 'Milestone Management', path: '/client/milestone-management' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
     { icon: MessageSquare, label: 'Meeting Summaries', path: '/client/meeting-summaries' },
     { icon: Settings, label: 'Settings', path: '/client/settings' },
-    // { icon: MessageSquare, label: 'Messages', path: '/messages' },
-    // { icon: LayoutDashboard, label: 'Meetings', path: '/client/meetings' },
     { icon: Video, label: 'Meetings', path: '/client/meetings' },
   ];
 
@@ -50,7 +45,6 @@ export function Sidebar() {
     { icon: User, label: 'Projects', path: '/freelancer/projects' },
     { icon: Clock, label: 'Requests', path: '/freelancer/requests' },
     { icon: Kanban, label: 'Task Board', path: '/freelancer/kanban' },
-    { icon: Clock, label: 'Hourly Logs', path: '/freelancer/hourly-logs' },
     { icon: CheckSquare, label: 'Milestones', path: '/freelancer/milestones' },
     { icon: DollarSign, label: 'Payments', path: '/freelancer/payments' },
     { icon: Clock, label: 'Timesheet', path: '/freelancer/timesheets' },

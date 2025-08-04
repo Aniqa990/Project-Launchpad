@@ -8,7 +8,7 @@ import { fetchPlatformProfile, updatePlatformProfile } from '../../apiendpoints'
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import { User } from '@/types';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 import { User as UserIcon, Phone, Camera, Save, Eye, EyeOff, Lock } from 'lucide-react';
 
 export function PlatformSettings() {
@@ -27,7 +27,7 @@ export function PlatformSettings() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
+  const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`;
   const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function PlatformSettings() {
         };
         setProfile(transformData);
       } catch (err: any) {
-        handleError(err, 'fetchProfile');
+        handleApiError(err, 'fetchProfile');
         setProfile(null);
       } finally {
         setLoading(false);
@@ -65,7 +65,7 @@ export function PlatformSettings() {
       setIsEditing(false);
       showSuccessToast('Profile updated successfully!');
     } catch (err: any) {
-      handleError(err, 'updateProfile');
+      handleApiError(err, 'updateProfile');
     } finally {
       setLoading(false);
     }
@@ -90,10 +90,10 @@ export function PlatformSettings() {
         setIsEditing(true);
         showSuccessToast('Image uploaded!');
       } else {
-        handleError(new Error('Failed to upload image'), 'uploadImage');
+        handleApiError(new Error('Failed to upload image'), 'uploadImage');
       }
     } catch (err) {
-      handleError(err, 'uploadImage');
+      handleApiError(err, 'uploadImage');
     }
   };
 
@@ -109,7 +109,7 @@ export function PlatformSettings() {
 
   const handleSavePassword = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
-      handleError(new Error('Passwords do not match'), 'validation');
+      handleApiError(new Error('Passwords do not match'), 'validation');
       return;
     }
     if (!profile) return;
@@ -124,7 +124,7 @@ export function PlatformSettings() {
       showSuccessToast('Password updated successfully!');
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err: any) {
-      handleError(err, 'updatePassword');
+      handleApiError(err, 'updatePassword');
     } finally {
       setLoading(false);
     }
@@ -250,8 +250,8 @@ export function PlatformSettings() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
             <Input
               type="tel"
-              value={profile?.phone || ''}
-              onChange={(e) => handleProfileChange('phone', e.target.value)}
+              value={profile?.phoneNo || ''}
+              onChange={(e) => handleProfileChange('phoneNo', e.target.value)}
               disabled={!isEditing}
             />
           </div>

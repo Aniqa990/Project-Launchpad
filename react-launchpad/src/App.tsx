@@ -12,18 +12,16 @@ import { ClientDashboard } from './pages/client/Dashboard';
 import { CreateProject } from './pages/client/CreateProject';
 import { ClientProjects } from './pages/client/Projects';
 import { UpdateProject } from './pages/client/UpdateProject';
-import { ProjectDetails } from './components/ProjectDetails';
+import { ProjectDetails } from './pages/ProjectDetails';
 import { ClientPayments } from './pages/client/Payments';
 import { ClientProjectRequests } from './pages/client/Requests';
-import { ClientHourlyLogViewer } from './pages/client/HourlyLog';
 import {FreelancerSuggestions} from './pages/client/FreelancerSuggestions';
-import { ClientMessages } from './pages/client/Messages';
 import ClientMilestones from './pages/client/Milestones';
 import { FreelancerDashboard } from './pages/freelancer/Dashboard';
 import { FreelancerProjects } from './pages/freelancer/Projects';
 import { FreelancerRequests } from './pages/freelancer/Requests';
 import { Feedback } from './pages/freelancer/Feedback';
-import { KanbanBoard } from './components/workspace/KanbanBoard';
+import { KanbanBoard } from './pages/KanbanBoard';
 import { ProfileSetup } from './pages/freelancer/ProfileSetup';
 import { PlatformDashboard } from './pages/platform/Dashboard';
 import { MilestonePayments } from './pages/platform/Payments';
@@ -31,12 +29,11 @@ import { AdminViewProjects } from './pages/platform/ViewProjects';
 import { AdminProjectApprovals } from './pages/platform/Projects';
 import { PlatformSettings } from './pages/platform/Settings';
 import ForgotPasswordPage from './pages/ForgotPassword';
-import TimesheetApproval from './pages/client/TimesheetApproval';
+import {TimesheetApproval} from './pages/client/TimesheetApproval';
 import Meetings from './pages/client/MeetingRoom';
 import FreelancerTimesheets from './pages/freelancer/Timesheets';
-import { MeetingSummaries } from './components/workspace/MeetingSummaries';
+import { MeetingSummaries } from './pages/MeetingSummaries';
 
-import { HourlyLogViewer } from './pages/freelancer/HourlyLogViewer';
 import { Milestones } from './pages/freelancer/Milestones';
 import { FreelancerPayments } from './pages/freelancer/Payments';
 import MeetingRoom from './pages/client/MeetingRoom';
@@ -137,12 +134,10 @@ const AppRoutes = () => {
         <Route path="kanban" element={<KanbanBoard />} /> 
         <Route path="payments" element={<ClientPayments />} />
         <Route path="milestone-management" element={<ClientMilestones />} />
-        <Route path="messages" element={<ClientMessages />} />
         <Route path="settings" element={<ClientSettings />} />
         <Route path="timesheet-approval" element={<TimesheetApproval />} />
         <Route path="meetings" element={<MeetingRoom />} />
         <Route path="meeting-summaries" element={<MeetingSummaries />} />
-        <Route path="hourly-logs" element={<ClientHourlyLogViewer />} />
       </Route>
       
       <Route path="/freelancer/*" element={
@@ -157,7 +152,6 @@ const AppRoutes = () => {
         <Route path="feedback" element={<Feedback />} />
         <Route path="settings" element={<FreelancerSettings />} />  
         <Route path="timesheets" element={<FreelancerTimesheets />} />
-        <Route path="hourly-logs" element={<HourlyLogViewer />} />
         <Route path="milestones" element={<Milestones />} />
         <Route path="payments" element={<FreelancerPayments />} />
         <Route path="meetings" element={<FreelancerMeetingRoom />} />

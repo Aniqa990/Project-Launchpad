@@ -16,9 +16,9 @@ import {
   Plus,
   AlertCircle
 } from 'lucide-react';
-import { getClientProjects, getProjectById, updateProject } from '../../apiendpoints';
+import { getClientProjects, getProjectById, updateProject, getProjectClosureSummary } from '../../apiendpoints';
 import { Project } from '@/types';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
 
 export function ClientProjects() {
   const navigate = useNavigate();
@@ -48,6 +48,15 @@ export function ClientProjects() {
     isUpdating: false
   });
 
+  // Project closure summary modal state
+  const [closureModal, setClosureModal] = useState({
+    isOpen: false,
+    projectId: null as number | null,
+    summary: null as any,
+    loading: false,
+    error: ''
+  });
+
   useEffect(() => {
     const fetchProjects = async () => {
       setLoading(true);
@@ -61,7 +70,7 @@ export function ClientProjects() {
           setProjects([]);
         }
       } catch (err) {
-        handleError(err, 'fetchProjects');
+        handleApiError(err, 'fetchProjects');
         setError('Failed to load projects.');
       } finally {
         setLoading(false);
@@ -166,9 +175,26 @@ export function ClientProjects() {
         setProjects(data);
       }
     } catch (error) {
-      handleError(error, 'updateStartDate');
+      handleApiError(error, 'updateStartDate');
     } finally {
       setStartDateModal(prev => ({ ...prev, isUpdating: false }));
+    }
+  };
+
+  // Handle project closure summary
+  const handleProjectClosure = async (projectId: number) => {
+    setClosureModal(prev => ({ ...prev, isOpen: true, projectId, loading: true, error: '' }));
+    
+    try {
+      const summary = await getProjectClosureSummary(projectId);
+      setClosureModal(prev => ({ ...prev, summary, loading: false }));
+    } catch (error) {
+      handleApiError(error, 'getProjectClosureSummary');
+      setClosureModal(prev => ({ 
+        ...prev, 
+        error: 'Failed to load project closure summary', 
+        loading: false 
+      }));
     }
   };
 
@@ -385,13 +411,23 @@ export function ClientProjects() {
                   
                   {/* Action Buttons */}
                   <div className="flex flex-col space-y-2 ml-4">
-                    <Button
-                      onClick={() => navigate(`/client/project-details/${project.id}`)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      View Details
-                    </Button>
+                    {project.status === 'closed' ? (
+                      <Button
+                        onClick={() => handleProjectClosure(project.id)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        size="sm"
+                      >
+                        Close Project
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => navigate(`/client/project-details/${project.id}`)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        View Details
+                      </Button>
+                    )}
                     
                     {project.approvalStatus === 'approved' && project.status === 'open' && (
                       <Button
@@ -495,6 +531,206 @@ export function ClientProjects() {
                   Update Start Date
                 </>
               )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Project Closure Summary Modal */}
+      <Modal
+        isOpen={closureModal.isOpen}
+        onClose={() => setClosureModal(prev => ({ ...prev, isOpen: false }))}
+        title="Project Closure Summary"
+        size="xl"
+      >
+        <div className="max-h-[calc(70vh-120px)] overflow-y-auto space-y-4 pr-2">
+          {closureModal.loading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading project closure summary...</p>
+            </div>
+          )}
+
+          {closureModal.error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <p className="text-red-800">{closureModal.error}</p>
+              </div>
+            </div>
+          )}
+
+          {closureModal.summary && !closureModal.loading && (
+            <div className="space-y-4">
+              {/* Project Information */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Project Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium text-gray-700">Title:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.ProjectTitle}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Status:</span>
+                    <Badge variant={
+                      closureModal.summary.Project.Status === 'closed' ? 'success' : 'default'
+                    }>
+                      {closureModal.summary.Project.Status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Category:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.CategoryOrDomain}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Payment Type:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.PaymentType}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Start Date:</span>
+                    <p className="text-gray-900">
+                      {closureModal.summary.Project.StartDate && closureModal.summary.Project.StartDate !== '0001-01-01T00:00:00' 
+                        ? new Date(closureModal.summary.Project.StartDate).toLocaleDateString() 
+                        : 'Not set'
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Deadline:</span>
+                    <p className="text-gray-900">
+                      {closureModal.summary.Project.Deadline 
+                        ? new Date(closureModal.summary.Project.Deadline).toLocaleDateString() 
+                        : 'Not set'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Freelancers */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Assigned Freelancers</h3>
+                {closureModal.summary.Project.Freelancers && closureModal.summary.Project.Freelancers.length > 0 ? (
+                  <div className="space-y-2">
+                    {closureModal.summary.Project.Freelancers.map((freelancer: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {freelancer.FirstName} {freelancer.LastName}
+                          </p>
+                          <p className="text-sm text-gray-600">{freelancer.Email}</p>
+                        </div>
+                        <Badge variant="info">ID: {freelancer.Id}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No freelancers assigned to this project</p>
+                )}
+              </div>
+
+              {/* Milestones */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Milestones</h3>
+                {closureModal.summary.Milestones && closureModal.summary.Milestones.length > 0 ? (
+                  <div className="space-y-3">
+                    {closureModal.summary.Milestones.map((milestone: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg border">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{milestone.Title}</h4>
+                          <Badge variant={
+                            milestone.Status === 'completed' ? 'success' :
+                            milestone.Status === 'in_progress' ? 'warning' :
+                            milestone.Status === 'pending' ? 'default' : 'default'
+                          }>
+                            {milestone.Status}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                          <div>
+                            <span className="font-medium text-gray-700">Amount:</span>
+                            <p className="text-gray-900">${milestone.Amount?.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Due Date:</span>
+                            <p className="text-gray-900">
+                              {milestone.DueDate ? new Date(milestone.DueDate).toLocaleDateString() : 'Not set'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Deliverables */}
+                        {milestone.Deliverables && milestone.Deliverables.length > 0 && (
+                          <div className="mb-2">
+                            <h5 className="font-medium text-gray-700 mb-1">Deliverables:</h5>
+                            <div className="space-y-2">
+                              {milestone.Deliverables.map((deliverable: any, dIndex: number) => (
+                                <div key={dIndex} className="bg-gray-50 p-2 rounded">
+                                  <p className="text-sm text-gray-900">{deliverable.comment}</p>
+                                  <p className="text-xs text-gray-600">Status: {deliverable.Status}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Assigned Freelancers */}
+                        {milestone.AssignedFreelancers && milestone.AssignedFreelancers.length > 0 && (
+                          <div className="mb-2">
+                            <h5 className="font-medium text-gray-700 mb-1">Assigned Freelancers:</h5>
+                            <div className="space-y-1">
+                              {milestone.AssignedFreelancers.map((freelancer: any, fIndex: number) => (
+                                <p key={fIndex} className="text-sm text-gray-900">
+                                  {freelancer.FirstName} {freelancer.LastName}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Payments */}
+                        {milestone.Payments && milestone.Payments.length > 0 && (
+                          <div>
+                            <h5 className="font-medium text-gray-700 mb-1">Payments:</h5>
+                            <div className="space-y-2">
+                              {milestone.Payments.map((payment: any, pIndex: number) => (
+                                <div key={pIndex} className="bg-gray-50 p-2 rounded">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-900">${payment.Amount?.toLocaleString()}</span>
+                                    <Badge variant={
+                                      payment.PaymentStatus === 'completed' ? 'success' :
+                                      payment.PaymentStatus === 'pending' ? 'warning' : 'default'
+                                    }>
+                                      {payment.PaymentStatus}
+                                    </Badge>
+                                  </div>
+                                  {payment.PaymentDate && (
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      {new Date(payment.PaymentDate).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No milestones found for this project</p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={() => setClosureModal(prev => ({ ...prev, isOpen: false }))}
+              variant="outline"
+            >
+              Close
             </Button>
           </div>
         </div>

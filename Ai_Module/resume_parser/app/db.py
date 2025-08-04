@@ -43,6 +43,9 @@ def get_parsed_resume(freelancer_id):
     conn.close()
     return json.loads(result['parsed_json']) if result and result['parsed_json'] else None
 
+import json
+import pymysql  # or your preferred import style
+
 def save_parsed_json(freelancer_id, parsed_json):
     conn = get_connection()
     try:
@@ -52,20 +55,19 @@ def save_parsed_json(freelancer_id, parsed_json):
             freelancer_exists = cursor.fetchone()
             
             if not freelancer_exists:
-                # Create new freelancer entry
                 print(f"Creating new freelancer entry with ID: {freelancer_id}")
                 cursor.execute("""
                     INSERT INTO freelancers (id) 
                     VALUES (%s)
-                """, (freelancer_id))
+                """, (freelancer_id,))
             
-            # Extract all fields from parsed JSON
+            # Extract fields from parsed JSON
             name = parsed_json.get('name', '')
             email = parsed_json.get('email', '')
             phone = parsed_json.get('phone', '')
             summary = parsed_json.get('summary', '')
             
-            # Update freelancer profile with all extracted data
+            # Update freelancer record
             cursor.execute("""
                 UPDATE freelancers 
                 SET 
@@ -74,7 +76,7 @@ def save_parsed_json(freelancer_id, parsed_json):
                     phone = %s,
                     summary = %s,
                     parsed_json = %s,
-                    parsed_at = CURRENT_TIMESTAMP,
+                    parsed_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             """, (
                 name,
@@ -84,16 +86,16 @@ def save_parsed_json(freelancer_id, parsed_json):
                 json.dumps(parsed_json),
                 freelancer_id
             ))
-            
+
             if cursor.rowcount == 0:
                 print(f"Warning: No rows updated for freelancer ID: {freelancer_id}")
             else:
                 print(f"Successfully updated freelancer profile for ID: {freelancer_id}")
                 print(f"Updated fields: name='{name}', email='{email}', phone='{phone}', summary='{summary[:50]}...'")
-                
-        conn.commit()
         
-    except mysql.connector.Error as e:
+        conn.commit()
+
+    except pymysql.MySQLError as e:
         print(f"Database error: {e}")
         conn.rollback()
         raise
@@ -103,6 +105,7 @@ def save_parsed_json(freelancer_id, parsed_json):
         raise
     finally:
         conn.close()
+
 
 def is_email_duplicate(email, freelancer_id):
     conn = get_connection()

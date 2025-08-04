@@ -4,9 +4,9 @@ import { getProjectsWithPendingApproval, updateProjectApprovalStatus, getMilesto
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ProjectDetails } from "@/components/ProjectDetails";
+import { ProjectDetails } from "@/pages/ProjectDetails";
 import type { Project, Milestone } from "@/types";
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
 export function AdminProjectApprovals() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export function AdminProjectApprovals() {
       const data = await getProjectsWithPendingApproval();
       setProjects(data);
     } catch (error) {
-      handleError(error, 'fetchProjects');
+      handleApiError(error, 'fetchProjects');
     }
   };
 
@@ -40,7 +40,7 @@ export function AdminProjectApprovals() {
       await fetchProjects();
       showSuccessToast('Project approved successfully');
     } catch (error) {
-      handleError(error, 'approveProject');
+      handleApiError(error, 'approveProject');
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export function AdminProjectApprovals() {
       setMilestones([]);
       showSuccessToast('Project rejected successfully');
     } catch (error) {
-      handleError(error, 'rejectProject');
+      handleApiError(error, 'rejectProject');
     } finally {
       setLoading(false);
     }
@@ -100,7 +100,7 @@ export function AdminProjectApprovals() {
       const data = await getMilestonesByProjectId(project.id);
       setMilestones(data);
     } catch (e) {
-      handleError(e, 'fetchMilestones');
+      handleApiError(e, 'fetchMilestones');
       setMilestones([]);
     } finally {
       setMilestonesLoading(false);

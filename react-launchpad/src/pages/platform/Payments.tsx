@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, Clock, DollarSign, Download, User, Calendar, Upload, FileText, AlertCircle, Send, CreditCard } from 'lucide-react';
 import { getMilestonesWithPaymentInfo, updateHandoverStatus, adminReleasePaymentAndApproveMilestone, releasePayment, getPaymentByMilestone } from '../../apiendpoints';
 import type { MilestoneWithPayment } from '../../types';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
 export function MilestonePayments() {
   const [milestones, setMilestones] = useState<MilestoneWithPayment[]>([]);
@@ -28,7 +28,7 @@ export function MilestonePayments() {
         setMilestones(normalized);
       })
       .catch((err: any) => {
-        handleError(err, 'fetchMilestones');
+        handleApiError(err, 'fetchMilestones');
         setError('Failed to fetch milestones');
       })
       .finally(() => setLoading(false));
@@ -76,7 +76,7 @@ export function MilestonePayments() {
       
       showSuccessToast('Milestone released and handed over successfully');
     } catch (err: any) {
-      handleError(err, 'updateHandoverStatus');
+      handleApiError(err, 'updateHandoverStatus');
       setError('Failed to update handover status');
     }
   };
@@ -100,7 +100,7 @@ export function MilestonePayments() {
       
       showSuccessToast('Payment released and milestone approved successfully');
     } catch (err: any) {
-      handleError(err, 'adminReleasePaymentAndApproveMilestone');
+      handleApiError(err, 'adminReleasePaymentAndApproveMilestone');
       setError('Failed to release payment and approve milestone');
     } finally {
       setReleasingPaymentId(null);

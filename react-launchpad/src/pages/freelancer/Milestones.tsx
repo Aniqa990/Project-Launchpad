@@ -7,7 +7,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Calendar, DollarSign, Upload, MessageSquare, Send, CheckCircle, XCircle, Clock, Filter, Paperclip, X, Target } from 'lucide-react';
 import { getFreelancerProjects, getMilestonesByProjectId, getDeliverablesByMilestoneId, createDeliverable, updateMilestoneHandover, getMilestonesByFreelancerId, updateMilestone } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
-import { handleError } from '@/utils/errorHandler';
+import { handleApiError } from '@/utils/errorHandler';
 import axios from 'axios';
 
 export function Milestones() {
@@ -92,7 +92,7 @@ export function Milestones() {
           }
         }
       } catch (error) {
-        handleError(error, 'fetchMilestones');
+        handleApiError(error, 'fetchMilestones');
         setMilestones([]);
       } finally {
         setMilestonesLoading(false);
@@ -183,13 +183,13 @@ export function Milestones() {
   const handleStatusChange = async (milestone: any, newStatus: string) => {
     // Prevent status changes if milestone is locked
     if (isMilestoneLocked(milestone)) {
-              handleError(new Error('Cannot change status - milestone has been completed by another team member'), 'milestoneStatus');
+              handleApiError(new Error('Cannot change status - milestone has been completed by another team member'), 'milestoneStatus');
       return;
     }
 
     const milestoneId = milestone.id || milestone.Id;
     if (!milestoneId) {
-              handleError(new Error('Milestone ID missing, cannot update status.'), 'milestoneStatus');
+              handleApiError(new Error('Milestone ID missing, cannot update status.'), 'milestoneStatus');
       return;
     }
     setStatusEdits(prev => ({ ...prev, [milestoneId]: newStatus }));
@@ -214,7 +214,7 @@ export function Milestones() {
         }
       }
     } catch (err) {
-              handleError(err, 'updateMilestoneStatus');
+              handleApiError(err, 'updateMilestoneStatus');
     }
   };
 

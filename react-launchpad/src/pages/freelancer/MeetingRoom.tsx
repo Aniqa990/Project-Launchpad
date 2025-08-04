@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../components/ui/select';
 import { Button } from '../../components/ui/button';
-import { handleError } from '@/utils/errorHandler';
+import { handleApiError } from '@/utils/errorHandler';
 
 function renderMessage(msg: string) {
   if (!msg || typeof msg !== 'string') return null;
@@ -48,7 +48,7 @@ export default function Meetings() {
   // Fetch notifications for freelancer
   useEffect(() => {
     if (!user?.id) return;
-    axios.get(`http://localhost:7053/api/notifications/${user.id}`)
+    axios.get(`http://localhost:7071/api/notifications/${user.id}`)
       .then(res => {
         setNotifications(res.data);
         if (res.data && res.data.length > 0) {
@@ -56,7 +56,7 @@ export default function Meetings() {
         }
       })
       .catch((error) => {
-        handleError(error, 'fetchNotifications');
+        handleApiError(error, 'fetchNotifications');
         setError('Failed to load notifications.');
       });
   }, [user?.id]);
@@ -69,13 +69,13 @@ export default function Meetings() {
     }
     const notif = notifications.find((n: any) => String(n.id) === selectedNotificationId);
     if (notif && notif.relatedMeetingId) {
-      axios.get(`http://localhost:7053/api/meetings/${notif.relatedMeetingId}/details`)
+      axios.get(`http://localhost:7071/api/meetings/${notif.relatedMeetingId}/details`)
         .then(res => {
           setMeeting(res.data);
           setMeetingId(res.data.meetingId || res.data.Id || res.data.id);
         })
         .catch((error) => {
-          handleError(error, 'fetchMeetingDetails');
+          handleApiError(error, 'fetchMeetingDetails');
           setError('Failed to load meeting details.');
         });
     } else {
@@ -264,9 +264,8 @@ export default function Meetings() {
     setUploadTranscriptError(null);
     try {
       // 1. Upload transcript to Cloudinary
-      const cloudName = 'depfyzzad';
-      const unsignedPreset = 'projectLaunchpad';
-      const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+      const unsignedPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+      const url = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/auto/upload`;
       const transcriptBlob = new Blob([transcript], { type: 'text/plain' });
       const cloudForm = new FormData();
       cloudForm.append('file', transcriptBlob, `transcript-${meetingId}-user-${user.id}.txt`);
@@ -286,7 +285,7 @@ export default function Meetings() {
       formData.append('userId', String(user.id));
       formData.append('audioUrl', transcriptUrl);
       const backendRes = await axios.post(
-        `http://localhost:7053/api/meetings/${meetingId}/upload-audio`,
+        `http://localhost:7071/api/meetings/${meetingId}/upload-audio`,
         formData
       );
       setUploadTranscriptSuccess('Transcript uploaded and saved!');

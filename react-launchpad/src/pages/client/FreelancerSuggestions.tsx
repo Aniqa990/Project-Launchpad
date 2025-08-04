@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../../components/ui/input';
 import { getProjectById, getFreelancerById, getFreelancerProjects, sendProjectRequest, getProjectRequestsByProjectId } from '@/apiendpoints';
 import type { Project, FreelancerProfile } from '@/types';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
 export function FreelancerSuggestions() {
   const [searchParams] = useSearchParams();
@@ -127,7 +127,7 @@ export function FreelancerSuggestions() {
       const requests = await getProjectRequestsByProjectId(Number(projectId));
       setProjectRequests(requests);
     } catch (err) {
-      handleError(err, 'sendProjectRequest');
+      handleApiError(err, 'sendProjectRequest');
     } finally {
       setSendingRequests(false);
     }

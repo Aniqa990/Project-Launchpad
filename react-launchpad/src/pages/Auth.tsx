@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Eye, EyeOff, Mail, Lock, User, CheckCircle, Phone, MessageCircle } from "lucide-react";
-import { handleError, showSuccessToast } from '../utils/errorHandler';
+import { handleApiError, showSuccessToast, showErrorToast } from '../utils/errorHandler';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { Avatar } from '../components/ui/avatar';
@@ -121,7 +121,7 @@ export function Auth({ mode }: AuthProps) {
   const { login, signup, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
+  const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`;
   const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   useEffect(() => {
@@ -141,17 +141,17 @@ export function Auth({ mode }: AuthProps) {
     } else if (step === 2) {
       // Step 2: Basic information - validate required fields, email, and phone
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.gender) {
-        handleError(new Error("Please fill in all required fields"), 'validation');
+        showErrorToast("Please fill in all required fields");
         return;
       }
       
       if (!validateEmail(formData.email)) {
-        handleError(new Error("Please enter a valid email address"), 'validation');
+        showErrorToast("Please enter a valid email address");
         return;
       }
       
       if (!phoneValidation.isValid) {
-        handleError(new Error("Please enter a valid phone number"), 'validation');
+        showErrorToast("Please enter a valid phone number");
         return;
       }
       
@@ -178,7 +178,7 @@ export function Auth({ mode }: AuthProps) {
         await login(formData.email, formData.password);
         showSuccessToast("Welcome back!");
       } catch (error) {
-        handleError(error, 'login');
+        handleApiError(error, 'login');
       } finally {
         setLoading(false);
       }
@@ -188,18 +188,18 @@ export function Auth({ mode }: AuthProps) {
       const phoneValidationResult = validatePhoneNumber(formData.phoneNo);
       
       if (!passwordValidationResult.isValid) {
-        handleError(new Error("Please fix password requirements"), 'validation');
+        showErrorToast("Please fix password requirements");
         setShowPasswordValidation(true);
         return;
       }
       
       if (!phoneValidationResult.isValid) {
-        handleError(new Error(phoneValidationResult.error), 'validation');
+        showErrorToast(phoneValidationResult.error);
         return;
       }
       
       if (formData.password !== formData.confirmPassword) {
-        handleError(new Error('Passwords do not match'), 'validation');
+        showErrorToast('Passwords do not match');
         return;
       }
       
@@ -208,7 +208,7 @@ export function Auth({ mode }: AuthProps) {
         await signup(formData);
         showSuccessToast("Account created successfully!");
       } catch (error) {
-        handleError(error, 'signup');
+        handleApiError(error, 'signup');
       } finally {
         setIsLoading(false);
       }
@@ -257,10 +257,10 @@ export function Auth({ mode }: AuthProps) {
         setFormData((prev) => ({ ...prev, profilePicture: data.secure_url }));
         showSuccessToast('Profile picture uploaded!');
       } else {
-        handleError(new Error('Failed to upload image'), 'signup');
+        handleApiError(new Error('Failed to upload image'), 'signup');
       }
     } catch (err) {
-      handleError(err, 'signup');
+      handleApiError(err, 'signup');
     } finally {
       setProfilePicUploading(false);
     }

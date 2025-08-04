@@ -94,7 +94,7 @@ def insert_experience(freelancer_id, experience, source='parsed'):
         cursor.execute("""
             INSERT INTO experience (freelancer_id, title, company, startDate, endDate, description, source)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (freelancer_id, exp['title'], exp['company'], exp['startDate'], exp['endDate'], exp['description'], source))
+        """, (freelancer_id, exp['title'], exp['company'], exp['duration'], exp['description'], source))
     conn.commit()
     cursor.close()
     conn.close()
