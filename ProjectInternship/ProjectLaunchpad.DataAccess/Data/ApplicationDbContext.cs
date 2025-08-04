@@ -53,6 +53,14 @@ namespace ProjectLaunchpad.DataAccess.Data
                 entity.Property(f => f.AvgRating).HasPrecision(3, 1);
             });
 
+            modelBuilder.Entity<ClientProfile>(entity =>
+            {
+                entity.HasOne(c => c.User)
+                      .WithOne(u => u.ClientProfile)
+                      .HasForeignKey<ClientProfile>(c => c.Id)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // Project
             modelBuilder.Entity<Project>(entity =>
             {
