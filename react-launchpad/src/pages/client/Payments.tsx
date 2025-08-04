@@ -4,8 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
-import { 
-  DollarSign,
+import {
   Calendar,
   Download,
   CreditCard,
@@ -22,13 +21,16 @@ import { MultiFreelancerPaymentModal } from './MultiFreelancerPaymentModal';
 import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers } from '../../apiendpoints';
 import PaymentForm from './PaymentForm'; // Added import for PaymentForm
 import { validatePaymentData, formatPaymentAmount, calculatePlatformFee, calculateFreelancerAmount, getPaymentStatusColor, formatPaymentDate } from '../../utils/paymentHelpers';
-import { useAuth } from '../../contexts/AuthContext'; // Add auth context import
-// REMOVE: import StripeWrapper from './StripeWrapper';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function ClientPayments() {
-  // Get clientId from auth context
+
   const { user } = useAuth();
-  const clientId = user?.id || 5; // Use auth context instead of hardcoding
+  const clientId = user?.id;
+
+  if (!clientId) {
+    return;
+  }
 
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -53,30 +55,7 @@ export function ClientPayments() {
       try {
         setLoading(true);
         const data = await getClientProjects(clientId);
-        
-        // Transform project data to handle both PascalCase and camelCase
-        const transformedProjects = data.map((project: any) => ({
-          Id: project.Id || project.id,
-          ProjectTitle: project.ProjectTitle || project.projectTitle,
-          Description: project.Description || project.description,
-          Status: project.Status || project.status,
-          Budget: project.Budget || project.budget,
-          StartDate: project.StartDate || project.startDate,
-          Deadline: project.Deadline || project.deadline,
-          ClientId: project.ClientId || project.clientId,
-          CategoryOrDomain: project.CategoryOrDomain || project.categoryOrDomain,
-          PaymentType: project.PaymentType || project.paymentType,
-          NumberOfFreelancers: project.NumberOfFreelancers || project.numberOfFreelancers,
-          AttachedDocumentPath: project.AttachedDocumentPath || project.attachedDocumentPath,
-          Client: project.Client || project.client,
-          RequiredSkills: project.RequiredSkills || project.requiredSkills,
-          Team: project.Team || project.team || [],
-          Progress: project.Progress || project.progress,
-          ApprovalStatus: project.ApprovalStatus || project.approvalStatus,
-          RejectionReason: project.RejectionReason || project.rejectionReason
-        }));
-        
-        setProjects(transformedProjects);
+        setProjects(data);
       } catch (err) {
         handleApiError(err, 'fetchProjects');
       } finally {
@@ -84,15 +63,15 @@ export function ClientPayments() {
       }
     };
     fetchProjects();
-  }, [clientId, user]); // Add clientId and user to dependencies
+  }, [clientId, user]);
 
   // Set default project when projects are loaded (only on initial load)
   useEffect(() => {
     if (projects.length > 0 && selectedProjectId === 'all') {
-      const firstProject = projects.find(project => project && (project.Id || project.id));
+      const firstProject = projects.find(project => project && (project.id));
       if (firstProject) {
-        const projectId = firstProject.Id || firstProject.id;
-        const projectTitle = firstProject.ProjectTitle || firstProject.projectTitle;
+        const projectId = firstProject.id;
+        const projectTitle = firstProject.projectTitle;
         if (projectId) {
           console.log('Auto-selecting project:', projectId, projectTitle);
           setSelectedProjectId(projectId.toString());
@@ -108,7 +87,7 @@ export function ClientPayments() {
       console.log('2. API call failed');
       console.log('3. Client ID is incorrect');
     }
-  }, [projects]); // Only depend on projects, not selectedProjectId
+  }, [projects]);
 
   useEffect(() => {
     // Fetch payments for the current client
@@ -155,7 +134,7 @@ export function ClientPayments() {
     const fetchMilestonePayments = async () => {
       if (milestones.length > 0) {
         const paymentPromises = milestones.map(async (milestone) => {
-          const milestoneId = milestone.Id || milestone.id;
+          const milestoneId = milestone.id;
           try {
             const payments = await getPaymentByMilestone(milestoneId);
             // getPaymentByMilestone now returns an array of payments
@@ -217,7 +196,7 @@ export function ClientPayments() {
 
   // Get payment status for milestone (for display)
   const getMilestonePaymentStatus = (milestone: any) => {
-    const milestoneId = milestone.Id || milestone.id;
+    const milestoneId = milestone.id;
     const payment = milestonePayments[milestoneId];
     
     if (!payment) {
@@ -237,7 +216,7 @@ export function ClientPayments() {
 
   // Filtered milestones based on search and status
   const filteredMilestones = milestones.filter((milestone: any) => {
-    const matchesSearch = (milestone.Title || milestone.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (milestone.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     let matchesStatus = true;
     if (statusFilter !== 'all') {
       if (statusFilter === 'notStarted') matchesStatus = (milestone.Status || milestone.status) === 0;
@@ -279,7 +258,7 @@ export function ClientPayments() {
     switch (status) {
       case 2: return 'success'; // Completed
       case 1: return 'warning'; // In Progress
-      case 0: return 'default'; // Not Selected
+      case 0: return 'default'; // Not Started
       default: return 'default';
     }
   };
@@ -288,7 +267,7 @@ export function ClientPayments() {
     switch (status) {
       case 2: return CheckCircle; // Completed
       case 1: return Clock; // In Progress
-      case 0: return AlertCircle; // Not Selected
+      case 0: return AlertCircle; // Not Started
       default: return Clock;
     }
   };
@@ -365,7 +344,7 @@ export function ClientPayments() {
         paymentType: 'Milestone',
         milestoneId: milestone.Id || milestone.id,
         timesheetId: null,
-        amount: milestone.Amount ?? 0,
+        amount: milestone.amount ?? 0,
       };
 
       // Validate payment data
@@ -439,9 +418,9 @@ export function ClientPayments() {
         freelancerId: milestone.FreelancerId || milestone.freelancerId || freelancerId,
         projectId: milestone.ProjectId || milestone.projectId || selectedProjectId,
         paymentType: 'Milestone',
-        milestoneId: milestone.Id || milestone.id,
+        milestoneId: milestone.id,
         timesheetId: null,
-        amount: milestone.Amount ?? 0,
+        amount: milestone.amount ?? 0,
       };
 
       // Validate payment data
@@ -497,7 +476,6 @@ export function ClientPayments() {
         <Card>
           <div className="flex items-center">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Budget</p>
@@ -590,7 +568,7 @@ export function ClientPayments() {
             <option value="all">All Status</option>
             {viewMode === 'milestones' ? (
               <>
-            <option value="pending">Not Selected</option>
+            <option value="pending">Not Started</option>
             <option value="in-progress">In Progress</option>
             <option value="completed">Completed</option>
               </>
@@ -621,7 +599,7 @@ export function ClientPayments() {
                     }`} />
                     <h3 className="text-lg font-semibold text-gray-900">{milestone.Title || milestone.title}</h3>
                     <Badge variant={getStatusColor(milestone.Status || milestone.status) as any}>
-                      {milestone.Status === 0 || milestone.status === 0 ? 'Not Selected' :
+                      {milestone.Status === 0 || milestone.status === 0 ? 'Not Started' :
                        milestone.Status === 1 || milestone.status === 1 ? 'In Progress' :
                        milestone.Status === 2 || milestone.status === 2 ? 'Completed' :
                        milestone.Status || milestone.status}
@@ -634,11 +612,10 @@ export function ClientPayments() {
                   <div className="flex items-center space-x-6 text-sm text-gray-500">
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1" />
-                      Due {milestone.DueDate ? new Date(milestone.DueDate).toLocaleDateString() : ''}
+                      Due {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : ''}
                     </div>
                     <div className="flex items-center">
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      ${milestone.Amount?.toLocaleString() || ''}
+                      ${milestone.amount?.toLocaleString() || ''}
                     </div>
                   </div>
                   <div className="mt-3">
@@ -654,7 +631,7 @@ export function ClientPayments() {
                 </div>
                 <div className="ml-6 text-right">
                   <div className="text-2xl font-bold text-gray-900 mb-2">
-                    ${milestone.Amount?.toLocaleString() || ''}
+                    ${milestone.amount?.toLocaleString() || ''}
                   </div>
                   {/* Payment Button Logic for Completed Milestones */}
                   {/* 
@@ -797,7 +774,6 @@ export function ClientPayments() {
                           Due {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : ''}
                         </div>
                         <div className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />
                           Budget: ${project.Budget?.toLocaleString() || ''}
                         </div>
                       </div>
@@ -893,7 +869,6 @@ export function ClientPayments() {
       {((viewMode === 'milestones' && filteredMilestones.length === 0) || (viewMode === 'payments' && filteredPayments.length === 0)) && (
         <Card className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <DollarSign className="w-8 h-8 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             {viewMode === 'milestones' ? 'No milestones found' : 'No payments found'}
@@ -926,16 +901,16 @@ export function ClientPayments() {
             <div className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Milestone Amount</span>
-                <span className="font-semibold">${selectedMilestone.Amount?.toLocaleString() || ''}</span>
+                <span className="font-semibold">${selectedMilestone.amount?.toLocaleString() || ''}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Platform Fee (5%)</span>
-                <span className="font-semibold">-{formatPaymentAmount(calculatePlatformFee(selectedMilestone.Amount || 0))}</span>
+                <span className="font-semibold">-{formatPaymentAmount(calculatePlatformFee(selectedMilestone.amount || 0))}</span>
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-semibold">Freelancer Receives</span>
                 <span className="font-semibold text-green-600">
-                  {formatPaymentAmount(calculateFreelancerAmount(selectedMilestone.Amount || 0))}
+                  {formatPaymentAmount(calculateFreelancerAmount(selectedMilestone.amount || 0))}
                 </span>
               </div>
             </div>

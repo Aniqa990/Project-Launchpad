@@ -35,80 +35,97 @@ namespace ProjectLaunchpad.Functions
 public async Task<HttpResponseData> Register(
     [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/register")] HttpRequestData req)
 {
-    var dto = await req.ReadFromJsonAsync<UserRegisterDTO>();
-    var (token, user) = await _auth.RegisterAsync(dto);
+    try
+    {
+        var dto = await req.ReadFromJsonAsync<UserRegisterDTO>();
+        var (token, user) = await _auth.RegisterAsync(dto);
 
-    // Add to respective profile tables based on role
-    if (user.Role.Equals("Client", StringComparison.OrdinalIgnoreCase))
-    {
-        _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
-    }
-    else if (user.Role.Equals("Freelancer", StringComparison.OrdinalIgnoreCase))
-    {
-        var freelancerProfileDto = new FreelancerProfileDTO
+        // Add to respective profile tables based on role
+        if (user.Role.Equals("Client", StringComparison.OrdinalIgnoreCase))
         {
-            Id = user.Id,
-            Skills = "",
-            Experience = "",
-            Projects = "",
-            HourlyRate = 0,
-            AvgRating = 0,
-            Availability = "Available",
-            WorkingHours = "9am-5pm",
-            Summary = ""
-        };
-
-        await _unitOfWork.FreelancerProfiles.AddFreelancerProfileAsync(freelancerProfileDto);
-    }
-
-    await _unitOfWork.SaveAsync();
-
-    var response = req.CreateResponse(HttpStatusCode.OK);
-    await response.WriteAsJsonAsync(new
-    {
-        token = token,
-        user = new
-        {
-            id = user.Id,
-            email = user.Email,
-            firstName = user.FirstName,
-            lastName = user.LastName,
-            phoneNo = user.PhoneNo,
-            profilePicture = user.ProfilePicture,
-            gender = user.Gender,
-            role = user.Role
+            _unitOfWork.ClientProfiles.InsertClientProfile(user.Id);
         }
-    });
+        else if (user.Role.Equals("Freelancer", StringComparison.OrdinalIgnoreCase))
+        {
+            var freelancerProfileDto = new FreelancerProfileDTO
+            {
+                Id = user.Id,
+                Skills = "",
+                Experience = "",
+                Projects = "",
+                HourlyRate = 0,
+                AvgRating = 0,
+                Availability = "Available",
+                WorkingHours = "9am-5pm",
+                Summary = ""
+            };
 
-    return response;
+            await _unitOfWork.FreelancerProfiles.AddFreelancerProfileAsync(freelancerProfileDto);
+        }
+
+        await _unitOfWork.SaveAsync();
+
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        await response.WriteAsJsonAsync(new
+        {
+            token = token,
+            user = new
+            {
+                id = user.Id,
+                email = user.Email,
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                phoneNo = user.PhoneNo,
+                profilePicture = user.ProfilePicture,
+                gender = user.Gender,
+                role = user.Role
+            }
+        });
+
+        return response;
+    }
+    catch (Exception ex)
+    {
+        var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+        await errorResponse.WriteAsJsonAsync(new { message = ex.Message });
+        return errorResponse;
+    }
 }
 
         [Function("Login")]
         public async Task<HttpResponseData> Login(
      [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestData req)
         {
-            var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
-            var (token, user) = await _auth.LoginAsync(dto); // Now getting both
-
-
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(new
+            try
             {
-                token = token,
-                user = new
-                {
-                    id = user.Id,
-                    email = user.Email,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    phoneNo = user.PhoneNo,
-                    profilePicture = user.ProfilePicture,
-                    gender = user.Gender,
-                    role = user.Role
-                }
-            });
+                var dto = await req.ReadFromJsonAsync<UserLoginDTO>();
+                var (token, user) = await _auth.LoginAsync(dto); // Now getting both
 
-            return response;
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(new
+                {
+                    token = token,
+                    user = new
+                    {
+                        id = user.Id,
+                        email = user.Email,
+                        firstName = user.FirstName,
+                        lastName = user.LastName,
+                        phoneNo = user.PhoneNo,
+                        profilePicture = user.ProfilePicture,
+                        gender = user.Gender,
+                        role = user.Role
+                    }
+                });
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                var errorResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                await errorResponse.WriteAsJsonAsync(new { message = ex.Message });
+                return errorResponse;
+            }
         }
 
         [Function("ValidateToken")]
