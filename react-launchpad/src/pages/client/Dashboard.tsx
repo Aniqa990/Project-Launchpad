@@ -11,7 +11,8 @@ import {
   TrendingUp,
   Calendar,
   Clock,
-  ArrowRight
+  ArrowRight,
+  RefreshCw
 } from 'lucide-react';
 import { getClientProjects } from '../../apiendpoints';
 import {Project} from '@/types';
@@ -24,6 +25,7 @@ export function ClientDashboard() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const statistics = useMemo(() => {
     if (!projects.length) {
@@ -36,20 +38,26 @@ export function ClientDashboard() {
     }
 
     const activeProjects = projects.filter(project => 
-      project.Status === 'active'
+      project.status === 'active'
     ).length;
 
-    const totalFreelancers = projects.reduce((sum, project) => 
-      sum + (parseInt(project.NumberOfFreelancers) || 0), 0
-    );
+    const totalFreelancers = projects.reduce((sum, project) => {
+      const freelancers = project.numberOfFreelancers;
+      if (typeof freelancers === 'number') return sum + freelancers;
+      if (typeof freelancers === 'string') return sum + (parseInt(freelancers) || 0);
+      return sum + 0;
+    }, 0);
 
-    const totalBudget = projects.reduce((sum, project) => 
-      sum + (parseFloat(project.Budget) || 0), 0
-    );
+    const totalBudget = projects.reduce((sum, project) => {
+      const budget = project.budget;
+      if (typeof budget === 'number') return sum + budget;
+      if (typeof budget === 'string') return sum + (parseFloat(budget) || 0);
+      return sum + 0;
+    }, 0);
 
     // Calculate success rate based on completed projects
     const completedProjects = projects.filter(project => 
-      project.Status === 'closed'
+      project.status === 'closed'
     ).length;
     const successRate = projects.length > 0 ? Math.round((completedProjects / projects.length) * 100) : 0;
 
@@ -110,6 +118,7 @@ export function ClientDashboard() {
           return;
         }
         setProjects(data);
+        console.log('Dashboard projects data:', data);
       } catch (err) {
         handleApiError(err, 'fetchProjects');
         setError('Failed to load projects.');
@@ -120,6 +129,44 @@ export function ClientDashboard() {
     fetchProjects();
   }, [user]);
 
+  // Manual refresh function
+  const refreshData = async () => {
+    if (!user?.id) return;
+    
+    setRefreshing(true);
+    try {
+      const data = await getClientProjects(user.id);
+      setProjects(data);
+      console.log('Dashboard manually refreshed projects data:', data);
+    } catch (err) {
+      handleApiError(err, 'refreshProjects');
+      setError('Failed to refresh projects.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Refresh data when component comes into focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user && user.id) {
+        const fetchProjects = async () => {
+          try {
+            const data = await getClientProjects(user.id!);
+            setProjects(data);
+            console.log('Dashboard refreshed projects data:', data);
+          } catch (err) {
+            console.error('Failed to refresh projects:', err);
+          }
+        };
+        fetchProjects();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -128,13 +175,23 @@ export function ClientDashboard() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
           <p className="text-gray-600">Welcome back! Here's what's happening with your projects.</p>
         </div>
-        <Button 
-          icon={Plus} 
-          onClick={() => navigate('/client/create-project')}
-          className="mt-4 md:mt-0"
-        >
-          Create New Project
-        </Button>
+        <div className="flex gap-3 mt-4 md:mt-0">
+          <Button 
+            variant="outline"
+            onClick={refreshData}
+            disabled={refreshing}
+            className="flex items-center"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button 
+            icon={Plus} 
+            onClick={() => navigate('/client/create-project')}
+          >
+            Create New Project
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

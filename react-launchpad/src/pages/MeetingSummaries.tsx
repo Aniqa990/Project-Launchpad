@@ -1,16 +1,19 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   getMeetingSummaries, 
   getFreelancerProjects,
-  getClientProjects
-} from '../../apiendpoints';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Badge } from '../ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+  getClientProjects,
+  startProjectMeeting,
+  stopMeeting,
+  runElevenLabsBot
+} from '../apiendpoints';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { 
   Clock, 
   Calendar, 
@@ -28,21 +31,9 @@ import {
   VolumeX,
   Bot
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-
-// ElevenLabs conversation hook - replace with real import when package is installed
+import { showErrorToast } from '@/utils/errorHandler';
 import { useConversation } from '@elevenlabs/react';
-
-interface MeetingSummary {
-  id: number; 
-  freelancerId: number;
-  projectId: number;
-  freelancerName: string;
-  projectName: string;
-  summary: string;
-  blocker?: string;
-  createdAt: string;
-}
+import { MeetingSummary } from '@/types';
 
 interface Project {
   id: number;
@@ -72,7 +63,7 @@ export function MeetingSummaries() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [projects, setProjects] = useState<Project[]>([]);
   
-  const agentId = 'agent_4001k1b6f2kefwmtn30k4jcc8gjt';
+  const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
   const conversation = useConversation({
     onConnect: () => setConvStarted(true),
     onDisconnect: () => setConvStarted(false),
@@ -147,24 +138,20 @@ export function MeetingSummaries() {
   // Start both ElevenLabs conversation and audio recording
   const startConversation = async () => {
     if (selectedProject === 'all') {
-      toast.error('Please select a project before starting conversation');
+      showErrorToast('Please select a project before starting conversation');
       return;
     }
 
     setConvError(null);
     setShowConversationUI(true);
     try {
-      const response = await fetch('http://localhost:8001/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: Number(selectedProject),
-          freelancer_id: user?.id
-        })
-      });
-      const data = await response.json();
-      if (data.status !== 'recording_started' && data.status !== 'already_recording') {
-        setConvError('Failed to start backend recording: ' + (data.error || data.status));
+      if (!user?.id) {
+        showErrorToast('Please login to start conversation');
+        return;
+      }
+      const response = await startProjectMeeting(Number(selectedProject), user.id);
+      if (response.status !== 'recording_started' && response.status !== 'already_recording') {
+        setConvError('Failed to start backend recording: ' + (response.error || response.status));
         return;
       }
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -190,13 +177,9 @@ export function MeetingSummaries() {
     stopRecording();
  
     try {
-      const response = await fetch('http://localhost:8001/stop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await response.json();
-      if (data.status !== 'success') {
-        setConvError('Failed to stop backend recording: ' + (data.error || data.status));
+      const response = await stopMeeting();
+      if (response.status !== 'success') {
+        setConvError('Failed to stop backend recording: ' + (response.error || response.status));
       } else {
         // Optionally, handle the transcript data here
         // e.g., setTranscript(data.transcript);
@@ -206,10 +189,7 @@ export function MeetingSummaries() {
     }
  
     try {
-      await fetch('http://localhost:8001/run-elevenlabs-bot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await runElevenLabsBot();
       console.log('Bot triggered successfully.');
     } catch (err) {
       console.error('Failed to call bot endpoint:', err);
@@ -313,31 +293,58 @@ export function MeetingSummaries() {
 
       {/* Controls Section */}
       <Card className="p-6 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
+        <div className="space-y-4">
+          {/* Top row - Project selection and action buttons */}
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             {/* Project Filter */}
-            <div className="flex flex-col gap-2 min-w-[200px]">
+            <div className="flex flex-col gap-2 flex-1 min-w-0">
               <label className="text-sm font-medium text-gray-700">
                 {user?.role === 'freelancer' ? 'Project' : 'Your Project'}
               </label>
               <Select value={selectedProject} onValueChange={setSelectedProject}>
-                <SelectTrigger>
+                <SelectTrigger className="min-w-[250px] max-w-full">
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.projectTitle}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                                 <SelectContent className="max-w-[400px] bg-white">
+                   <SelectItem value="all">All Projects</SelectItem>
+                   {projects.map((project) => (
+                     <SelectItem key={project.id} value={project.id.toString()} className="truncate">
+                       {project.projectTitle}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
               </Select>
             </div>
 
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="flex items-center gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                Clear Filters
+              </Button>
+              
+              {user?.role === 'freelancer' && (
+                <Button
+                  onClick={startConversation}
+                  disabled={selectedProject === 'all' || convStarted || recording}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Bot className="h-4 w-4" />
+                  Start Conversation
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom row - Date range and search */}
+          <div className="flex flex-col lg:flex-row gap-4">
             {/* Date Range */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              <div className="flex flex-col gap-2 min-w-[150px]">
                 <label className="text-sm font-medium text-gray-700">From Date</label>
                 <Input
                   type="date"
@@ -346,7 +353,7 @@ export function MeetingSummaries() {
                   className="w-full"
                 />
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 min-w-[150px]">
                 <label className="text-sm font-medium text-gray-700">To Date</label>
                 <Input
                   type="date"
@@ -358,7 +365,7 @@ export function MeetingSummaries() {
             </div>
 
             {/* Search */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 min-w-[200px]">
               <label className="text-sm font-medium text-gray-700">Search</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -370,28 +377,6 @@ export function MeetingSummaries() {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={clearFilters}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              Clear Filters
-            </Button>
-            
-            {user?.role === 'freelancer' && (
-              <Button
-                onClick={startConversation}
-                disabled={selectedProject === 'all' || convStarted || recording}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-              >
-                <Bot className="h-4 w-4" />
-                Start Conversation
-              </Button>
-            )}
           </div>
         </div>
       </Card>

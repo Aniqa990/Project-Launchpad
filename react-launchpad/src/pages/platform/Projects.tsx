@@ -4,7 +4,7 @@ import { getProjectsWithPendingApproval, updateProjectApprovalStatus, getMilesto
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ProjectDetails } from "@/components/ProjectDetails";
+import { ProjectDetails } from "@/pages/ProjectDetails";
 import type { Project, Milestone } from "@/types";
 import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 

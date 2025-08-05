@@ -22,8 +22,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Badge } from '../../components/ui/badge';
 import SignatureCanvas from 'react-signature-canvas';
 
-// Add these at the top of the file (after imports):
-// Remove Cloudinary env constants and uploadToCloudinary function
 
 export function CreateProject() {
   const navigate = useNavigate();
@@ -68,7 +66,6 @@ export function CreateProject() {
   const [signatureImageUrl, setSignatureImageUrl] = useState<string>('');
   const [signatureUploading, setSignatureUploading] = useState(false);
 
-  // Move Cloudinary env constants inside the component
   const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
@@ -377,44 +374,6 @@ export function CreateProject() {
     } catch (err) {
       handleApiError(err, 'createProject');
       setSubmitted(false);
-    }
-  };
-
-  const toggleFreelancerSelection = (freelancerId: number) => {
-    setSelectedFreelancers(prev => 
-      prev.includes(freelancerId) 
-        ? prev.filter(id => id !== freelancerId)
-        : [...prev, freelancerId]
-    );
-  };
-
-  const handleSelectFreelancer = (id: number) => {
-    setSelectedFreelancers(prev =>
-      prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
-    );
-  };
-
-  const handleSendRequests = async () => {
-    if (!createdProjectId || selectedFreelancers.length === 0) return;
-    
-    // Filter out any invalid IDs (0 or undefined)
-    const validFreelancerIds = selectedFreelancers.filter(id => id && id > 0);
-    
-    if (validFreelancerIds.length === 0) {
-      toast.error('No valid freelancers selected.');
-      return;
-    }
-    
-    setSendingRequests(true);
-    try {
-      console.log('Sending requests for project:', createdProjectId, 'to freelancers:', validFreelancerIds);
-      await Promise.all(validFreelancerIds.map(fid => sendProjectRequest(Number(createdProjectId), fid)));
-      toast.success(`Requests sent to ${validFreelancerIds.length} freelancer(s)!`);
-    } catch (err) {
-      console.error('Error sending requests:', err);
-      toast.error('Failed to send requests.');
-    } finally {
-      setSendingRequests(false);
     }
   };
 

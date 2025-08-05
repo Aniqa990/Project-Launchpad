@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: any, onPayNow: (data: any) => void, onClose?: () => void }) => {
   console.log('InvoicePage rendered with invoiceData:', invoiceData);
   
-  // Allow editing of user details
+  //Allow editing of user details
   const [userDetails, setUserDetails] = useState({
     name: invoiceData.name || '',
     email: invoiceData.email || '',
@@ -20,7 +20,7 @@ export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: a
     setUserDetails(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Fetch freelancers for the project
+  //Fetch freelancers for the project
   useEffect(() => {
     const fetchFreelancers = async () => {
       if (invoiceData.projectId) {

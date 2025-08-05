@@ -355,7 +355,16 @@ namespace ProjectLaunchpad.Functions
             if (updateData.Budget.HasValue && updateData.Budget.Value > 0)
                 project.Budget = updateData.Budget.Value;
             if (updateData.Deadline.HasValue && updateData.Deadline.Value != default(DateTime))
+            {
                 project.Deadline = updateData.Deadline.Value;
+
+                // Check if deadline is today and set status to closed
+                var today = DateTime.UtcNow.Date;
+                if (project.Deadline.Date == today && project.ApprovalStatus == "approved")
+                {
+                    project.Status = "closed";
+                }
+            }
             if (!string.IsNullOrEmpty(updateData.RequiredSkills))
                 project.RequiredSkills = updateData.RequiredSkills;
             if (updateData.NumberOfFreelancers.HasValue && updateData.NumberOfFreelancers.Value > 0)
@@ -365,7 +374,16 @@ namespace ProjectLaunchpad.Functions
             if (!string.IsNullOrEmpty(updateData.ApprovalStatus))
                 project.ApprovalStatus = updateData.ApprovalStatus;
             if (updateData.StartDate.HasValue && updateData.StartDate.Value != default(DateTime))
+            {
                 project.StartDate = updateData.StartDate.Value;
+
+                // Check if start date is today and set status to active
+                var today = DateTime.UtcNow.Date;
+                if (project.StartDate.Date == today && project.ApprovalStatus == "approved")
+                {
+                    project.Status = "active";
+                }
+            }
 
             // Handle milestone operations
             if (updateData.MilestoneIdsToDelete != null && updateData.MilestoneIdsToDelete.Any())

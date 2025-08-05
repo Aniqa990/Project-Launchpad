@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
-const JAAS_DOMAIN = '8x8.vc';
-const JAAS_ROOM = 'vpaas-magic-cookie-916ca21a710a40e0ac58af93b2f48abe/SampleAppFrightenedPresidentsInviteSeldom';
+const JAAS_DOMAIN = import.meta.env.VITE_JAAS_DOMAIN;
+const JAAS_ROOM = import.meta.env.VITE_JAAS_ROOM;
 
 // @ts-ignore
 declare global { interface Window { JitsiMeetExternalAPI: any; } }
@@ -36,7 +36,7 @@ export default function JaaSMeeting({ onMeetingStart, onMeetingEnd }: { onMeetin
     if (!window.JitsiMeetExternalAPI && !scriptLoadedRef.current) {
       scriptLoadedRef.current = true;
       const script = document.createElement('script');
-      script.src = 'https://8x8.vc/vpaas-magic-cookie-916ca21a710a40e0ac58af93b2f48abe/external_api.js';
+      script.src = import.meta.env.VITE_JAAS_SCRIPT_URL;
       script.async = true;
       script.onload = createMeeting;
       document.body.appendChild(script);

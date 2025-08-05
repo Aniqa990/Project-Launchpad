@@ -16,7 +16,7 @@ import {
   Plus,
   AlertCircle
 } from 'lucide-react';
-import { getClientProjects, getProjectById, updateProject } from '../../apiendpoints';
+import { getClientProjects, getProjectById, updateProject, getProjectClosureSummary } from '../../apiendpoints';
 import { Project } from '@/types';
 import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
 
@@ -29,23 +29,24 @@ export function ClientProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState<any>({});
-  const [formErrors, setFormErrors] = useState<any>({});
-  const [updateLoading, setUpdateLoading] = useState(false);
-  const [updateSuccess, setUpdateSuccess] = useState('');
-  const [updateError, setUpdateError] = useState('');
   
-  // Start date update modal state
-  const [startDateModal, setStartDateModal] = useState({
+  // Combined timeline update modal state
+  const [timelineModal, setTimelineModal] = useState({
     isOpen: false,
     selectedProject: null as Project | null,
     newStartDate: '',
+    newDeadline: '',
     error: '',
     isUpdating: false
+  });
+
+  // Project closure summary modal state
+  const [closureModal, setClosureModal] = useState({
+    isOpen: false,
+    projectId: null as number | null,
+    summary: null as any,
+    loading: false,
+    error: ''
   });
 
   useEffect(() => {
@@ -128,37 +129,101 @@ export function ClientProjects() {
     return '';
   };
 
-  // Open start date update modal
-  const openStartDateModal = (project: Project) => {
-    setStartDateModal({
+  // Check if setting start date to today will activate the project
+  const willActivateProject = (startDate: string) => {
+    if (!startDate) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const startDateObj = new Date(startDate);
+    startDateObj.setHours(0, 0, 0, 0);
+    
+    return startDateObj.getTime() === today.getTime();
+  };
+
+  // Check if setting deadline to today will close the project
+  const willCloseProject = (deadline: string) => {
+    if (!deadline) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const deadlineObj = new Date(deadline);
+    deadlineObj.setHours(0, 0, 0, 0);
+    
+    return deadlineObj.getTime() === today.getTime();
+  };
+
+  // Open timeline update modal
+  const openTimelineModal = (project: Project) => {
+    setTimelineModal({
       isOpen: true,
       selectedProject: project,
       newStartDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+      newDeadline: project.deadline ? new Date(project.deadline).toISOString().split('T')[0] : '',
       error: '',
       isUpdating: false
     });
   };
 
-  // Handle start date update
-  const handleStartDateUpdate = async () => {
+  // Handle timeline update
+  const handleTimelineUpdate = async () => {
+    // Validate start date only if project is not active
+    if (timelineModal.selectedProject?.status !== 'active') {
+      const startDateError = validateStartDate(timelineModal.newStartDate);
+      if (startDateError) {
+        setTimelineModal(prev => ({ ...prev, error: startDateError }));
+        return;
+      }
+    }
 
-    const error = validateStartDate(startDateModal.newStartDate);
-    if (error) {
-      setStartDateModal(prev => ({ ...prev, error }));
+    // Validate deadline
+    const deadlineError = validateDeadline(timelineModal.newDeadline);
+    if (deadlineError) {
+      setTimelineModal(prev => ({ ...prev, error: deadlineError }));
       return;
     }
     
-    if (!startDateModal.selectedProject) return;
+    if (!timelineModal.selectedProject) return;
 
-    setStartDateModal(prev => ({ ...prev, isUpdating: true }));
+    setTimelineModal(prev => ({ ...prev, isUpdating: true }));
     try {
-      const payload = {
-        startDate: new Date(startDateModal.newStartDate).toISOString(),
+      const payload: any = {
+        deadline: new Date(timelineModal.newDeadline).toISOString(),
       };
 
-      await updateProject(startDateModal.selectedProject.id, payload);
-      showSuccessToast('Start date updated successfully!');
-      setStartDateModal(prev => ({ ...prev, isOpen: false }));
+      // Only include start date if project is not active
+      if (timelineModal.selectedProject?.status !== 'active') {
+        payload.startDate = new Date(timelineModal.newStartDate).toISOString();
+      }
+
+      await updateProject(timelineModal.selectedProject.id, payload);
+      showSuccessToast('Timeline updated successfully!');
+      
+      // Check if the project status should be active now (only for non-active projects)
+      if (timelineModal.selectedProject?.status !== 'active') {
+        const newStartDate = new Date(timelineModal.newStartDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        newStartDate.setHours(0, 0, 0, 0);
+        
+        if (newStartDate.getTime() === today.getTime()) {
+          showSuccessToast('Project activated! Start date set to today.');
+        }
+      }
+
+      // Check if the project status should be closed now
+      const newDeadline = new Date(timelineModal.newDeadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      newDeadline.setHours(0, 0, 0, 0);
+      
+      if (newDeadline.getTime() === today.getTime()) {
+        showSuccessToast('Project closed! Deadline set to today.');
+      }
+      
+      setTimelineModal(prev => ({ ...prev, isOpen: false }));
       
       // Refresh projects list
       if (user?.id) {
@@ -166,9 +231,43 @@ export function ClientProjects() {
         setProjects(data);
       }
     } catch (error) {
-      handleApiError(error, 'updateStartDate');
+      handleApiError(error, 'updateTimeline');
     } finally {
-      setStartDateModal(prev => ({ ...prev, isUpdating: false }));
+      setTimelineModal(prev => ({ ...prev, isUpdating: false }));
+    }
+  };
+
+  // Deadline validation
+  const validateDeadline = (deadline: string) => {
+    if (!deadline) return 'Deadline is required';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const deadlineObj = new Date(deadline);
+    
+    if (deadlineObj < today) {
+      return 'Deadline must not be before today';
+    }
+    return '';
+  };
+
+
+
+  // Handle project closure summary
+  const handleProjectClosure = async (projectId: number) => {
+    setClosureModal(prev => ({ ...prev, isOpen: true, projectId, loading: true, error: '' }));
+    
+    try {
+      const summary = await getProjectClosureSummary(projectId);
+      setClosureModal(prev => ({ ...prev, summary, loading: false }));
+    } catch (error) {
+      handleApiError(error, 'getProjectClosureSummary');
+      setClosureModal(prev => ({ 
+        ...prev, 
+        error: 'Failed to load project closure summary', 
+        loading: false 
+      }));
     }
   };
 
@@ -385,13 +484,23 @@ export function ClientProjects() {
                   
                   {/* Action Buttons */}
                   <div className="flex flex-col space-y-2 ml-4">
-                    <Button
-                      onClick={() => navigate(`/client/project-details/${project.id}`)}
-                      variant="outline"
-                      size="sm"
-                    >
-                      View Details
-                    </Button>
+                    {project.status === 'closed' ? (
+                      <Button
+                        onClick={() => handleProjectClosure(project.id)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        size="sm"
+                      >
+                        Close Project
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => navigate(`/client/project-details/${project.id}`)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        View Details
+                      </Button>
+                    )}
                     
                     {project.approvalStatus === 'approved' && project.status === 'open' && (
                       <Button
@@ -413,14 +522,14 @@ export function ClientProjects() {
                       </Button>
                     )}
                     
-                    {project.status === 'open' && project.approvalStatus === 'approved' && (
+                    {(project.status === 'open' || project.status === 'active') && project.approvalStatus === 'approved' && (
                       <Button
-                        onClick={() => openStartDateModal(project)}
+                        onClick={() => openTimelineModal(project)}
                         variant="outline"
                         size="sm"
-                        className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
+                        className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                       >
-                        Update Start Date
+                        Update Timeline
                       </Button>
                     )}
                   </div>
@@ -444,47 +553,89 @@ export function ClientProjects() {
         </div>
       </Card>
 
-      {/* Start Date Update Modal */}
+            {/* Timeline Update Modal */}
       <Modal
-        isOpen={startDateModal.isOpen}
-        onClose={() => setStartDateModal(prev => ({ ...prev, isOpen: false }))}
-        title="Update Start Date"
+        isOpen={timelineModal.isOpen}
+        onClose={() => setTimelineModal(prev => ({ ...prev, isOpen: false }))}
+        title="Update Timeline"
         size="sm"
       >
         <div className="space-y-4">
+                     <div>
+             <label htmlFor="newStartDate" className="block text-sm font-medium text-gray-700">
+               Start Date
+               {timelineModal.selectedProject?.status === 'active' && (
+                 <span className="text-xs text-gray-500 ml-2">(Cannot be changed for active projects)</span>
+               )}
+             </label>
+             <input
+               type="date"
+               id="newStartDate"
+               value={timelineModal.newStartDate}
+               onChange={(e) => setTimelineModal(prev => ({ ...prev, newStartDate: e.target.value }))}
+               disabled={timelineModal.selectedProject?.status === 'active'}
+               className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                 timelineModal.selectedProject?.status === 'active' ? 'bg-gray-100 cursor-not-allowed' : ''
+               }`}
+             />
+           </div>
+
           <div>
-            <label htmlFor="newStartDate" className="block text-sm font-medium text-gray-700">
-              New Start Date
+            <label htmlFor="newDeadline" className="block text-sm font-medium text-gray-700">
+              Deadline
             </label>
             <input
               type="date"
-              id="newStartDate"
-              value={startDateModal.newStartDate}
-              onChange={(e) => setStartDateModal(prev => ({ ...prev, newStartDate: e.target.value }))}
+              id="newDeadline"
+              value={timelineModal.newDeadline}
+              onChange={(e) => setTimelineModal(prev => ({ ...prev, newDeadline: e.target.value }))}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
-            {startDateModal.error && (
-              <p className="mt-2 text-sm text-red-600 flex items-center">
-                <AlertCircle className="w-4 h-4 mr-1" />
-                {startDateModal.error}
-              </p>
-            )}
           </div>
+
+          {timelineModal.error && (
+            <p className="mt-2 text-sm text-red-600 flex items-center">
+              <AlertCircle className="w-4 h-4 mr-1" />
+              {timelineModal.error}
+            </p>
+          )}
+
+          {willActivateProject(timelineModal.newStartDate) && !timelineModal.error && (
+            <p className="mt-2 text-sm text-green-600 flex items-center">
+              <div className="w-4 h-4 mr-1 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+              Project will be activated immediately when start date is set to today
+            </p>
+          )}
+
+          {willCloseProject(timelineModal.newDeadline) && !timelineModal.error && (
+            <p className="mt-2 text-sm text-red-600 flex items-center">
+              <div className="w-4 h-4 mr-1 bg-red-500 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+              Project will be closed immediately when deadline is set to today
+            </p>
+          )}
           
           <div className="flex justify-end space-x-3 pt-4">
             <Button
               variant="outline"
-              onClick={() => setStartDateModal(prev => ({ ...prev, isOpen: false }))}
-              disabled={startDateModal.isUpdating}
+              onClick={() => setTimelineModal(prev => ({ ...prev, isOpen: false }))}
+              disabled={timelineModal.isUpdating}
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleStartDateUpdate}
-              disabled={startDateModal.isUpdating || !startDateModal.newStartDate}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {startDateModal.isUpdating ? (
+                         <Button
+               onClick={handleTimelineUpdate}
+               disabled={
+                 timelineModal.isUpdating || 
+                 !timelineModal.newDeadline || 
+                 (timelineModal.selectedProject?.status !== 'active' && !timelineModal.newStartDate)
+               }
+               className="bg-blue-600 hover:bg-blue-700"
+             >
+              {timelineModal.isUpdating ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Updating...
@@ -492,9 +643,209 @@ export function ClientProjects() {
               ) : (
                 <>
                   <Calendar className="w-4 h-4 mr-2" />
-                  Update Start Date
+                  Update Timeline
                 </>
               )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Project Closure Summary Modal */}
+      <Modal
+        isOpen={closureModal.isOpen}
+        onClose={() => setClosureModal(prev => ({ ...prev, isOpen: false }))}
+        title="Project Closure Summary"
+        size="xl"
+      >
+        <div className="max-h-[calc(70vh-120px)] overflow-y-auto space-y-4 pr-2">
+          {closureModal.loading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading project closure summary...</p>
+            </div>
+          )}
+
+          {closureModal.error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <p className="text-red-800">{closureModal.error}</p>
+              </div>
+            </div>
+          )}
+
+          {closureModal.summary && !closureModal.loading && (
+            <div className="space-y-4">
+              {/* Project Information */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Project Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium text-gray-700">Title:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.ProjectTitle}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Status:</span>
+                    <Badge variant={
+                      closureModal.summary.Project.Status === 'closed' ? 'success' : 'default'
+                    }>
+                      {closureModal.summary.Project.Status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Category:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.CategoryOrDomain}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Payment Type:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.PaymentType}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Start Date:</span>
+                    <p className="text-gray-900">
+                      {closureModal.summary.Project.StartDate && closureModal.summary.Project.StartDate !== '0001-01-01T00:00:00' 
+                        ? new Date(closureModal.summary.Project.StartDate).toLocaleDateString() 
+                        : 'Not set'
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Deadline:</span>
+                    <p className="text-gray-900">
+                      {closureModal.summary.Project.Deadline 
+                        ? new Date(closureModal.summary.Project.Deadline).toLocaleDateString() 
+                        : 'Not set'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Freelancers */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Assigned Freelancers</h3>
+                {closureModal.summary.Project.Freelancers && closureModal.summary.Project.Freelancers.length > 0 ? (
+                  <div className="space-y-2">
+                    {closureModal.summary.Project.Freelancers.map((freelancer: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {freelancer.FirstName} {freelancer.LastName}
+                          </p>
+                          <p className="text-sm text-gray-600">{freelancer.Email}</p>
+                        </div>
+                        <Badge variant="info">ID: {freelancer.Id}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No freelancers assigned to this project</p>
+                )}
+              </div>
+
+              {/* Milestones */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Milestones</h3>
+                {closureModal.summary.Milestones && closureModal.summary.Milestones.length > 0 ? (
+                  <div className="space-y-3">
+                    {closureModal.summary.Milestones.map((milestone: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg border">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{milestone.Title}</h4>
+                          <Badge variant={
+                            milestone.Status === 'completed' ? 'success' :
+                            milestone.Status === 'in_progress' ? 'warning' :
+                            milestone.Status === 'pending' ? 'default' : 'default'
+                          }>
+                            {milestone.Status}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                          <div>
+                            <span className="font-medium text-gray-700">Amount:</span>
+                            <p className="text-gray-900">${milestone.Amount?.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Due Date:</span>
+                            <p className="text-gray-900">
+                              {milestone.DueDate ? new Date(milestone.DueDate).toLocaleDateString() : 'Not set'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Deliverables */}
+                        {milestone.Deliverables && milestone.Deliverables.length > 0 && (
+                          <div className="mb-2">
+                            <h5 className="font-medium text-gray-700 mb-1">Deliverables:</h5>
+                            <div className="space-y-2">
+                              {milestone.Deliverables.map((deliverable: any, dIndex: number) => (
+                                <div key={dIndex} className="bg-gray-50 p-2 rounded">
+                                  <p className="text-sm text-gray-900">{deliverable.comment}</p>
+                                  <p className="text-xs text-gray-600">Status: {deliverable.Status}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Assigned Freelancers */}
+                        {milestone.AssignedFreelancers && milestone.AssignedFreelancers.length > 0 && (
+                          <div className="mb-2">
+                            <h5 className="font-medium text-gray-700 mb-1">Assigned Freelancers:</h5>
+                            <div className="space-y-1">
+                              {milestone.AssignedFreelancers.map((freelancer: any, fIndex: number) => (
+                                <p key={fIndex} className="text-sm text-gray-900">
+                                  {freelancer.FirstName} {freelancer.LastName}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Payments */}
+                        {milestone.Payments && milestone.Payments.length > 0 && (
+                          <div>
+                            <h5 className="font-medium text-gray-700 mb-1">Payments:</h5>
+                            <div className="space-y-2">
+                              {milestone.Payments.map((payment: any, pIndex: number) => (
+                                <div key={pIndex} className="bg-gray-50 p-2 rounded">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-900">${payment.Amount?.toLocaleString()}</span>
+                                    <Badge variant={
+                                      payment.PaymentStatus === 'completed' ? 'success' :
+                                      payment.PaymentStatus === 'pending' ? 'warning' : 'default'
+                                    }>
+                                      {payment.PaymentStatus}
+                                    </Badge>
+                                  </div>
+                                  {payment.PaymentDate && (
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      {new Date(payment.PaymentDate).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No milestones found for this project</p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={() => setClosureModal(prev => ({ ...prev, isOpen: false }))}
+              variant="outline"
+            >
+              Close
             </Button>
           </div>
         </div>

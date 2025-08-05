@@ -17,7 +17,6 @@ export function FreelancerSuggestions() {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
   const navigate = useNavigate();
-  // Use FreelancerProfile & add extra fields as needed
   const [freelancers, setFreelancers] = useState<(FreelancerProfile & { summary: string; skills: string[]; activeProjects: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFreelancers, setSelectedFreelancers] = useState<string[]>([]);
