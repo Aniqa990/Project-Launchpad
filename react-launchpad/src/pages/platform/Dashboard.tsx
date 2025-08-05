@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
-import { getProjects, getAllocatedResources, getUnallocatedResources, getMilestonesByHandoverStatus, getProjectsWithPendingApproval } from '@/apiendpoints';
+import { getProjects, getAllocatedResources, getUnallocatedResources, getMilestonesByHandoverStatus, getProjectsWithPendingApproval, getTotalRevenue } from '@/apiendpoints';
 import type { Project } from '@/types';
 import { handleApiError } from '@/utils/errorHandler';
 
@@ -23,24 +23,27 @@ export function PlatformDashboard() {
   const [unallocated, setUnallocated] = useState(0);
   const [pendingProjects, setPendingProjects] = useState<Project[]>([]);
   const [pendingPayments, setPendingPayments] = useState<any[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
-        const [projectsData, allocatedData, unallocatedData, pendingProjectsData, pendingPaymentsData] = await Promise.all([
+        const [projectsData, allocatedData, unallocatedData, pendingProjectsData, pendingPaymentsData, totalRevenueData] = await Promise.all([
           getProjects(),
           getAllocatedResources(),
           getUnallocatedResources(),
           getProjectsWithPendingApproval(),
-          getMilestonesByHandoverStatus('pending')
+          getMilestonesByHandoverStatus('pending'),
+          getTotalRevenue()
         ]);
         setProjects(projectsData);
         setAllocated(allocatedData.allocated ?? allocatedData);
         setUnallocated(unallocatedData.unallocated ?? unallocatedData);
         setPendingProjects(pendingProjectsData);
         setPendingPayments(pendingPaymentsData);
+        setTotalRevenue(totalRevenueData.totalRevenue || 0);
       } catch (e) {
         handleApiError(e, 'fetchDashboardData');
         setProjects([]);
@@ -48,6 +51,7 @@ export function PlatformDashboard() {
         setUnallocated(0);
         setPendingProjects([]);
         setPendingPayments([]);
+        setTotalRevenue(0);
       } finally {
         setLoading(false);
       }
@@ -98,7 +102,7 @@ const pieOptions = {
   const statCards = [
     {
       label: 'Total Revenue',
-      value: '$125,000',
+      value: `$${totalRevenue.toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-green-500',
       backgroundColor: 'bg-green-50',

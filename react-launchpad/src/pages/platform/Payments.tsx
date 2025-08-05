@@ -25,12 +25,13 @@ export function MilestonePayments() {
               : [],
         }));
         console.log('Normalized milestones:', normalized);
-        setMilestones(normalized);
+        setMilestones(normalized || []);
       })
-      .catch((err: any) => {
-        handleApiError(err, 'fetchMilestones');
-        setError('Failed to fetch milestones');
-      })
+              .catch((err: any) => {
+          handleApiError(err, 'fetchMilestones');
+          setError('Failed to fetch milestones');
+          setMilestones([]);
+        })
       .finally(() => setLoading(false));
   }, []);
 
@@ -150,7 +151,6 @@ export function MilestonePayments() {
     return isApproved ? <CheckCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />;
   };
 
-  if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
 
   return (
@@ -159,112 +159,127 @@ export function MilestonePayments() {
         <h2 className="text-2xl font-bold text-gray-900">Milestone Payments</h2>
       </div>
       <div className="grid gap-6">
-        {milestones.map((milestone) => (
-          <div key={milestone.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{milestone.title}</h3>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${getClientStatusColor(milestone.isApproved)}`}>
-                  {getClientStatusIcon(milestone.isApproved)}
-                  <span>{milestone.isApproved ? 'Client Approved' : 'Client Pending Review'}</span>
-                </span>
-                {milestone.paymentStatus && (
-                  <span className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(milestone.paymentStatus)}`}>
-                    <CreditCard className="w-3 h-3" />
-                    <span>Payment: {milestone.paymentStatus}</span>
+        {loading ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading milestone payments...</p>
+          </div>
+        ) : !loading && milestones.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No milestone payments yet</h3>
+            <p className="text-gray-600">
+              Milestone payments will appear here when freelancers submit their work and payments are ready for review.
+            </p>
+          </div>
+        ) : (
+          milestones.map((milestone) => (
+            <div key={milestone.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{milestone.title}</h3>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${getClientStatusColor(milestone.isApproved)}`}>
+                    {getClientStatusIcon(milestone.isApproved)}
+                    <span>{milestone.isApproved ? 'Client Approved' : 'Client Pending Review'}</span>
                   </span>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500">Amount</p>
-                  <p className="text-sm font-medium">${milestone.amount}</p>
+                  {milestone.paymentStatus && (
+                    <span className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(milestone.paymentStatus)}`}>
+                      <CreditCard className="w-3 h-3" />
+                      <span>Payment: {milestone.paymentStatus}</span>
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500">Submitted</p>
-                  <p className="text-sm font-medium">{new Date(milestone.submissionDate).toLocaleDateString()}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">Amount</p>
+                    <p className="text-sm font-medium">${milestone.amount}</p>
+                  </div>
                 </div>
-              </div>
-              {milestone.paymentDate && (
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-xs text-gray-500">Payment Date</p>
-                    <p className="text-sm font-medium">{new Date(milestone.paymentDate).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500">Submitted</p>
+                    <p className="text-sm font-medium">{new Date(milestone.submissionDate).toLocaleDateString()}</p>
                   </div>
                 </div>
-              )}
-              {milestone.transactionReference && (
-                <div className="flex items-center space-x-2">
-                  <FileText className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Transaction Ref</p>
-                    <p className="text-sm font-medium">{milestone.transactionReference}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* Freelancer Submitted Files */}
-            {milestone.submittedFileUrls && milestone.submittedFileUrls.length > 0 && (
-              <div className="mb-4 bg-blue-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center space-x-2">
-                  <Upload className="w-4 h-4" />
-                  <span>Freelancer Deliverables</span>
-                </h4>
-                <div className="grid grid-cols-1 gap-2">
-                  {milestone.submittedFileUrls.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
-                      <div className="flex items-center space-x-2">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                        <span className="text-sm font-medium">{file}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">Ready for handover</span>
-                        <Download className="w-4 h-4 text-gray-400" />
-                      </div>
+                {milestone.paymentDate && (
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Payment Date</p>
+                      <p className="text-sm font-medium">{new Date(milestone.paymentDate).toLocaleDateString()}</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+                {milestone.transactionReference && (
+                  <div className="flex items-center space-x-2">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Transaction Ref</p>
+                      <p className="text-sm font-medium">{milestone.transactionReference}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-            <div className="flex items-center justify-end space-x-2">
-              {/* Show Release & Approve button only when payment is paid but not released */}
-              {milestone.paymentStatus?.toLowerCase() === 'paid' && (
-                <button
-                  onClick={() => handleReleasePaymentAndApproveMilestone(milestone.id, milestone.paymentId)}
-                  disabled={releasingPaymentId === milestone.paymentId}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                    releasingPaymentId === milestone.paymentId
-                      ? 'bg-blue-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  } text-white`}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>{releasingPaymentId === milestone.paymentId ? 'Releasing...' : 'Release & Approve'}</span>
-                </button>
+              {/* Freelancer Submitted Files */}
+              {milestone.submittedFileUrls && milestone.submittedFileUrls.length > 0 && (
+                <div className="mb-4 bg-blue-50 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center space-x-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Freelancer Deliverables</span>
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {milestone.submittedFileUrls.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm font-medium">{file}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500">Ready for handover</span>
+                          <Download className="w-4 h-4 text-gray-400" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-              
-              {/* Show Release & Handover button for other cases */}
-              {milestone.paymentStatus?.toLowerCase() !== 'paid' && (
-                <button
-                  onClick={() => handleReleasePaymentAndHandover(milestone.id)}
-                  className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Release & Handover</span>
-                </button>
-              )}
+              <div className="flex items-center justify-end space-x-2">
+                {/* Show Release & Approve button only when payment is paid but not released */}
+                {milestone.paymentStatus?.toLowerCase() === 'paid' && (
+                  <button
+                    onClick={() => handleReleasePaymentAndApproveMilestone(milestone.id, milestone.paymentId)}
+                    disabled={releasingPaymentId === milestone.paymentId}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                      releasingPaymentId === milestone.paymentId
+                        ? 'bg-blue-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white`}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>{releasingPaymentId === milestone.paymentId ? 'Releasing...' : 'Release & Approve'}</span>
+                  </button>
+                )}
+                
+                {/* Show Release & Handover button for other cases */}
+                {milestone.paymentStatus?.toLowerCase() !== 'paid' && (
+                  <button
+                    onClick={() => handleReleasePaymentAndHandover(milestone.id)}
+                    className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Release & Handover</span>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

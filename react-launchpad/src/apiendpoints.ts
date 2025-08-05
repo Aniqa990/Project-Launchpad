@@ -778,6 +778,17 @@ export const adminReleasePaymentAndApproveMilestone = async (
   }
 };
 
+export const getTotalRevenue = async () => {
+  try {
+    const response = await api.get("/payments/total-revenue");
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch total revenue"
+    );
+  }
+};
+
 // Stripe Payment API
 export const createStripePaymentIntent = async (params: {
   clientId: number;
