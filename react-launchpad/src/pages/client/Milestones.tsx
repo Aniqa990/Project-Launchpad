@@ -134,72 +134,65 @@ export function ClientMilestones() {
   useEffect(() => {
     const fetchMilestones = async () => {
       if (!selectedProject || selectedProject === 'All') {
-        console.log('No project selected, clearing milestones');
         setMilestones([]);
         setMilestoneAssignments({});
         setMilestonePayments({});
         return;
       }
-
       try {
         setLoading(true);
-                 console.log('Fetching milestones for project:', selectedProject);
-         const data = await getMilestonesByProjectId(Number(selectedProject));
-         console.log('Milestones fetched:', data);
-         
-         // Transform milestone data to handle both PascalCase and camelCase
-         const transformedMilestones = data.map((milestone: any) => ({
-           Id: milestone.Id || milestone.id,
-           Title: milestone.Title || milestone.title,
-           Description: milestone.Description || milestone.description,
-           DueDate: milestone.DueDate || milestone.dueDate,
-           Amount: milestone.Amount || milestone.amount,
-           Status: milestone.Status || milestone.status,
-           SubmissionDate: milestone.SubmissionDate || milestone.submissionDate,
-           FreelancerComments: milestone.FreelancerComments || milestone.freelancerComments,
-           IsApproved: milestone.IsApproved || milestone.isApproved,
-           HandoverStatus: milestone.HandoverStatus || milestone.handoverStatus,
-           ProjectId: milestone.ProjectId || milestone.projectId,
-           project: milestone.project,
-           Deliverables: milestone.Deliverables || milestone.deliverables || [],
-           AssignedFreelancers: milestone.AssignedFreelancers || milestone.assignedFreelancers
-         }));
-         
-         setMilestones(transformedMilestones);
+        const data = await getMilestonesByProjectId(Number(selectedProject));
+        const transformedMilestones = data.map((milestone: any) => ({
+          Id: milestone.Id || milestone.id,
+          Title: milestone.Title || milestone.title,
+          Description: milestone.Description || milestone.description,
+          DueDate: milestone.DueDate || milestone.dueDate,
+          Amount: milestone.Amount || milestone.amount,
+          Status: milestone.Status || milestone.status,
+          SubmissionDate: milestone.SubmissionDate || milestone.submissionDate,
+          FreelancerComments: milestone.FreelancerComments || milestone.freelancerComments,
+          IsApproved: milestone.IsApproved || milestone.isApproved,
+          HandoverStatus: milestone.HandoverStatus || milestone.handoverStatus,
+          ProjectId: milestone.ProjectId || milestone.projectId,
+          project: milestone.project,
+          Deliverables: milestone.Deliverables || milestone.deliverables || [],
+          AssignedFreelancers: milestone.AssignedFreelancers || milestone.assignedFreelancers
+        }));
+        setMilestones(transformedMilestones);
         
-                           // Fetch payment status for all milestones
-          const payments: {[milestoneId: number]: any} = {};
-          
-          for (const milestone of data) {
-            const milestoneId = milestone.Id || milestone.id;
-            if (!milestoneId) {
-              console.error('Milestone has no valid ID:', milestone);
-              continue;
-            }
-            
-            // Fetch payment status for all milestones
+        // Fetch assigned freelancers and payment data for all milestones
+        const assignments: {[milestoneId: number]: any[]} = {};
+        const payments: {[milestoneId: number]: any} = {};
+        
+        await Promise.all(
+          transformedMilestones.map(async (milestone) => {
             try {
-              const paymentData = await getPaymentByMilestone(milestoneId);
+              // Fetch freelancers
+              const freelancers = await getMilestoneFreelancers(milestone.Id);
+              assignments[milestone.Id] = freelancers || [];
+              
+              // Fetch payment data
+              const paymentData = await getPaymentByMilestone(milestone.Id);
               if (paymentData && paymentData.length > 0) {
-                payments[milestoneId] = paymentData[0]; // Take the first payment
+                // Use the first payment's status
+                payments[milestone.Id] = paymentData[0];
               }
-            } catch (error) {
-              console.error(`Failed to fetch payment for milestone ${milestoneId}:`, error);
+            } catch (err) {
+              assignments[milestone.Id] = [];
+              console.error(`Error fetching data for milestone ${milestone.Id}:`, err);
             }
-          }
-         
-         setMilestoneAssignments({}); // Clear assignments - will be populated when freelancers are assigned
-         setMilestonePayments(payments);
-              } catch (error) {
-          handleApiError(error, 'fetchMilestones');
-          setMilestones([]);
-          setMilestoneAssignments({});
-          setMilestonePayments({});
-        } finally {
-          setLoading(false);
-        }
+          })
+        );
+        setMilestoneAssignments(assignments);
+        setMilestonePayments(payments);
+      } catch (error) {
+        handleApiError(error, 'fetchMilestones');
+        setMilestones([]);
+        setMilestoneAssignments({});
+      } finally {
+        setLoading(false);
+      }
     };
-
     fetchMilestones();
   }, [selectedProject]);
 
@@ -361,7 +354,7 @@ export function ClientMilestones() {
 
   // Handle download deliverables
   const handleDownloadDeliverables = (milestone: Milestone) => {
-    if (milestone.HandoverStatus?.toLowerCase() === 'completed') {
+    if (canDownloadDeliverables(milestone)) {
       // Here you would implement the actual download logic
       // For now, we'll just show an alert
       alert(`Downloading deliverables for milestone: ${milestone.Title}`);
@@ -372,8 +365,12 @@ export function ClientMilestones() {
   const canDownloadDeliverables = (milestone: Milestone) => {
     if (milestone.Status !== 2) return false; // Only for completed milestones
     
-    // Enable download when handover status is "completed"
-    return milestone.HandoverStatus?.toLowerCase() === 'completed';
+    // Enable download when handover status is "completed" OR "approved" OR payment status is "Released"
+    return (
+      milestone.HandoverStatus?.toLowerCase() === 'completed' ||
+      milestone.HandoverStatus?.toLowerCase() === 'approved' ||
+      milestone.paymentStatus?.toLowerCase() === 'released'
+    );
   };
 
      // Filter milestones
@@ -501,13 +498,13 @@ export function ClientMilestones() {
                   {milestoneAssignments[milestone.Id] && milestoneAssignments[milestone.Id].length > 0 ? (
                     <div className="space-y-2">
                       {milestoneAssignments[milestone.Id].map((freelancer) => (
-                        <div key={freelancer.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div key={freelancer.FreelancerId || freelancer.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div>
                             <p className="text-sm font-medium">
-                              {freelancer.firstName} {freelancer.lastName}
+                              {freelancer.FirstName || freelancer.firstName} {freelancer.LastName || freelancer.lastName}
                             </p>
                             <p className="text-xs text-gray-600">
-                              {freelancer.email} • ${freelancer.hourlyRate || 0}/hr
+                              {freelancer.email ? `${freelancer.email} • ` : ''}${freelancer.HourlyRate || freelancer.hourlyRate || 0}/hr
                             </p>
                           </div>
                           {milestone.Status !== 2 && (
@@ -524,7 +521,7 @@ export function ClientMilestones() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 italic">No freelancers assigned</p>
+                    <p className="text-xs text-gray-500">No freelancers assigned</p>
                   )}
                 </div>
 

@@ -554,15 +554,9 @@ export function KanbanBoard() {
       setLoadingTasks(true);
       setMessage('');
       try {
-<<<<<<< HEAD:react-launchpad/src/components/workspace/KanbanBoard.tsx
-        const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
-        setTasks(res.data);
-        if (res.data.length === 0) {
-=======
         const res = await getTasksByProjectId(selectedProjectId!);
         setTasks(res);
         if (res.length === 0) {
->>>>>>> 4377cf5442a2d3fd34f280788c917936947b2f6d:react-launchpad/src/pages/KanbanBoard.tsx
           setMessage('No tasks for this project yet.');
         }
       } catch (e) {
@@ -634,15 +628,9 @@ export function KanbanBoard() {
     setLoadingTasks(true);
     setMessage('');
     try {
-<<<<<<< HEAD:react-launchpad/src/components/workspace/KanbanBoard.tsx
-      const res = await axios.get(`http://localhost:7053/api/tasks/project/${selectedProjectId}`);
-      setTasks(res.data);
-      if (res.data.length === 0) {
-=======
       const res = await getTasksByProjectId(selectedProjectId);
       setTasks(res);
       if (res.length === 0) {
->>>>>>> 4377cf5442a2d3fd34f280788c917936947b2f6d:react-launchpad/src/pages/KanbanBoard.tsx
         setMessage('No tasks for this project yet.');
       }
     } catch (e) {
@@ -1013,18 +1001,58 @@ export function KanbanBoard() {
             </div>
           ) : (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <DndContext
-                sensors={canPerformActions ? sensors : []}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
+              {canPerformActions ? (
+                // FREELANCER: Enable drag-and-drop and edit
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+                      <KanbanColumn
+                        title="To Do"
+                        status="todo"
+                        tasks={tasksByStatus['To Do']}
+                        onTaskClick={handleTaskClick}
+                        setShowAddTaskModal={setShowAddTaskModal}
+                        subtasks={subtasks}
+                        setEditSubtask={setSelectedSubtask}
+                      />
+                    </div>
+                    <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                      <KanbanColumn
+                        title="In Progress"
+                        status="inprogress"
+                        tasks={tasksByStatus['In Progress']}
+                        onTaskClick={handleTaskClick}
+                        setShowAddTaskModal={setShowAddTaskModal}
+                        subtasks={subtasks}
+                        setEditSubtask={setSelectedSubtask}
+                      />
+                    </div>
+                    <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                      <KanbanColumn
+                        title="Done"
+                        status="done"
+                        tasks={tasksByStatus['Done']}
+                        onTaskClick={handleTaskClick}
+                        setShowAddTaskModal={setShowAddTaskModal}
+                        subtasks={subtasks}
+                        setEditSubtask={setSelectedSubtask}
+                      />
+                    </div>
+                  </div>
+                </DndContext>
+              ) : (
+                // CLIENT: No drag-and-drop, no edit
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                   <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
                     <KanbanColumn
                       title="To Do"
                       status="todo"
                       tasks={tasksByStatus['To Do']}
-                      onTaskClick={handleTaskClick}
+                      onTaskClick={() => {}} // no-op for clients
                       setShowAddTaskModal={setShowAddTaskModal}
                       subtasks={subtasks}
                       setEditSubtask={setSelectedSubtask}
@@ -1035,7 +1063,7 @@ export function KanbanBoard() {
                       title="In Progress"
                       status="inprogress"
                       tasks={tasksByStatus['In Progress']}
-                      onTaskClick={handleTaskClick}
+                      onTaskClick={() => {}} // no-op for clients
                       setShowAddTaskModal={setShowAddTaskModal}
                       subtasks={subtasks}
                       setEditSubtask={setSelectedSubtask}
@@ -1046,14 +1074,14 @@ export function KanbanBoard() {
                       title="Done"
                       status="done"
                       tasks={tasksByStatus['Done']}
-                      onTaskClick={handleTaskClick}
+                      onTaskClick={() => {}} // no-op for clients
                       setShowAddTaskModal={setShowAddTaskModal}
                       subtasks={subtasks}
                       setEditSubtask={setSelectedSubtask}
                     />
                   </div>
                 </div>
-              </DndContext>
+              )}
             </div>
           )
         ) : (

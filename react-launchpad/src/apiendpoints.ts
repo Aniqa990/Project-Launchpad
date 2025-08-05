@@ -15,7 +15,7 @@ import type {
 import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst"; //for matching the keys from backend to frontend
 
 const api = axios.create({
-  baseURL: "http://localhost:7071/api",
+  baseURL: "http://localhost:7053/api",
   headers: {
     "Content-Type": "application/json",
   },

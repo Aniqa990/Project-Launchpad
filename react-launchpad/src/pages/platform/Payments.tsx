@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, Clock, DollarSign, Download, User, Calendar, Upload, FileText, AlertCircle, Send, CreditCard } from 'lucide-react';
-import { getMilestonesWithPaymentInfo, updateHandoverStatus, adminReleasePaymentAndApproveMilestone, releasePayment, getPaymentByMilestone } from '../../apiendpoints';
+import { useState, useEffect } from 'react';
+import { CheckCircle, Clock, DollarSign, Download, Calendar, Upload, FileText, AlertCircle, Send, CreditCard } from 'lucide-react';
+import { getMilestonesWithPaymentInfo, updateHandoverStatus, adminReleasePaymentAndApproveMilestone, releasePayment, getPaymentByMilestone, getDeliverablesByMilestoneId } from '../../apiendpoints';
 import type { MilestoneWithPayment } from '../../types';
 import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
@@ -11,27 +11,35 @@ export function MilestonePayments() {
   const [releasingPaymentId, setReleasingPaymentId] = useState<number | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    getMilestonesWithPaymentInfo('pending')
-      .then((data: any[]) => {
-        console.log('Raw milestones data:', data);
-        // Ensure submittedFileUrls is always an array
-        const normalized = data.map((m: any) => ({
-          ...m,
-          submittedFileUrls: Array.isArray(m.submittedFileUrls)
-            ? m.submittedFileUrls
-            : m.submittedFileUrls
-              ? m.submittedFileUrls.split(',').map((s: string) => s.trim())
-              : [],
-        }));
-        console.log('Normalized milestones:', normalized);
-        setMilestones(normalized);
-      })
-      .catch((err: any) => {
+    // Fetch milestones for the selected project
+    const fetchMilestones = async () => {
+      try {
+        setLoading(true);
+        const data = await getMilestonesWithPaymentInfo('pending');
+        // For each milestone, fetch deliverables and attach them
+        const milestonesWithDeliverables = await Promise.all(
+          data.map(async (milestone: any) => {
+            const milestoneId = milestone.Id || milestone.id;
+            let deliverables = [];
+            try {
+              deliverables = await getDeliverablesByMilestoneId(milestoneId);
+            } catch (err) {
+              deliverables = [];
+            }
+            return {
+              ...milestone,
+              Deliverables: deliverables || [],
+            };
+          })
+        );
+        setMilestones(milestonesWithDeliverables);
+      } catch (err) {
         handleApiError(err, 'fetchMilestones');
-        setError('Failed to fetch milestones');
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMilestones();
   }, []);
 
   const handleReleasePaymentAndHandover = async (milestoneId: number) => {
@@ -81,22 +89,36 @@ export function MilestonePayments() {
     }
   };
 
-  const handleReleasePaymentAndApproveMilestone = async (milestoneId: number, paymentId?: number) => {
+  const handleReleasePaymentAndApproveMilestone = async (_milestoneId: number, paymentId?: number) => {
     try {
+      console.log('Release button clicked with paymentId:', paymentId);
       if (!paymentId) {
         setError('Payment ID not found for this milestone');
         return;
       }
       
       setReleasingPaymentId(paymentId);
+      console.log('Calling adminReleasePaymentAndApproveMilestone with paymentId:', paymentId);
       await adminReleasePaymentAndApproveMilestone(paymentId);
       
-      // Update the milestone in the local state
-      setMilestones((prev) => prev.map((m) => 
-        m.id === milestoneId 
-          ? { ...m, paymentStatus: 'released', isApproved: true }
-          : m
-      ));
+      // Refresh the data to get the updated payment status
+      const updatedData = await getMilestonesWithPaymentInfo('pending');
+      const milestonesWithDeliverables = await Promise.all(
+        updatedData.map(async (milestone: any) => {
+          const milestoneId = milestone.Id || milestone.id;
+          let deliverables = [];
+          try {
+            deliverables = await getDeliverablesByMilestoneId(milestoneId);
+          } catch (err) {
+            deliverables = [];
+          }
+          return {
+            ...milestone,
+            Deliverables: deliverables || [],
+          };
+        })
+      );
+      setMilestones(milestonesWithDeliverables);
       
       showSuccessToast('Payment released and milestone approved successfully');
     } catch (err: any) {
@@ -107,29 +129,7 @@ export function MilestonePayments() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      //case 'In Progress': return 'bg-blue-100 text-blue-800';
-      //case 'Submitted': return 'bg-purple-100 text-purple-800';
-      case 'Client Review': return 'bg-yellow-100 text-yellow-800';
-      case 'Client Approved': return 'bg-green-100 text-green-800';
-      //case 'Revision Requested': return 'bg-orange-100 text-orange-800';
-      //case 'Completed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'In Progress': return <Clock className="w-4 h-4" />;
-      case 'Submitted': return <Upload className="w-4 h-4" />;
-      case 'Client Review': return <Clock className="w-4 h-4" />;
-      case 'Client Approved': return <CheckCircle className="w-4 h-4" />;
-      case 'Revision Requested': return <AlertCircle className="w-4 h-4" />;
-      case 'Completed': return <CheckCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
-  };
 
   const getPaymentStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
@@ -220,7 +220,7 @@ export function MilestonePayments() {
                   <span>Freelancer Deliverables</span>
                 </h4>
                 <div className="grid grid-cols-1 gap-2">
-                  {milestone.submittedFileUrls.map((file, index) => (
+                  {(Array.isArray(milestone.submittedFileUrls) ? milestone.submittedFileUrls : []).map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4 text-blue-600" />
@@ -236,26 +236,59 @@ export function MilestonePayments() {
               </div>
             )}
             <div className="flex items-center justify-end space-x-2">
-              {/* Show Release & Approve button only when payment is paid but not released */}
-              {milestone.paymentStatus?.toLowerCase() === 'paid' && (
-                <button
-                  onClick={() => handleReleasePaymentAndApproveMilestone(milestone.id, milestone.paymentId)}
-                  disabled={releasingPaymentId === milestone.paymentId}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                    releasingPaymentId === milestone.paymentId
-                      ? 'bg-blue-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  } text-white`}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>{releasingPaymentId === milestone.paymentId ? 'Releasing...' : 'Release & Approve'}</span>
-                </button>
-              )}
+              {/* Debug: Show payment status */}
+              <div className="text-xs text-gray-500 mr-2">
+                Status: {milestone.paymentStatus} | ID: {milestone.paymentId}
+              </div>
+              
+              {/* Show Release & Approve button for debugging */}
+              <button
+                onClick={() => {
+                  console.log('Button clicked for milestone:', milestone);
+                  console.log('milestone.id:', milestone.id);
+                  console.log('milestone.paymentId:', milestone.paymentId);
+                  console.log('milestone.paymentStatus:', milestone.paymentStatus);
+                  handleReleasePaymentAndApproveMilestone(milestone.id, milestone.paymentId);
+                }}
+                disabled={releasingPaymentId === milestone.paymentId}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                  releasingPaymentId === milestone.paymentId
+                    ? 'bg-blue-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                } text-white`}
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>{releasingPaymentId === milestone.paymentId ? 'Releasing...' : 'Release & Approve'}</span>
+              </button>
               
               {/* Show Release & Handover button for other cases */}
               {milestone.paymentStatus?.toLowerCase() !== 'paid' && (
                 <button
-                  onClick={() => handleReleasePaymentAndHandover(milestone.id)}
+                  onClick={async () => {
+                    console.log('Release & Handover button clicked for milestone:', milestone);
+                    try {
+                      // First get the payments for this milestone
+                      const payments = await getPaymentByMilestone(milestone.id);
+                      console.log('Payments for milestone:', payments);
+                      
+                      if (payments && payments.length > 0) {
+                        // Use the first payment ID
+                        const paymentId = payments[0].Id || payments[0].id;
+                        console.log('Using payment ID:', paymentId);
+                        
+                        if (paymentId) {
+                          await handleReleasePaymentAndApproveMilestone(milestone.id, paymentId);
+                        } else {
+                          setError('Payment ID not found in payments data');
+                        }
+                      } else {
+                        setError('No payments found for this milestone');
+                      }
+                    } catch (error) {
+                      console.error('Error fetching payments:', error);
+                      setError('Failed to fetch payments for milestone');
+                    }
+                  }}
                   className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                 >
                   <Send className="w-4 h-4" />

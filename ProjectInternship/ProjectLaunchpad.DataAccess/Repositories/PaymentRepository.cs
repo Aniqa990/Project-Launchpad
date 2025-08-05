@@ -32,6 +32,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories
         public async Task AddPaymentAsync(Payment payment) => await _db.payments.AddAsync(payment);
         public async Task UpdateAsync(Payment payment)
         {
+            payment.PaymentStatus = "Released";
             _db.payments.Update(payment);
             await Task.CompletedTask;
         }
