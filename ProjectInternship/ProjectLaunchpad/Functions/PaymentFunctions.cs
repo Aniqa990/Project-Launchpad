@@ -406,11 +406,10 @@ namespace ProjectLaunchpad.Functions
 
         [Function("AdminReleasePaymentAndApproveMilestone")]
         public async Task<HttpResponseData> AdminReleasePaymentAndApproveMilestone(
-    [HttpTrigger(AuthorizationLevel.Function, "post", Route = "payments/admin-release/{paymentId:int}")] HttpRequestData req,
-    int paymentId)
+      [HttpTrigger(AuthorizationLevel.Function, "post", Route = "payments/admin-release/{paymentId:int}")] HttpRequestData req,
+      int paymentId)
         {
             var response = req.CreateResponse();
-
             try
             {
                 // Fetch payment by ID
@@ -429,24 +428,42 @@ namespace ProjectLaunchpad.Functions
                     return response;
                 }
 
-                // Release payment
-                payment.PaymentStatus = "Released";
-                await _unitOfWork.PaymentRepository.UpdateAsync(payment);
+                int releasedPaymentsCount = 0;
 
-                // Check if it's a milestone payment and update milestone status
+                // Release all payments for this milestone if it's a milestone payment
                 if (payment.PaymentType == "Milestone" && payment.MilestoneId.HasValue)
                 {
+                    var allMilestonePayments = await _unitOfWork.PaymentRepository.GetPaymentsByMilestoneIdAsync(payment.MilestoneId.Value);
+
+                    foreach (var milestonePayment in allMilestonePayments)
+                    {
+                        if (milestonePayment.PaymentStatus != "Released")
+                        {
+                            milestonePayment.PaymentStatus = "Released";
+                            await _unitOfWork.PaymentRepository.UpdateAsync(milestonePayment);
+                            releasedPaymentsCount++;
+                        }
+                    }
+
+                    // Update milestone handover status
                     var milestone = await _unitOfWork.MilestoneRepository.GetMilestoneByIdAsync(payment.MilestoneId.Value);
                     if (milestone != null)
                     {
                         await _unitOfWork.MilestoneRepository.UpdateHandoverStatusAsync(payment.MilestoneId.Value, "Approved");
                     }
                 }
+                else
+                {
+                    // For non-milestone payments, just update the single payment
+                    payment.PaymentStatus = "Released";
+                    await _unitOfWork.PaymentRepository.UpdateAsync(payment);
+                    releasedPaymentsCount = 1;
+                }
 
                 await _unitOfWork.SaveAsync();
 
                 response.StatusCode = HttpStatusCode.OK;
-                await response.WriteStringAsync("Payment released and milestone approved (if applicable).");
+                await response.WriteStringAsync($"Successfully released {releasedPaymentsCount} payment(s) and approved milestone.");
                 return response;
             }
             catch (Exception ex)

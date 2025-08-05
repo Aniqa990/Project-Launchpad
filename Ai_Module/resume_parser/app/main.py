@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Body
 from fastapi.responses import JSONResponse
 from .resume_handler import handle_resume_upload

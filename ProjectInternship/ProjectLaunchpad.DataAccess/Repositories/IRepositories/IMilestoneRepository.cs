@@ -27,7 +27,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task AssignMilestoneToFreelancerAsync(int milestoneId, int userId);
 
         // Get all milestones assigned to a freelancer
-        Task<IEnumerable<Milestone>> GetMilestonesByFreelancerIdAsync(int userId);
+        Task<IEnumerable<MilestoneWithDeliverablesDto>> GetMilestonesByFreelancerIdAsync(int userId);
 
         Task<IEnumerable<FreelancerMilestoneDTO>> getMilestoneFreelancers(int milestoneId);
 

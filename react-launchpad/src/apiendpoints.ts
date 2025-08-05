@@ -58,13 +58,14 @@ export const getFreelancerById = async (
   id: number
 ): Promise<FreelancerProfile> => {
   try {
-    const response = await api.get(`/freelancer/${id}`);;
+    const response = await api.get(`/freelancer/${id}`);
     return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
-    throw new Error(error.response?.data?.detail || "Failed to fetch freelancer profile");
+    throw new Error(
+      error.response?.data?.detail || "Failed to fetch freelancer profile"
+    );
   }
 };
-
 
 export const updateFreelancerProfile = async (
   profile: Partial<FreelancerProfile>,
@@ -268,7 +269,6 @@ export const updateProjectApprovalStatus = async (
   });
   return res.data;
 };
-
 
 // Kanban APIs
 export const getTasks = async (): Promise<KanbanTask[]> => {
@@ -629,7 +629,6 @@ export const updateMilestoneHandover = async (
   }
 };
 
-
 // TIMESHEETS
 export const getTimesheets = async () => {
   const res = await api.get("/timesheets");
@@ -705,8 +704,6 @@ export const getFreelancerFeedbacks = async (
   return lowercaseFirstLetterKeys(response.data);
 };
 
-
-
 // NOTIFICATIONS
 export const getNotifications = async (userId: number) => {
   const response = await api.get(`/notifications/${userId}`);
@@ -717,7 +714,6 @@ export const markNotificationRead = async (notificationId: number) => {
   const response = await api.put(`/notifications/${notificationId}/read`);
   return response.data;
 };
-
 
 // Payment APIs
 export const getFreelancerPayments = async (freelancerId: number) => {
@@ -778,6 +774,17 @@ export const adminReleasePaymentAndApproveMilestone = async (
   }
 };
 
+export const getTotalRevenue = async () => {
+  try {
+    const response = await api.get("/payments/total-revenue");
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch total revenue"
+    );
+  }
+};
+
 // Stripe Payment API
 export const createStripePaymentIntent = async (params: {
   clientId: number;
@@ -788,11 +795,9 @@ export const createStripePaymentIntent = async (params: {
   timesheetId: number | null;
   amount: number;
 }): Promise<{ clientSecret: string }> => {
-  const response = await api.post(
-    "/payments/create-intent",
-    params,
-    { headers: { "Content-Type": "application/json" } }
-  );
+  const response = await api.post("/payments/create-intent", params, {
+    headers: { "Content-Type": "application/json" },
+  });
   return response.data;
 };
 
@@ -832,7 +837,6 @@ export const createMultiFreelancerCheckoutSession = async (params: {
   );
   return response.data;
 };
-
 
 //ADMIN API
 export async function fetchPlatformProfile(id: number) {
@@ -969,13 +973,10 @@ export const startProjectMeeting = async (
 ) => {
   try {
     // Use Python server URL for meeting functionality
-    const response = await axios.post(
-      "http://localhost:8001/start",
-      {
-        project_id: projectId,
-        freelancer_id: freelancerId,
-      }
-    );
+    const response = await axios.post("http://localhost:8001/start", {
+      project_id: projectId,
+      freelancer_id: freelancerId,
+    });
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -996,10 +997,14 @@ export const stopMeeting = async () => {
 
 export const runElevenLabsBot = async () => {
   try {
-    const response = await axios.post("http://localhost:8001/run-elevenlabs-bot");
+    const response = await axios.post(
+      "http://localhost:8001/run-elevenlabs-bot"
+    );
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to run elevenlabs bot");
+    throw new Error(
+      error.response?.data?.message || "Failed to run elevenlabs bot"
+    );
   }
 };
 
@@ -1024,7 +1029,6 @@ export const storeMeetingSummary = async (summaryData: {
     );
   }
 };
-
 
 export const getProjectDetails = async (projectId: number) => {
   try {
