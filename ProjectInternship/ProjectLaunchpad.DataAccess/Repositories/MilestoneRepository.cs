@@ -3,6 +3,7 @@ using ProjectLaunchpad.DataAccess.Data;
 using ProjectLaunchpad.DataAccess.Repositories.IRepositories;
 using ProjectLaunchpad.Models.Models;
 using ProjectLaunchpad.Models.Models.DTOs;
+using ProjectLaunchpad.Models.Models.DTOs.DeliverableDTO;
 using ProjectLaunchpad.Models.Models.DTOs.MilestoneDTO;
 using ProjectLaunchpad.Models.Models.Enums;
 using System;
@@ -186,17 +187,43 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             }
         }
 
-        public async Task<IEnumerable<Milestone>> GetMilestonesByFreelancerIdAsync(int userId)
+        public async Task<IEnumerable<MilestoneWithDeliverablesDto>> GetMilestonesByFreelancerIdAsync(int userId)
         {
             var milestoneIds = await _db.freelancerMilestones
                 .Where(fm => fm.UserId == userId)
                 .Select(fm => fm.MilestoneId)
                 .ToListAsync();
 
-            return await _db.milestones
+            var milestones = await _db.milestones
                 .Where(m => milestoneIds.Contains(m.Id))
+                .Include(m => m.Deliverables)
                 .ToListAsync();
+
+            return milestones.Select(m => new MilestoneWithDeliverablesDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                Description = m.Description,
+                DueDate = m.DueDate,
+                Amount = m.Amount,
+                Status = m.Status,
+                SubmissionDate = m.SubmissionDate,
+                FreelancerComments = m.FreelancerComments,
+                IsApproved = m.IsApproved,
+                HandoverStatus = m.HandoverStatus,
+                ProjectId = m.ProjectId,
+                Deliverables = m.Deliverables.Select(d => new DeliverableDto
+                {
+                    Id = d.Id,
+                    UploadFiles = d.uploadFiles,
+                    Comment = d.comment,
+                    Status = d.Status,
+                    MilestoneId = d.MilestoneId,
+                    ProjectId = d.projectId
+                }).ToList()
+            });
         }
+
 
         public async Task<FreelancerMilestone> GetFreelancerMilestoneAsync(int milestoneId, int userId)
         {

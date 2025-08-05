@@ -18,7 +18,7 @@ import {
 import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 import { InvoicePage } from './InvoicePage'; // Restore InvoicePage import
 import { MultiFreelancerPaymentModal } from '../../components/ui/MultiFreelancerPaymentModal';
-import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers } from '../../apiendpoints';
+import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers, getDeliverablesByMilestoneId } from '../../apiendpoints';
 import PaymentForm from './PaymentForm'; // Added import for PaymentForm
 import { validatePaymentData, formatPaymentAmount, calculatePlatformFee, calculateFreelancerAmount, getPaymentStatusColor, formatPaymentDate } from '../../utils/paymentHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -105,8 +105,8 @@ export function ClientPayments() {
     fetchPayments();
   }, []);
 
+  // Fetch milestones when project is selected
   useEffect(() => {
-    // Fetch milestones for the selected project
     const fetchMilestones = async () => {
       if (selectedProjectId === 'all') {
         setMilestones([]);
@@ -115,7 +115,26 @@ export function ClientPayments() {
       try {
         setLoading(true);
         const data = await getMilestonesByProjectId(Number(selectedProjectId));
-        setMilestones(data);
+        
+        // For each milestone, fetch deliverables and attach them
+        const milestonesWithDeliverables = await Promise.all(
+          data.map(async (milestone: any) => {
+            const milestoneId = milestone.Id || milestone.id;
+            let deliverables = [];
+            try {
+              deliverables = await getDeliverablesByMilestoneId(milestoneId);
+            } catch (err) {
+              console.error(`Failed to fetch deliverables for milestone ${milestoneId}:`, err);
+              deliverables = [];
+            }
+            return {
+              ...milestone,
+              Deliverables: deliverables
+            };
+          })
+        );
+        
+        setMilestones(milestonesWithDeliverables);
       } catch (err) {
         handleApiError(err, 'fetchMilestones');
       } finally {
@@ -391,14 +410,30 @@ export function ClientPayments() {
       } else {
         // Open InvoicePage for single freelancer
         console.log('Opening InvoicePage for single freelancer');
-        setPayingMilestone({
-          Title: milestone.Title || milestone.title,
-          ProjectId: milestone.ProjectId || milestone.projectId,
-          Amount: milestone.Amount || milestone.amount,
-          PaymentType: 'Milestone',
-          MilestoneId: milestone.Id || milestone.id
-        });
-        setShowInvoiceModal(true);
+        try {
+          // Fetch the correct freelancers for this milestone
+          const milestoneFreelancers = await getMilestoneFreelancers(milestone.Id || milestone.id);
+          setPayingMilestone({
+            Title: milestone.Title || milestone.title,
+            ProjectId: milestone.ProjectId || milestone.projectId,
+            Amount: milestone.Amount || milestone.amount,
+            PaymentType: 'Milestone',
+            MilestoneId: milestone.Id || milestone.id,
+            milestoneFreelancers: milestoneFreelancers
+          });
+          setShowInvoiceModal(true);
+        } catch (err) {
+          console.error('Failed to fetch milestone freelancers:', err);
+          // Fallback to opening without freelancer data
+          setPayingMilestone({
+            Title: milestone.Title || milestone.title,
+            ProjectId: milestone.ProjectId || milestone.projectId,
+            Amount: milestone.Amount || milestone.amount,
+            PaymentType: 'Milestone',
+            MilestoneId: milestone.Id || milestone.id
+          });
+          setShowInvoiceModal(true);
+        }
       }
     } catch (error) {
       console.error('Error in handleMilestonePayment:', error);
@@ -623,7 +658,8 @@ export function ClientPayments() {
                     <div className="flex flex-wrap gap-2">
                       {(milestone.Deliverables || milestone.deliverables || []).map((deliverable: any, index: number) => (
                         <Badge key={index} variant="info" size="sm">
-                          {deliverable.Name || deliverable.name || deliverable}
+                          {/* Show file name and comment if available, fallback to ID */}
+                          {deliverable.uploadFiles || deliverable.UploadFiles || deliverable.comment || deliverable.Comment || `Deliverable #${deliverable.id || deliverable.Id || index}`}
                         </Badge>
                       ))}
                     </div>
@@ -820,6 +856,9 @@ export function ClientPayments() {
                       <Badge variant={getPaymentStatusColor(payment.PaymentStatus)}>
                         {payment.PaymentStatus}
                       </Badge>
+                      {payment.PaymentStatus === 'Released' && (
+                        <span className="text-green-600 text-sm font-medium">✓ Payment Released</span>
+                      )}
                     </div>
                     
                     <p className="text-gray-600 mb-2">
@@ -953,6 +992,7 @@ export function ClientPayments() {
                    amount: payingMilestone.Amount || payingMilestone.amount,
                    paymentType: payingMilestone.PaymentType || 'Milestone',
                    milestoneId: payingMilestone.MilestoneId || payingMilestone.Id || payingMilestone.id,
+                   milestoneFreelancers: payingMilestone.milestoneFreelancers || [],
                    // Add more fields as needed
                  }}
                  onPayNow={(data) => {
@@ -981,6 +1021,8 @@ export function ClientPayments() {
           onSuccess={() => {
             setShowMultiFreelancerModal(false);
             setSelectedMilestoneForMultiPayment(null);
+            // fetchPayments();
+            // fetchMilestones();
             // Refresh payments and milestones
             // Note: The component will automatically refresh when the modal closes
           }}

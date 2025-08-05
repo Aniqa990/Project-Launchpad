@@ -14,7 +14,8 @@ import {
   Filter,
   Search,
   Plus,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { getClientProjects, getProjectById, updateProject, getProjectClosureSummary } from '../../apiendpoints';
 import { Project } from '@/types';
@@ -29,8 +30,18 @@ export function ClientProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState<any>({});
+  const [formErrors, setFormErrors] = useState<any>({});
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState('');
+  const [updateError, setUpdateError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   
-  // Combined timeline update modal state
+  // Start date update modal state
   const [timelineModal, setTimelineModal] = useState({
     isOpen: false,
     selectedProject: null as Project | null,
@@ -49,12 +60,29 @@ export function ClientProjects() {
     error: ''
   });
 
+  // Manual refresh function
+  const refreshProjects = async () => {
+    if (!user || typeof user.id !== 'number') return;
+    
+    setRefreshing(true);
+    try {
+      const data = await getClientProjects(user.id);
+      setProjects(data);
+      console.log('Projects refreshed:', data);
+    } catch (err) {
+      handleApiError(err, 'refreshProjects');
+      setError('Failed to refresh projects.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProjects = async () => {
       setLoading(true);
       setError('');
       try {
-        if (user && user.id) {
+        if (user && typeof user.id === 'number') {
           const data = await getClientProjects(user.id);
           setProjects(data);
           console.log(data);
@@ -69,6 +97,44 @@ export function ClientProjects() {
       }
     };
     fetchProjects();
+  }, [user]);
+
+  // Refresh data when component comes into focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user?.id) {
+        const fetchProjects = async () => {
+          try {
+            const data = await getClientProjects(user.id!);
+            setProjects(data);
+            console.log('Projects refreshed on focus:', data);
+          } catch (err) {
+            console.error('Failed to refresh projects on focus:', err);
+          }
+        };
+        fetchProjects();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user]);
+
+  // Periodic refresh every 30 seconds when user is active
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const data = await getClientProjects(user.id!);
+        setProjects(data);
+        console.log('Projects auto-refreshed:', data);
+      } catch (err) {
+        console.error('Failed to auto-refresh projects:', err);
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, [user]);
 
   const filteredProjects = projects.filter(project => {
@@ -226,10 +292,7 @@ export function ClientProjects() {
       setTimelineModal(prev => ({ ...prev, isOpen: false }));
       
       // Refresh projects list
-      if (user?.id) {
-        const data = await getClientProjects(user.id);
-        setProjects(data);
-      }
+      await refreshProjects();
     } catch (error) {
       handleApiError(error, 'updateTimeline');
     } finally {
@@ -287,10 +350,21 @@ export function ClientProjects() {
           <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
           <p className="text-gray-600 mt-1">Manage and track all your posted projects</p>
         </div>
-        <Button onClick={createNewProject} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          New Project
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            onClick={refreshProjects}
+            disabled={refreshing}
+            variant="outline"
+            className="flex items-center"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button onClick={createNewProject} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            New Project
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
