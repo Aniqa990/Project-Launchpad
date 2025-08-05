@@ -307,8 +307,13 @@ namespace ProjectLaunchpad.Functions
             //    return unauthorizedResponse!;
 
             var milestones = await _unitOfWork.MilestoneRepository.GetMilestonesByFreelancerIdAsync(userId);
+
             if (milestones == null || !milestones.Any())
-                return req.CreateResponse(HttpStatusCode.NotFound);
+            {
+                var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                await notFoundResponse.WriteStringAsync("No milestones found for the specified freelancer.");
+                return notFoundResponse;
+            }
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(milestones);

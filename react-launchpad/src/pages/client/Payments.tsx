@@ -1006,6 +1006,8 @@ export function ClientPayments() {
           onSuccess={() => {
             setShowMultiFreelancerModal(false);
             setSelectedMilestoneForMultiPayment(null);
+            // fetchPayments();
+            // fetchMilestones();
             // Refresh payments and milestones
             // Note: The component will automatically refresh when the modal closes
           }}
