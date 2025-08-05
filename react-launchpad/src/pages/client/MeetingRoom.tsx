@@ -1,8 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import JaaSMeeting from './JaaSMeeting';
 import { useAuth } from '../../contexts/AuthContext';
-import { getClientProjects } from '../../apiendpoints';
-import axios from 'axios';
+import { getClientProjects, startMeeting, uploadMeetingAudio, getProjectFreelancers } from '../../apiendpoints';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../components/ui/select';
 import { Button } from '../../components/ui/button';
 import type { FreelancerProfile } from '../../types';
@@ -25,7 +24,6 @@ export default function Meetings() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
   const [selectedFreelancerId, setSelectedFreelancerId] = useState<string | null>(null);
-  const [meetingReady, setMeetingReady] = useState(false);
   const [showMeeting, setShowMeeting] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [loadingFreelancers, setLoadingFreelancers] = useState(false);
@@ -37,14 +35,14 @@ export default function Meetings() {
   const [meetingAgenda, setMeetingAgenda] = useState('');
   const [startingMeeting, setStartingMeeting] = useState(false);
   const [meetingRoomId, setMeetingRoomId] = useState<string | null>(null);
-  const [meetingId, setMeetingId] = useState<number | null>(null); // Store integer meeting ID
+  const [meetingId, setMeetingId] = useState<number | null>(null);
 
-  // New: Upload transcript state
+  // Upload transcript state
   const [uploadingTranscript, setUploadingTranscript] = useState(false);
   const [uploadTranscriptSuccess, setUploadTranscriptSuccess] = useState<string | null>(null);
   const [uploadTranscriptError, setUploadTranscriptError] = useState<string | null>(null);
 
-  const ASSEMBLYAI_API_KEY = '2a10d51c006c409681db68820636a14d'; // Replace with your real key for testing
+  const ASSEMBLYAI_API_KEY = '2a10d51c006c409681db68820636a14d';
 
   // Fetch projects for client
   useEffect(() => {
@@ -70,9 +68,9 @@ export default function Meetings() {
     }
     setLoadingFreelancers(true);
     setError(null);
-    axios.get(`http://localhost:7053/api/projects/${selectedProjectId}/freelancers`)
+    getProjectFreelancers(Number(selectedProjectId))
       .then((res) => {
-        setFreelancers(res.data);
+        setFreelancers(res);
       })
       .catch(() => setError('Failed to load freelancers'))
       .finally(() => setLoadingFreelancers(false));
@@ -257,14 +255,13 @@ export default function Meetings() {
   };
 
   const handleStartMeeting = async () => {
-    if (!selectedProjectId || !user) return;
+    if (!selectedProjectId || !user || !user.id) return;
     setStartingMeeting(true);
     setError(null);
     try {
-      // Compose participants: client + freelancers
       const participants = [
         {
-          userId: user.id,
+          userId: user.id!,
           userName: `${user.firstName} ${user.lastName}`,
           role: 'client',
         },
@@ -279,10 +276,10 @@ export default function Meetings() {
         title: meetingTitle || 'Project Meeting',
         description: meetingDescription,
         agenda: meetingAgenda,
-        createdBy: user.id,
+        createdBy: user.id!,
         participants,
       };
-      const res = await axios.post('http://localhost:7053/api/meetings/start', payload);
+      const res = await startMeeting(payload);
       setMeetingRoomId(res.data.roomId);
       setMeetingId(res.data.meetingId); // Save integer meeting ID
       setShowMeeting(true);
@@ -306,9 +303,8 @@ export default function Meetings() {
     setUploadTranscriptError(null);
     try {
       // 1. Upload transcript to Cloudinary
-      const cloudName = 'depfyzzad';
-      const unsignedPreset = 'projectLaunchpad';
-      const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+      const unsignedPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+      const url = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/auto/upload`;
       const transcriptBlob = new Blob([transcript], { type: 'text/plain' });
       const cloudForm = new FormData();
       cloudForm.append('file', transcriptBlob, `transcript-${meetingId}-user-${user.id}.txt`);
@@ -327,10 +323,7 @@ export default function Meetings() {
       const formData = new FormData();
       formData.append('userId', String(user.id));
       formData.append('audioUrl', transcriptUrl);
-      const backendRes = await axios.post(
-        `http://localhost:7053/api/meetings/${meetingId}/upload-audio`,
-        formData
-      );
+      const backendRes = await uploadMeetingAudio(meetingId!, formData);
       setUploadTranscriptSuccess('Transcript uploaded and saved!');
     } catch (err: any) {
       setUploadTranscriptError(err?.response?.data || err.message || 'Failed to upload transcript.');

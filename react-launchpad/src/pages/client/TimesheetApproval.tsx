@@ -4,8 +4,9 @@ import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { CheckSquare, X, Clock, MessageSquare, User, Calendar, Filter, Search } from 'lucide-react';
-import { getTimesheets, getTimesheetsByFreelancer, approveTimesheet, rejectTimesheet, getProjectById, getProjectsByClient, getFreelancersByProject, getTimesheetsByFreelancerId, getFreelancerById } from '../../apiendpoints';
+import { approveTimesheet, rejectTimesheet, getProjectById, getClientProjects, getProjectFreelancers, getTimesheetsByFreelancerId, getFreelancerById } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
+import { Project } from '../../types';
 
 interface TimesheetEntry {
   id: string;
@@ -25,19 +26,6 @@ interface TimesheetEntry {
     date: string;
   }[];
   submittedAt: string;
-}
-
-interface Project {
-  Id: number;
-  ProjectTitle: string;
-  Description: string;
-  Status: string;
-  Budget: number;
-  Deadline: string;
-  CategoryOrDomain: string;
-  PaymentType: string;
-  NumberOfFreelancers: number;
-  RequiredSkills: string;
 }
 
 // Helper to get week ending date (Sunday) for a given date string
@@ -127,7 +115,7 @@ async function groupTimesheets(flat: any[]): Promise<TimesheetEntry[]> {
   return Object.values(grouped);
 }
 
-const TimesheetApproval: React.FC = () => {
+export function TimesheetApproval() {
   const { projectId } = useParams<{ projectId: string }>();
   const [selectedTimesheet, setSelectedTimesheet] = useState<string | null>(null);
   const [comments, setComments] = useState<{ [key: string]: string }>({});
@@ -161,12 +149,12 @@ const TimesheetApproval: React.FC = () => {
             
             if (targetProject) {
               // Get freelancers for this specific project
-              const freelancers = await getFreelancersByProject(Number(projectId));
+              const freelancers = await getProjectFreelancers(Number(projectId));
               console.log('Freelancers for project', projectId, ':', freelancers);
               
               // For each freelancer, get their timesheets
               for (const freelancer of freelancers) {
-                const freelancerId = freelancer.Id || freelancer.id;
+                const freelancerId = freelancer.id;
                 if (!freelancerId) {
                   console.warn('Skipping freelancer with missing Id:', freelancer);
                   continue;
@@ -190,8 +178,8 @@ const TimesheetApproval: React.FC = () => {
                 // Add project name to each timesheet entry
                 const timesheetsWithProject = projectTimesheets.map((ts: any) => ({ 
                   ...ts, 
-                  ProjectName: targetProject!.ProjectTitle,
-                  FreelancerName: freelancer.FirstName + ' ' + freelancer.LastName || freelancer.Name || `Freelancer ${freelancerId}`
+                  ProjectName: targetProject!.projectTitle,
+                  FreelancerName: freelancer.firstName + ' ' + freelancer.lastName || `Freelancer ${freelancerId}`
                 }));
                 
                 allTimesheets.push(...timesheetsWithProject);
@@ -206,18 +194,18 @@ const TimesheetApproval: React.FC = () => {
         } else {
           // If no projectId, fetch all projects and their timesheets
           console.log('Fetching all projects for client:', user.id);
-          const projects = await getProjectsByClient(user.id);
+          const projects = await getClientProjects(user.id);
           console.log('Projects fetched:', projects);
           
           // For each project, get the assigned freelancers
           for (const project of projects) {
-            console.log('Fetching freelancers for project:', project.Id);
-            const freelancers = await getFreelancersByProject(project.Id);
-            console.log('Freelancers for project', project.Id, ':', freelancers);
+            console.log('Fetching freelancers for project:', project.id);
+            const freelancers = await getProjectFreelancers(project.id);
+            console.log('Freelancers for project', project.id, ':', freelancers);
             
             // For each freelancer, get their timesheets
             for (const freelancer of freelancers) {
-              const freelancerId = freelancer.Id || freelancer.id;
+              const freelancerId = freelancer.id;
               if (!freelancerId) {
                 console.warn('Skipping freelancer with missing Id:', freelancer);
                 continue;
@@ -233,16 +221,16 @@ const TimesheetApproval: React.FC = () => {
                              // Filter timesheets to only include those for the current project
                const projectTimesheets = freelancerTimesheets.filter((ts: any) => {
                  const timesheetProjectId = ts.projectId || ts.ProjectId;
-                 const matchesProject = timesheetProjectId === project.Id;
-                 console.log(`Timesheet ${ts.id}: projectId=${timesheetProjectId}, currentProjectId=${project.Id}, matches=${matchesProject}`);
+                 const matchesProject = timesheetProjectId === project.id;
+                 console.log(`Timesheet ${ts.id}: projectId=${timesheetProjectId}, currentProjectId=${project.id}, matches=${matchesProject}`);
                  return matchesProject;
                });
               
               // Add project name to each timesheet entry
               const timesheetsWithProject = projectTimesheets.map((ts: any) => ({ 
                 ...ts, 
-                ProjectName: project.ProjectTitle,
-                FreelancerName: freelancer.FirstName + ' ' + freelancer.LastName || freelancer.Name || `Freelancer ${freelancerId}`
+                ProjectName: project.projectTitle,
+                FreelancerName: freelancer.firstName + ' ' + freelancer.lastName || `Freelancer ${freelancerId}`
               }));
               
               allTimesheets.push(...timesheetsWithProject);
@@ -274,13 +262,13 @@ const TimesheetApproval: React.FC = () => {
   const projects = [...new Set(timesheets.map(t => t.projectName))];
   
   // If we have a specific project, only show that project in the dropdown
-  const availableProjects = projectId && project ? [project.ProjectTitle] : projects;
+  const availableProjects = projectId && project ? [project.projectTitle] : projects;
 
   // Set the selected project to the specific project when projectId is provided
   useEffect(() => {
     if (projectId && project && timesheets.length > 0) {
       // Set the selected project to the project title from the fetched project data
-      setSelectedProject(project.ProjectTitle);
+      setSelectedProject(project.projectTitle || '');
     }
   }, [projectId, project, timesheets]);
 
@@ -353,7 +341,7 @@ const TimesheetApproval: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900">Timesheet Approval</h1>
         <p className="text-gray-600 mt-1">
           {project 
-            ? `Review and approve freelancer timesheets for: ${project.ProjectTitle}`
+            ? `Review and approve freelancer timesheets for: ${project.projectTitle}`
             : projectId 
             ? `Review and approve freelancer timesheets for Project ID: ${projectId}`
             : 'Review and approve freelancer timesheets'
@@ -363,13 +351,13 @@ const TimesheetApproval: React.FC = () => {
           <div className="mt-2 p-3 bg-blue-50 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <span className="font-medium text-gray-700">Category:</span> {project.CategoryOrDomain}
+                <span className="font-medium text-gray-700">Category:</span> {project.categoryOrDomain}
               </div>
               <div>
-                <span className="font-medium text-gray-700">Payment Type:</span> {project.PaymentType}
+                <span className="font-medium text-gray-700">Payment Type:</span> {project.paymentType}
               </div>
               <div>
-                <span className="font-medium text-gray-700">Budget:</span> ${project.Budget?.toLocaleString()}
+                <span className="font-medium text-gray-700">Budget:</span> ${project.budget?.toLocaleString()}
               </div>
             </div>
           </div>
@@ -463,7 +451,7 @@ const TimesheetApproval: React.FC = () => {
               disabled={!!projectId}
             >
               <option value="all">
-                {projectId ? (project?.ProjectTitle || 'Loading...') : 'All Projects'}
+                {projectId ? (project?.projectTitle || 'Loading...') : 'All Projects'}
               </option>
               {availableProjects.map(projectName => (
                 <option key={projectName} value={projectName}>{projectName}</option>
@@ -634,5 +622,3 @@ const TimesheetApproval: React.FC = () => {
     </div>
   );
 };
-
-export default TimesheetApproval; 

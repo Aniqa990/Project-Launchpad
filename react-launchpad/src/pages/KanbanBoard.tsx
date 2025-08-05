@@ -15,16 +15,19 @@ import {
   PlayCircle,
   AlertCircle
 } from 'lucide-react';
-import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask, Project, User } from '../../types';
-import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById } from '../../apiendpoints';
+import { KanbanTask, KanbanTaskStatus, KanbanTaskPriorityLevel, KanbanSubtask, Project, User } from '../types';
+import { getTasks, updateTask, createTask, deleteTask, getSubtasks, updateSubtask, getFreelancerProjects, getClientProjects, getProjectById, getTasksByProjectId } from '../apiendpoints';
 import { useDroppable } from '@dnd-kit/core';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Avatar } from '../ui/avatar';
-import { Modal } from '../ui/Modal';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Avatar } from '../components/ui/avatar';
+import { Modal } from '../components/ui/Modal';
+import { EditTaskModal } from '../components/ui/EditTaskModal';
+import { AddTaskModal } from '../components/ui/AddTaskModal';
+import { EditSubtaskModal } from '../components/ui/EditSubtaskModal';
 
 // Custom CSS animations
 const customStyles = `
@@ -460,547 +463,11 @@ function KanbanColumn({ title, status, tasks, onTaskClick, setShowAddTaskModal, 
   );
 }
 
-// EditTaskModal component for updating and deleting a task
-function EditTaskModal({ isOpen, onClose, task, onUpdate, onDelete, loading, projectFreelancers, projectDetails, validateTaskDeadline }: {
-  isOpen: boolean;
-  onClose: () => void;
-  task: KanbanTask | null;
-  onUpdate: (id: number, form: any) => void;
-  onDelete: (id: number) => void;
-  loading: boolean;
-  projectFreelancers: User[];
-  projectDetails: any;
-  validateTaskDeadline: (deadline: string) => string;
-}) {
-  const [form, setForm] = React.useState<any>(task ? {
-    title: task.Title,
-    description: task.Description || '',
-    estimatedDeadline: task.EstimatedDeadline ? task.EstimatedDeadline.split('T')[0] : '',
-    priority: task.Priority,
-    createdByUserId: task.CreatedByUserId,
-    assignedToUserId: task.AssignedToUserId,
-    status: task.Status,
-  } : {});
-  const [deadlineError, setDeadlineError] = React.useState('');
-  
-  useEffect(() => {
-    if (task) {
-      setForm({
-        title: task.Title,
-        description: task.Description || '',
-        estimatedDeadline: task.EstimatedDeadline ? task.EstimatedDeadline.split('T')[0] : '',
-        priority: task.Priority,
-        createdByUserId: task.CreatedByUserId,
-        assignedToUserId: task.AssignedToUserId,
-        status: task.Status,
-      });
-    }
-  }, [task]);
-  
-  if (!isOpen || !task) return <></>;
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    
-    // Validate deadline when it changes
-    if (name === 'estimatedDeadline') {
-      const error = validateTaskDeadline(value);
-      setDeadlineError(error);
-    }
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate deadline before submitting
-    if (form.estimatedDeadline) {
-      const error = validateTaskDeadline(form.estimatedDeadline);
-      if (error) {
-        setDeadlineError(error);
-        return;
-      }
-    }
-    
-    onUpdate(task.Id, {
-      ...form,
-      priority: Number(form.priority),
-      createdByUserId: Number(form.createdByUserId),
-      assignedToUserId: Number(form.assignedToUserId),
-      status: Number(form.status),
-    });
-  };
-  
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-2xl p-6 border-b border-blue-200">
-          <h2 className="text-xl font-bold text-gray-900">Edit Task</h2>
-          <p className="text-gray-600 mt-1">Update task details and assignments</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-title">Title</label>
-            <input 
-              id="edit-title" 
-              name="title" 
-              value={form.title} 
-              onChange={handleChange} 
-              placeholder="Task title" 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-              required 
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-description">Description</label>
-            <textarea 
-              id="edit-description" 
-              name="description" 
-              value={form.description} 
-              onChange={handleChange} 
-              placeholder="Task description" 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none" 
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-estimatedDeadline">Estimated Deadline</label>
-            <input 
-              id="edit-estimatedDeadline" 
-              name="estimatedDeadline" 
-              type="date" 
-              value={form.estimatedDeadline} 
-              onChange={handleChange} 
-              className={`w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
-              min={new Date().toISOString().split('T')[0]}
-              max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
-            />
-            {deadlineError && (
-              <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
-            )}
-            {projectDetails?.Deadline && (
-              <p className="text-gray-500 text-sm mt-1">
-                Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-priority">Priority</label>
-            <select 
-              id="edit-priority" 
-              name="priority" 
-              value={form.priority} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            >
-              <option value={0}>Low</option>
-              <option value={1}>Medium</option>
-              <option value={2}>High</option>
-              <option value={3}>Urgent</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-createdByUserId">Created By</label>
-            <select 
-              id="edit-createdByUserId" 
-              name="createdByUserId" 
-              value={form.createdByUserId} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-              required
-            >
-              <option value="">Select a freelancer</option>
-              {projectFreelancers.map((freelancer) => (
-                <option key={freelancer.id} value={freelancer.id}>
-                  {freelancer.firstName} {freelancer.lastName}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-assignedToUserId">Assigned To</label>
-            <select 
-              id="edit-assignedToUserId" 
-              name="assignedToUserId" 
-              value={form.assignedToUserId} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-              required
-            >
-              <option value="">Select a freelancer</option>
-              {projectFreelancers.map((freelancer) => (
-                <option key={freelancer.id} value={freelancer.id}>
-                  {freelancer.firstName} {freelancer.lastName}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-status">Status</label>
-            <select 
-              id="edit-status" 
-              name="status" 
-              value={form.status} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            >
-              <option value={0}>To Do</option>
-              <option value={1}>In Progress</option>
-              <option value={2}>Done</option>
-            </select>
-          </div>
-          
-          <div className="flex justify-between pt-4 border-t border-gray-200">
-            <button 
-              type="button" 
-              onClick={() => onDelete(task.Id)} 
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium"
-            >
-              Delete
-            </button>
-            <div className="flex gap-3">
-              <button 
-                type="button" 
-                onClick={onClose} 
-                className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors duration-200 font-medium"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                disabled={loading} 
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 
-// Subtask Edit Modal
-function EditSubtaskModal({ isOpen, onClose, onSubmit, loading, subtask }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (id: number, form: any) => void;
-  loading: boolean;
-  subtask: KanbanSubtask | null;
-}) {
-  const [form, setForm] = useState<any>(subtask ? {
-    title: subtask.Title,
-    description: subtask.Description || '',
-    dueDate: subtask.DueDate ? subtask.DueDate.split('T')[0] : '',
-    status: subtask.Status,
-  } : {});
-  
-  useEffect(() => {
-    if (subtask) {
-      setForm({
-        title: subtask.Title,
-        description: subtask.Description || '',
-        dueDate: subtask.DueDate ? subtask.DueDate.split('T')[0] : '',
-        status: subtask.Status,
-      });
-    }
-  }, [subtask]);
-  
-  if (!subtask) return <></>;
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(subtask.Id, {
-      ...form,
-      status: Number(form.status),
-    });
-  };
-  
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
-        <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-t-2xl p-6 border-b border-purple-200">
-          <h2 className="text-xl font-bold text-gray-900">Edit Subtask</h2>
-          <p className="text-gray-600 mt-1">Update subtask details</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-title">Title</label>
-            <input 
-              id="edit-subtask-title" 
-              name="title" 
-              value={form.title} 
-              onChange={handleChange} 
-              placeholder="Subtask title" 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-              required 
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-description">Description</label>
-            <textarea 
-              id="edit-subtask-description" 
-              name="description" 
-              value={form.description} 
-              onChange={handleChange} 
-              placeholder="Subtask description" 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none" 
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-dueDate">Due Date</label>
-            <input 
-              id="edit-subtask-dueDate" 
-              name="dueDate" 
-              type="date" 
-              value={form.dueDate} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-subtask-status">Status</label>
-            <select 
-              id="edit-subtask-status" 
-              name="status" 
-              value={form.status} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            >
-              <option value={0}>To Do</option>
-              <option value={1}>In Progress</option>
-              <option value={2}>Done</option>
-            </select>
-          </div>
-          
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors duration-200 font-medium"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 
-// AddTaskModal component
-function AddTaskModal({ isOpen, onClose, onSubmit, loading, selectedProjectId, projectFreelancers, projectDetails, validateTaskDeadline }: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onSubmit: (form: any) => void; 
-  loading: boolean; 
-  selectedProjectId: number | null;
-  projectFreelancers: User[];
-  projectDetails: any;
-  validateTaskDeadline: (deadline: string) => string;
-}) {
-  const [form, setForm] = React.useState({
-    title: '',
-    description: '',
-    estimatedDeadline: '',
-    priority: 0,
-    createdByUserId: '',
-    assignedToUserId: '',
-  });
-  const [deadlineError, setDeadlineError] = React.useState('');
-  
-  if (!isOpen) return <></>;
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    
-    // Validate deadline when it changes
-    if (name === 'estimatedDeadline') {
-      const error = validateTaskDeadline(value);
-      setDeadlineError(error);
-    }
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate deadline before submitting
-    if (form.estimatedDeadline) {
-      const error = validateTaskDeadline(form.estimatedDeadline);
-      if (error) {
-        setDeadlineError(error);
-        return;
-      }
-    }
-    
-    onSubmit({
-      ...form,
-      priority: Number(form.priority),
-      createdByUserId: Number(form.createdByUserId),
-      assignedToUserId: Number(form.assignedToUserId),
-      ProjectId: selectedProjectId,
-    });
-  };
-  
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
-        <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-t-2xl p-6 border-b border-green-200">
-          <h2 className="text-xl font-bold text-gray-900">Create New Task</h2>
-          <p className="text-gray-600 mt-1">Add a new task to the project</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-title">Title</label>
-            <input 
-              id="add-title" 
-              name="title" 
-              value={form.title} 
-              onChange={handleChange} 
-              placeholder="Task title" 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-              required 
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-description">Description</label>
-            <textarea 
-              id="add-description" 
-              name="description" 
-              value={form.description} 
-              onChange={handleChange} 
-              placeholder="Task description" 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none" 
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-estimatedDeadline">Estimated Deadline</label>
-            <input 
-              id="add-estimatedDeadline" 
-              name="estimatedDeadline" 
-              type="date" 
-              value={form.estimatedDeadline} 
-              onChange={handleChange} 
-              className={`w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${deadlineError ? 'border-red-500' : 'border-gray-300'}`}
-              min={new Date().toISOString().split('T')[0]}
-              max={projectDetails?.Deadline ? new Date(projectDetails.Deadline).toISOString().split('T')[0] : undefined}
-            />
-            {deadlineError && (
-              <p className="text-red-500 text-sm mt-1">{deadlineError}</p>
-            )}
-            {projectDetails?.Deadline && (
-              <p className="text-gray-500 text-sm mt-1">
-                Project deadline: {new Date(projectDetails.Deadline).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-priority">Priority</label>
-            <select 
-              id="add-priority" 
-              name="priority" 
-              value={form.priority} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            >
-              <option value={0}>Low</option>
-              <option value={1}>Medium</option>
-              <option value={2}>High</option>
-              <option value={3}>Urgent</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-createdByUserId">Created By</label>
-            <select 
-              id="add-createdByUserId" 
-              name="createdByUserId" 
-              value={form.createdByUserId} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-              required
-            >
-              <option value="">Select a freelancer</option>
-              {projectFreelancers.map((freelancer) => (
-                <option key={freelancer.id} value={freelancer.id}>
-                  {freelancer.firstName} {freelancer.lastName}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="add-assignedToUserId">Assigned To</label>
-            <select 
-              id="add-assignedToUserId" 
-              name="assignedToUserId" 
-              value={form.assignedToUserId} 
-              onChange={handleChange} 
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-              required
-            >
-              <option value="">Select a freelancer</option>
-              {projectFreelancers.map((freelancer) => (
-                <option key={freelancer.id} value={freelancer.id}>
-                  {freelancer.firstName} {freelancer.lastName}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <input type="hidden" name="ProjectId" value={selectedProjectId ?? ''} />
-          
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors duration-200 font-medium"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Adding...' : 'Add Task'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+
+
+
 
 export function KanbanBoard() {
   const { user } = useAuth();
@@ -1022,6 +489,9 @@ export function KanbanBoard() {
 
   const [projectDetails, setProjectDetails] = useState<any>(null);
   const [loadingProjectDetails, setLoadingProjectDetails] = useState(false);
+
+  // Check if user can perform actions (only freelancers can)
+  const canPerformActions = user?.role === 'freelancer';
 
   useEffect(() => {
     async function fetchTasks() {
@@ -1084,9 +554,9 @@ export function KanbanBoard() {
       setLoadingTasks(true);
       setMessage('');
       try {
-        const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
-        setTasks(res.data);
-        if (res.data.length === 0) {
+        const res = await getTasksByProjectId(selectedProjectId!);
+        setTasks(res);
+        if (res.length === 0) {
           setMessage('No tasks for this project yet.');
         }
       } catch (e) {
@@ -1158,9 +628,9 @@ export function KanbanBoard() {
     setLoadingTasks(true);
     setMessage('');
     try {
-      const res = await axios.get(`http://localhost:7071/api/tasks/project/${selectedProjectId}`);
-      setTasks(res.data);
-      if (res.data.length === 0) {
+      const res = await getTasksByProjectId(selectedProjectId);
+      setTasks(res);
+      if (res.length === 0) {
         setMessage('No tasks for this project yet.');
       }
     } catch (e) {
@@ -1178,6 +648,9 @@ export function KanbanBoard() {
   );
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    // Only allow drag/drop for freelancers
+    if (!canPerformActions) return;
+    
     const { active, over } = event;
     if (!over) return;
     // Handle subtasks
@@ -1255,12 +728,16 @@ export function KanbanBoard() {
   };
 
   const handleEditButton = () => {
+    // Only allow editing for freelancers
+    if (!canPerformActions) return;
     setEditTask(selectedTask);
     setShowTaskModal(false);
     setShowAddTaskModal(false);
   };
 
   const handleCreateTaskButton = () => {
+    // Only allow creating for freelancers
+    if (!canPerformActions) return;
     setShowAddTaskModal(true);
     setShowTaskModal(false);
     setEditTask(null);
@@ -1401,7 +878,7 @@ export function KanbanBoard() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Project Tasks
               </h1>
               <p className="text-gray-600 mt-2 text-lg">
@@ -1410,8 +887,13 @@ export function KanbanBoard() {
                   : 'Monitor and track project progress'
                 }
               </p>
+              {user?.role === 'client' && (
+                <p className="text-sm text-blue-600 mt-1">
+                  View-only mode - You can monitor task progress but cannot modify tasks
+                </p>
+              )}
             </div>
-            {user?.role === 'freelancer' && (
+            {canPerformActions && (
               <Button 
                 icon={Plus} 
                 onClick={handleCreateTaskButton} 
@@ -1519,18 +1001,58 @@ export function KanbanBoard() {
             </div>
           ) : (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
+              {canPerformActions ? (
+                // FREELANCER: Enable drag-and-drop and edit
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+                      <KanbanColumn
+                        title="To Do"
+                        status="todo"
+                        tasks={tasksByStatus['To Do']}
+                        onTaskClick={handleTaskClick}
+                        setShowAddTaskModal={setShowAddTaskModal}
+                        subtasks={subtasks}
+                        setEditSubtask={setSelectedSubtask}
+                      />
+                    </div>
+                    <div className="animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                      <KanbanColumn
+                        title="In Progress"
+                        status="inprogress"
+                        tasks={tasksByStatus['In Progress']}
+                        onTaskClick={handleTaskClick}
+                        setShowAddTaskModal={setShowAddTaskModal}
+                        subtasks={subtasks}
+                        setEditSubtask={setSelectedSubtask}
+                      />
+                    </div>
+                    <div className="animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                      <KanbanColumn
+                        title="Done"
+                        status="done"
+                        tasks={tasksByStatus['Done']}
+                        onTaskClick={handleTaskClick}
+                        setShowAddTaskModal={setShowAddTaskModal}
+                        subtasks={subtasks}
+                        setEditSubtask={setSelectedSubtask}
+                      />
+                    </div>
+                  </div>
+                </DndContext>
+              ) : (
+                // CLIENT: No drag-and-drop, no edit
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                   <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
                     <KanbanColumn
                       title="To Do"
                       status="todo"
                       tasks={tasksByStatus['To Do']}
-                      onTaskClick={handleTaskClick}
+                      onTaskClick={() => {}} // no-op for clients
                       setShowAddTaskModal={setShowAddTaskModal}
                       subtasks={subtasks}
                       setEditSubtask={setSelectedSubtask}
@@ -1541,7 +1063,7 @@ export function KanbanBoard() {
                       title="In Progress"
                       status="inprogress"
                       tasks={tasksByStatus['In Progress']}
-                      onTaskClick={handleTaskClick}
+                      onTaskClick={() => {}} // no-op for clients
                       setShowAddTaskModal={setShowAddTaskModal}
                       subtasks={subtasks}
                       setEditSubtask={setSelectedSubtask}
@@ -1552,14 +1074,14 @@ export function KanbanBoard() {
                       title="Done"
                       status="done"
                       tasks={tasksByStatus['Done']}
-                      onTaskClick={handleTaskClick}
+                      onTaskClick={() => {}} // no-op for clients
                       setShowAddTaskModal={setShowAddTaskModal}
                       subtasks={subtasks}
                       setEditSubtask={setSelectedSubtask}
                     />
                   </div>
                 </div>
-              </DndContext>
+              )}
             </div>
           )
         ) : (

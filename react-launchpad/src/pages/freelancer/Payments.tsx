@@ -263,7 +263,7 @@ export function FreelancerPayments() {
                         'text-gray-400'
                       }`} />
                       <h3 className="text-lg font-semibold text-gray-900">
-                        {payment.PaymentType === 'Fixed' ? 'Fixed Project Payment' : 'Milestone Payment'}
+                        {payment.PaymentType === 'fixed' ? 'Fixed Project Payment' : 'Milestone Payment'}
                       </h3>
                       <Badge variant={getStatusColor(payment.PaymentStatus) as any}>
                         {payment.PaymentStatus}
@@ -277,7 +277,7 @@ export function FreelancerPayments() {
                       Client: {client ? `${client.FirstName} ${client.LastName}` : `Client #${payment.ClientId}`}
                     </p>
                     
-                    {payment.PaymentType !== 'Fixed' && payment.MilestoneId && (
+                    {payment.PaymentType !== 'fixed' && payment.MilestoneId && (
                       <p className="text-sm text-blue-600 font-medium mb-2">
                         Milestone ID: {payment.MilestoneId}
                       </p>

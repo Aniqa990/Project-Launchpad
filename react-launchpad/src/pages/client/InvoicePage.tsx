@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: any, onPayNow: (data: any) => void, onClose?: () => void }) => {
   console.log('InvoicePage rendered with invoiceData:', invoiceData);
   
-  // Allow editing of user details
+  //Allow editing of user details
   const [userDetails, setUserDetails] = useState({
     name: invoiceData.name || '',
     email: invoiceData.email || '',
@@ -20,34 +20,40 @@ export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: a
     setUserDetails(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Fetch freelancers for the project
+  //Fetch freelancers for the project
   useEffect(() => {
     const fetchFreelancers = async () => {
+      if (invoiceData.milestoneFreelancers && Array.isArray(invoiceData.milestoneFreelancers) && invoiceData.milestoneFreelancers.length > 0) {
+        // Normalize freelancer IDs to 'id' for consistency
+        const normalized = invoiceData.milestoneFreelancers.map((f: any) => ({
+          ...f,
+          id: f.id || f.FreelancerId || f.Id
+        }));
+        setFreelancers(normalized);
+        // Auto-select first freelancer if none selected
+        if (!selectedFreelancerId && normalized.length === 1) {
+          setSelectedFreelancerId(normalized[0].id);
+        }
+        return;
+      }
       if (invoiceData.projectId) {
         try {
-          console.log('InvoicePage: Fetching freelancers for projectId:', invoiceData.projectId);
           setLoading(true);
           const data = await getProjectFreelancers(invoiceData.projectId);
-          console.log('InvoicePage: Freelancers fetched:', data);
           setFreelancers(data);
           // Auto-select first freelancer if none selected
           if (!selectedFreelancerId && data.length > 0) {
-            console.log('InvoicePage: Auto-selecting first freelancer:', data[0]);
             setSelectedFreelancerId(data[0].id);
           }
         } catch (err) {
-          console.error('InvoicePage: Error fetching freelancers:', err);
           toast.error('Failed to fetch freelancers');
         } finally {
           setLoading(false);
         }
-      } else {
-        console.log('InvoicePage: No projectId provided:', invoiceData);
       }
     };
-
     fetchFreelancers();
-  }, [invoiceData.projectId, selectedFreelancerId]);
+  }, [invoiceData.projectId, invoiceData.milestoneFreelancers, selectedFreelancerId]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -84,8 +90,8 @@ export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: a
             >
               <option value="">Select a freelancer</option>
               {freelancers.map((freelancer) => (
-                <option key={freelancer.Id} value={freelancer.Id}>
-                  {freelancer.FirstName} {freelancer.LastName} - ${freelancer.HourlyRate}/hr
+                <option key={freelancer.id} value={freelancer.id}>
+                  {freelancer.FirstName || freelancer.firstName} {freelancer.LastName || freelancer.lastName} - ${freelancer.HourlyRate || freelancer.hourlyRate || 0}/hr
                 </option>
               ))}
             </select>

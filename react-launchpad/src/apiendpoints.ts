@@ -12,10 +12,10 @@ import type {
   Feedback,
   Milestone,
 } from "@/types";
-import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst";
+import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst"; //for matching the keys from backend to frontend
 
 const api = axios.create({
-  baseURL: "http://localhost:7071/api",
+  baseURL: "http://localhost:7053/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -32,21 +32,6 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
-);
-
-// Add response interceptor for global error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Don't handle auth errors here as they're handled in AuthContext
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      return Promise.reject(error);
-    }
-
-    // For other errors, we can log them but let individual handlers deal with them
-    console.error("API Error:", error);
-    return Promise.reject(error);
-  }
 );
 
 //AUTH
@@ -68,23 +53,18 @@ export async function validateToken(token?: string) {
     .then((res) => res.data);
 }
 
+//FREELANCER
 export const getFreelancerById = async (
   id: number
 ): Promise<FreelancerProfile> => {
-  const response = await api.get(`/freelancer/${id}`);
-  return lowercaseFirstLetterKeys(response.data);
-};
-
-export const addFreelancerProfile = async (
-  profile: Partial<FreelancerProfile>
-) => {
   try {
-    const response = await api.post("/freelancer", profile);
-    return response.data;
+    const response = await api.get(`/freelancer/${id}`);;
+    return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to save profile");
+    throw new Error(error.response?.data?.detail || "Failed to fetch freelancer profile");
   }
 };
+
 
 export const updateFreelancerProfile = async (
   profile: Partial<FreelancerProfile>,
@@ -97,6 +77,39 @@ export const updateFreelancerProfile = async (
     throw new Error(error.response?.data?.message || "Failed to save profile");
   }
 };
+
+export async function deleteFreelancerProfile(userId: number) {
+  const { data } = await api.delete(`/freelancer/${userId}`);
+  return data;
+}
+
+//CLIENTS
+export const getClientById = async (clientId: number) => {
+  try {
+    const response = await api.get(`/clients/${clientId}`);
+    return lowercaseFirstLetterKeys(response.data);
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch client details"
+    );
+  }
+};
+
+//Client Profile Setup API
+export async function fetchClientProfile(id: number) {
+  const { data } = await api.get(`/client/profile/${id}`);
+  return lowercaseFirstLetterKeys(data);
+}
+
+export async function updateClientProfile(updates: Partial<User>) {
+  const { data } = await api.patch("/client/profile", updates);
+  return data;
+}
+
+export async function deleteClientProfile(userId: number) {
+  const { data } = await api.delete(`/client/profile/${userId}`);
+  return data;
+}
 
 //PROJECT REQUESTS
 export const getProjectRequests = async (freelancerId: number) => {
@@ -148,6 +161,19 @@ export const updateProjectRequestStatus = async (
   }
 };
 
+export const getProjectRequestsByProjectId = async (projectId: number) => {
+  try {
+    const response = await api.get(`/projects/${projectId}/requests`);
+    return lowercaseFirstLetterKeys(response.data);
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message ||
+        "Failed to fetch project requests for project"
+    );
+  }
+};
+
+//PROJECTS
 export const assignFreelancerToProject = async (
   projectId: number,
   freelancerId: number
@@ -176,17 +202,73 @@ export const getFreelancerProjects = async (freelancerId: number) => {
   }
 };
 
-export const getProjectRequestsByProjectId = async (projectId: number) => {
+export const getProjects = async () => {
+  const res = await api.get("/projects");
+  return lowercaseFirstLetterKeys(res.data);
+};
+
+export const getProjectById = async (id: string | number) => {
+  const res = await api.get(`/projects/${id}`);
+  return lowercaseFirstLetterKeys(res.data);
+};
+
+// Fetch projects for a specific client
+export const getClientProjects = async (clientId: number) => {
+  const res = await api.get(`/clients/${clientId}/projects`);
+  return lowercaseFirstLetterKeys(res.data);
+};
+
+export const getProjectFreelancers = async (
+  projectId: number
+): Promise<FreelancerProfile[]> => {
   try {
-    const response = await api.get(`/projects/${projectId}/requests`);
+    const response = await api.get(`/projects/${projectId}/freelancers`);
     return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
     throw new Error(
-      error.response?.data?.message ||
-        "Failed to fetch project requests for project"
+      error.response?.data?.message || "Failed to fetch project freelancers"
     );
   }
 };
+
+// Fetch projects by approval status for a specific client
+export const getProjectsByApprovalStatus = async (
+  clientId: number,
+  approvalStatus: string
+) => {
+  const res = await api.get(
+    `/clients/${clientId}/projects/approval/${approvalStatus}`
+  );
+  return lowercaseFirstLetterKeys(res.data);
+};
+
+export const createProject = async (payload: any) => {
+  const res = await api.post("/projects", payload);
+  return res.data;
+};
+
+export const updateProject = async (id: number, updatedData: any) => {
+  const res = await api.patch(`/projects/${id}`, updatedData);
+  return res.data;
+};
+
+export const getProjectsWithPendingApproval = async () => {
+  const res = await api.get("platform/projects/pending");
+  return lowercaseFirstLetterKeys(res.data);
+};
+
+export const updateProjectApprovalStatus = async (
+  Id: number,
+  ApprovalStatus: string,
+  RejectionReason?: string
+) => {
+  const res = await api.patch(`platform/projects/${Id}`, {
+    ApprovalStatus,
+    RejectionReason,
+  });
+  return res.data;
+};
+
 
 // Kanban APIs
 export const getTasks = async (): Promise<KanbanTask[]> => {
@@ -225,6 +307,29 @@ export const updateTask = async (
 
 export const deleteTask = async (id: number): Promise<void> => {
   await api.delete(`/tasks/${id}`);
+};
+
+export const syncTasksFromAI = async (tasks: any[]) => {
+  try {
+    const response = await api.post("/tasks/ai/sync", { tasks });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to sync AI tasks");
+  }
+};
+
+// Get tasks by project ID
+export const getTasksByProjectId = async (
+  projectId: number
+): Promise<KanbanTask[]> => {
+  try {
+    const response = await api.get(`/tasks/project/${projectId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch tasks by project"
+    );
+  }
 };
 
 // Subtasks
@@ -386,6 +491,20 @@ export const deleteDeliverable = async (id: number): Promise<void> => {
   await api.delete(`/deliverables/${id}`);
 };
 
+export const getDeliverablesByMilestoneId = async (
+  milestoneId: number
+): Promise<any[]> => {
+  try {
+    const response = await api.get(`/deliverables/milestone/${milestoneId}`);
+    return lowercaseFirstLetterKeys(response.data);
+  } catch (error: any) {
+    if (error.response && error.response.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+};
+
 // Hourly Logs
 export const getHourlyLogs = async (): Promise<any[]> => {
   const response = await api.get("/logs");
@@ -412,46 +531,6 @@ export const getLogsByProjectId = async (projectId: number): Promise<any[]> => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to fetch logs by project"
-    );
-  }
-};
-
-// PROJECTS
-export const getProjects = async () => {
-  const res = await api.get("/projects");
-  return lowercaseFirstLetterKeys(res.data);
-};
-
-export const getProjectById = async (id: string | number) => {
-  const res = await api.get(`/projects/${id}`);
-  return lowercaseFirstLetterKeys(res.data);
-};
-
-// Fetch projects for a specific client
-export const getClientProjects = async (clientId: number) => {
-  const res = await api.get(`/clients/${clientId}/projects`);
-  return lowercaseFirstLetterKeys(res.data);
-};
-
-// Fetch projects by approval status for a specific client
-export const getProjectsByApprovalStatus = async (
-  clientId: number,
-  approvalStatus: string
-) => {
-  const res = await api.get(
-    `/clients/${clientId}/projects/approval/${approvalStatus}`
-  );
-  return lowercaseFirstLetterKeys(res.data);
-};
-
-// Get client details by ID
-export const getClientById = async (clientId: number) => {
-  try {
-    const response = await api.get(`/clients/${clientId}`);
-    return lowercaseFirstLetterKeys(response.data);
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch client details"
     );
   }
 };
@@ -528,6 +607,11 @@ export const getMilestoneFreelancers = async (milestoneId: number) => {
   }
 };
 
+export const getMilestonesByProjectId = async (projectId: number) => {
+  const response = await api.get(`/milestones/project/${projectId}`);
+  return lowercaseFirstLetterKeys(response.data);
+};
+
 // Update handover status for a milestone
 export const updateMilestoneHandover = async (
   milestoneId: number,
@@ -545,32 +629,6 @@ export const updateMilestoneHandover = async (
   }
 };
 
-export const createProject = async (payload: any) => {
-  const res = await api.post("/projects", payload);
-  return res.data;
-};
-
-export const updateProject = async (id: number, updatedData: any) => {
-  const res = await api.patch(`/projects/${id}`, updatedData);
-  return res.data;
-};
-
-export const getProjectsWithPendingApproval = async () => {
-  const res = await api.get("platform/projects/pending");
-  return lowercaseFirstLetterKeys(res.data);
-};
-
-export const updateProjectApprovalStatus = async (
-  Id: number,
-  ApprovalStatus: string,
-  RejectionReason?: string
-) => {
-  const res = await api.patch(`platform/projects/${Id}`, {
-    ApprovalStatus,
-    RejectionReason,
-  });
-  return res.data;
-};
 
 // TIMESHEETS
 export const getTimesheets = async () => {
@@ -593,6 +651,20 @@ export const approveTimesheet = async (
 
 export const rejectTimesheet = async (id: number, reviewerComments: string) => {
   const res = await api.put(`/timesheets/${id}/reject`, { reviewerComments });
+  return res.data;
+};
+
+export const getTimesheetsByFreelancerId = async (
+  freelancerId: number | string
+) => {
+  const res = await api.get(`/timesheets/freelancer/${freelancerId}`);
+  return res.data;
+};
+
+export const getTimesheetsByFreelancer = async (freelancerName: string) => {
+  const res = await api.get(
+    `/timesheets/freelancer/${encodeURIComponent(freelancerName)}`
+  );
   return res.data;
 };
 
@@ -633,135 +705,7 @@ export const getFreelancerFeedbacks = async (
   return lowercaseFirstLetterKeys(response.data);
 };
 
-// // Freelancer Profile Setup API functions
-// export const getProfileSetupData = async (): Promise<ProfileSetupData> => {
-//   const response = await api.get('/freelancer/profile-setup');
-//   return response.data;
-// };
 
-// export const saveProfileSetupData = async (data: {
-//   firstName: string;
-//   lastName: string;
-//   phone: string;
-//   hourlyRate: number;
-//   availability: string;
-//   workingHours: string;
-//   profileData: ProfileSetupData;
-// }): Promise<void> => {
-//   await api.post('/freelancer/profile-setup', data);
-// };
-
-// export const updateProfileSetupData = async (data: {
-//   firstName: string;
-//   lastName: string;
-//   phone: string;
-//   hourlyRate: number;
-//   availability: string;
-//   workingHours: string;
-//   profilePicture: string;
-//   profileData: ProfileSetupData;
-//   password?: string;
-//   newPassword?: string;
-// }): Promise<void> => {
-//   await api.put('/freelancer/profile-setup', data);
-// };
-
-// export const getCurrentUserFreelancerProfile = async (userId: number): Promise<FreelancerProfile> => {
-//   try {
-//     if (!userId) {
-//       throw new Error('User ID is required');
-//     }
-//     const response = await api.get(`/freelancer/${userId}`);
-//     return response.data;
-//   } catch (error: any) {
-//     throw new Error(error.response?.data?.message || 'Failed to fetch freelancer profile');
-//   }
-// };
-
-// Stripe Payment API
-export const createStripePaymentIntent = async (params: {
-  clientId: number;
-  freelancerId: number;
-  projectId: number;
-  paymentType: string;
-  milestoneId: number | null;
-  timesheetId: number | null;
-  amount: number;
-}): Promise<{ clientSecret: string }> => {
-  // Note: This uses the backend port 7053
-  const response = await axios.post(
-    "http://localhost:7053/api/payments/create-intent",
-    params,
-    { headers: { "Content-Type": "application/json" } }
-  );
-  return response.data;
-};
-
-// New: Stripe Checkout Session API
-export const createStripeCheckoutSession = async (params: {
-  clientId: number;
-  freelancerId: number;
-  projectId: number;
-  paymentType: string;
-  milestoneId: number | null;
-  timesheetId: number | null;
-  amount: number;
-}): Promise<{ url: string }> => {
-  const response = await api.post("/payments/create-checkout-session", params, {
-    headers: { "Content-Type": "application/json" },
-  });
-  return response.data;
-};
-
-export const createMultiFreelancerCheckoutSession = async (params: {
-  clientId: number;
-  projectId: number;
-  paymentType: string;
-  milestoneId: number | null;
-  timesheetId: number | null;
-  totalAmount: number;
-  freelancerPayments: Array<{
-    freelancerId: number;
-    freelancerName: string;
-    amount: number;
-  }>;
-}): Promise<{ url: string }> => {
-  const response = await axios.post(
-    "http://localhost:7053/api/payments/create-multi-freelancer-checkout-session",
-    params,
-    { headers: { "Content-Type": "application/json" } }
-  );
-  return response.data;
-};
-
-export const getMilestonesByProjectId = async (projectId: number) => {
-  const response = await api.get(`/milestones/project/${projectId}`);
-  return lowercaseFirstLetterKeys(response.data);
-};
-
-export const getDeliverablesByMilestoneId = async (
-  milestoneId: number
-): Promise<any[]> => {
-  try {
-    const response = await api.get(`/deliverables/milestone/${milestoneId}`);
-    return lowercaseFirstLetterKeys(response.data);
-  } catch (error: any) {
-    if (error.response && error.response.status === 404) {
-      return [];
-    }
-    throw error;
-  }
-};
-
-// Get projects by client id
-// export const getClientProjects = async (clientId: number) => {
-//   try {
-//     const response = await api.get(`/clients/${clientId}/projects`);
-//     return response.data;
-//   } catch (error: any) {
-//     throw new Error(error.response?.data?.message || 'Failed to fetch client projects');
-//   }
-// };
 
 // NOTIFICATIONS
 export const getNotifications = async (userId: number) => {
@@ -773,6 +717,7 @@ export const markNotificationRead = async (notificationId: number) => {
   const response = await api.put(`/notifications/${notificationId}/read`);
   return response.data;
 };
+
 
 // Payment APIs
 export const getFreelancerPayments = async (freelancerId: number) => {
@@ -833,43 +778,67 @@ export const adminReleasePaymentAndApproveMilestone = async (
   }
 };
 
-export async function deleteFreelancerProfile(userId: number) {
-  const { data } = await api.delete(`/freelancer/${userId}`);
-  return data;
-}
+// Stripe Payment API
+export const createStripePaymentIntent = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ clientSecret: string }> => {
+  const response = await api.post(
+    "/payments/create-intent",
+    params,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return response.data;
+};
 
-//Client Profile Setup API
-export async function fetchClientProfile(id: number) {
-  const { data } = await api.get(`/client/profile/${id}`);
-  return lowercaseFirstLetterKeys(data);
-}
+// New: Stripe Checkout Session API
+export const createStripeCheckoutSession = async (params: {
+  clientId: number;
+  freelancerId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  amount: number;
+}): Promise<{ url: string }> => {
+  const response = await api.post("/payments/create-checkout-session", params, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return response.data;
+};
 
-export async function updateClientProfile(updates: Partial<User>) {
-  const { data } = await api.patch("/client/profile", updates);
-  return data;
-}
+export const createMultiFreelancerCheckoutSession = async (params: {
+  clientId: number;
+  projectId: number;
+  paymentType: string;
+  milestoneId: number | null;
+  timesheetId: number | null;
+  totalAmount: number;
+  freelancerPayments: Array<{
+    freelancerId: number;
+    freelancerName: string;
+    amount: number;
+  }>;
+}): Promise<{ url: string }> => {
+  const response = await api.post(
+    "/payments/create-multi-freelancer-checkout-session",
+    params,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return response.data;
+};
 
-export async function deleteClientProfile(userId: number) {
-  const { data } = await api.delete(`/client/profile/${userId}`);
-  return data;
-}
 
 //ADMIN API
 export async function fetchPlatformProfile(id: number) {
   const { data } = await api.get(`/platform/profile/${id}`);
   return lowercaseFirstLetterKeys(data);
 }
-
-export const getMeetingsByProjectId = async (projectId: number) => {
-  try {
-    const response = await api.get(`/projects/${projectId}/meetings`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch project meetings"
-    );
-  }
-};
 
 export async function updatePlatformProfile(
   id: number,
@@ -889,6 +858,18 @@ export async function getUnallocatedResources() {
   const { data } = await api.get("/platform/unallocated-resources");
   return data;
 }
+
+//MEETINGS
+export const getMeetingsByProjectId = async (projectId: number) => {
+  try {
+    const response = await api.get(`/projects/${projectId}/meetings`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch project meetings"
+    );
+  }
+};
 
 export const getMeetingDetails = async (meetingId: number) => {
   try {
@@ -913,56 +894,6 @@ export const getAudioByMeetingId = async (meetingId: number) => {
   }
 };
 
-// Get logs by freelancer ID
-export const getLogsByFreelancerId = async (
-  freelancerId: number
-): Promise<any[]> => {
-  try {
-    const response = await api.get(`/logs/freelancer/${freelancerId}`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch logs by freelancer"
-    );
-  }
-};
-
-export const syncTasksFromAI = async (tasks: any[]) => {
-  try {
-    const response = await api.post("/tasks/ai/sync", { tasks });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to sync AI tasks");
-  }
-};
-
-// Get tasks by project ID
-export const getTasksByProjectId = async (
-  projectId: number
-): Promise<KanbanTask[]> => {
-  try {
-    const response = await api.get(`/tasks/project/${projectId}`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch tasks by project"
-    );
-  }
-};
-
-export const getProjectFreelancers = async (
-  projectId: number
-): Promise<FreelancerProfile[]> => {
-  try {
-    const response = await api.get(`/projects/${projectId}/freelancers`);
-    return lowercaseFirstLetterKeys(response.data);
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch project freelancers"
-    );
-  }
-};
-// Start meeting
 export const startMeeting = async (meetingData: {
   projectId: number;
   title: string;
@@ -1002,7 +933,7 @@ export const uploadMeetingAudio = async (
   }
 };
 
-// Meeting Summaries API
+// Meeting Summaries API (STAND-UP BOT)
 export const getMeetingSummaries = async (
   userId: number,
   userRole: string,
@@ -1039,7 +970,7 @@ export const startProjectMeeting = async (
   try {
     // Use Python server URL for meeting functionality
     const response = await axios.post(
-      "http://localhost:8001/start-project-meeting",
+      "http://localhost:8001/start",
       {
         project_id: projectId,
         freelancer_id: freelancerId,
@@ -1060,6 +991,15 @@ export const stopMeeting = async () => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to stop meeting");
+  }
+};
+
+export const runElevenLabsBot = async () => {
+  try {
+    const response = await axios.post("http://localhost:8001/run-elevenlabs-bot");
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to run elevenlabs bot");
   }
 };
 
@@ -1084,6 +1024,7 @@ export const storeMeetingSummary = async (summaryData: {
     );
   }
 };
+
 
 export const getProjectDetails = async (projectId: number) => {
   try {
@@ -1148,36 +1089,6 @@ export const assignFreelancerToGist = async (assignmentData: {
       error.response?.data?.detail || "Failed to assign freelancer to gist"
     );
   }
-};
-
-export const getTimesheetsByFreelancer = async (freelancerName: string) => {
-  const res = await api.get(
-    `/timesheets/freelancer/${encodeURIComponent(freelancerName)}`
-  );
-  return res.data;
-};
-
-export const getProjectsByClient = async (clientId: number | string) => {
-  const res = await api.get(`/clients/${clientId}/projects`);
-  return res.data;
-};
-
-export const getFreelancersByProject = async (projectId: number) => {
-  try {
-    const response = await api.get(`/projects/${projectId}/freelancers`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Failed to fetch project freelancers"
-    );
-  }
-};
-
-export const getTimesheetsByFreelancerId = async (
-  freelancerId: number | string
-) => {
-  const res = await api.get(`/timesheets/freelancer/${freelancerId}`);
-  return res.data;
 };
 
 // Project Closure Summary

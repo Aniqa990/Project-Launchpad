@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import axios from "axios";
-import { createStripePaymentIntent, createStripeCheckoutSession } from "../../apiendpoints";
+import { createStripePaymentIntent, createStripeCheckoutSession } from "@/apiendpoints";
 
 interface PaymentFormProps {
   clientId: number;

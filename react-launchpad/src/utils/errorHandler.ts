@@ -8,7 +8,12 @@ export function handleApiError(error: any, operation?: string): void {
   
   // Network errors (no response)
   if (!error.response) {
-    toast.error('Network connection error. Please check your internet connection and try again.');
+    // Check if it's a custom error with a specific message
+    if (error.message && error.message !== 'Network Error') {
+      toast.error(error.message);
+    } else {
+      toast.error('Network connection error. Please check your internet connection and try again.');
+    }
     return;
   }
   
@@ -40,7 +45,13 @@ export function handleApiError(error: any, operation?: string): void {
     case 502:
     case 503:
     case 504:
-      toast.error('Server error. Please try again later.');
+      // Check if it's an authentication error that was incorrectly returned as 500
+      const authErrorMessage = error.response.data?.message;
+      if (authErrorMessage && (authErrorMessage.includes('Invalid email or password') || authErrorMessage.includes('Email already in use'))) {
+        toast.error(authErrorMessage);
+      } else {
+        toast.error('Server error. Please try again later.');
+      }
       break;
     default:
       toast.error('An unexpected error occurred. Please try again.');

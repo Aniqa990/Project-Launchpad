@@ -152,7 +152,7 @@ export function ClientDashboard() {
       if (user && user.id) {
         const fetchProjects = async () => {
           try {
-            const data = await getClientProjects(user.id);
+            const data = await getClientProjects(user.id!);
             setProjects(data);
             console.log('Dashboard refreshed projects data:', data);
           } catch (err) {

@@ -14,6 +14,11 @@ api_key = os.getenv("GROQ_API_KEY")
 if not api_key:
     raise ValueError("GROQ_API_KEY not found in .env!")
 
+vector_folder = os.getenv("VECTOR_FOLDER_PATH")
+if not vector_folder:
+    raise ValueError("VECTOR_FOLDER_PATH not found in .env!")
+
+
 
 app = FastAPI()
 
@@ -77,8 +82,7 @@ async def suggest_freelancers(
     project_summary: str = Body(..., embed=True),
 ):
     try:
-        VECTOR_FOLDER = "C:/Users/aniqa/OneDrive/Desktop/Resume-parser/Project-Launchpad/resume_parser/embedding_vectors_fl"
-        collection_list = os.listdir(VECTOR_FOLDER)
+        collection_list = os.listdir(vector_folder)
         results = recommend_freelancers(project_summary, collection_list)
         filtered_results = [
             {

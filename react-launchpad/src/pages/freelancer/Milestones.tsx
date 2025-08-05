@@ -36,7 +36,7 @@ export function Milestones() {
 
   // Map backend integer status to dropdown string value
   function getDropdownStatusValue(status: number | string): 'not-started' | 'in-progress' | 'completed' {
-    if (status === 0 || status === 'not-started' || status === 'NotSelected') return 'not-started';
+    if (status === 0 || status === 'not-started' || status === 'NotStarted') return 'not-started';
     if (status === 1 || status === 'in-progress' || status === 'InProgress') return 'in-progress';
     if (status === 2 || status === 'completed' || status === 'Completed') return 'completed';
     return 'not-started';
@@ -124,7 +124,7 @@ export function Milestones() {
   const getStatusBadge = (status: string | number | undefined) => {
     // Map integer status to string for display
     let display = { label: 'Unknown', color: 'bg-gray-100 text-gray-800', icon: Clock };
-    if (status === 0 || status === 'not-started' || status === 'NotSelected') {
+    if (status === 0 || status === 'not-started' || status === 'NotStarted') {
       display = { label: 'Not Started', color: 'bg-gray-100 text-gray-800', icon: Clock };
     } else if (status === 1 || status === 'in-progress' || status === 'InProgress') {
       display = { label: 'In Progress', color: 'bg-blue-100 text-blue-800', icon: Clock };

@@ -341,3 +341,14 @@ export interface Feedback {
   clientName: string;
   createdAt: string;
 }
+
+export interface MeetingSummary {
+  id: number; 
+  freelancerId: number;
+  projectId: number;
+  freelancerName: string;
+  projectName: string;
+  summary: string;
+  blocker?: string;
+  createdAt: string;
+}

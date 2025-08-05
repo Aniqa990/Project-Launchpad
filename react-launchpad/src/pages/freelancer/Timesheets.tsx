@@ -46,7 +46,7 @@ interface Timesheet {
   reviewerComments?: string;
 }
 
-const FreelancerTimesheets: React.FC = () => {
+export function FreelancerTimesheets() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
