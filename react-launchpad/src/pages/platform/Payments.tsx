@@ -158,7 +158,35 @@ export function MilestonePayments() {
         <h2 className="text-2xl font-bold text-gray-900">Milestone Payments</h2>
       </div>
       <div className="grid gap-6">
-        {milestones.map((milestone) => (
+        {loading ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading milestone payments...</p>
+          </div>
+        ) : !loading && milestones.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No milestone payments found</h3>
+            <p className="text-gray-600 mb-4">
+              There are currently no milestone payments pending review. Payments will appear here when:
+            </p>
+            <ul className="text-sm text-gray-500 space-y-1 text-left max-w-md mx-auto">
+              <li className="flex items-center space-x-2">
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                <span>Freelancers submit their deliverables</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                <span>Clients approve milestone submissions</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                <span>Payments are ready for release</span>
+              </li>
+            </ul>
+          </div>
+        ) : (
+          milestones.map((milestone) => (
           <div key={milestone.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -296,7 +324,8 @@ export function MilestonePayments() {
               )}
             </div>
           </div>
-        ))}
+        ))
+      )}
       </div>
     </div>
   );

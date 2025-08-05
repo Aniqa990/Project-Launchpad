@@ -233,11 +233,8 @@ export function ProfileSetup() {
 
   const getCompletionPercentage = () => {
     let completed = 0;
-    let total = 6;
+    let total = 4; // Only count editable fields
 
-    if (fullName) completed++;
-    if (email) completed++;
-    if (phoneNo) completed++;
     if (hourlyRate > 0) completed++;
     if (availability) completed++;
     if (workingHours) completed++;
@@ -254,7 +251,7 @@ export function ProfileSetup() {
   const canProceedToNext = () => {
     switch (step) {
       case 1: return resumeUploaded || showParseResults;
-      case 2: return fullName && email && phoneNo && profileData.skills.length && hourlyRate > 0 && availability && workingHours;
+      case 2: return profileData.skills.length && hourlyRate > 0 && availability && workingHours;
       case 3: return true;
       case 4: return true;
       default: return true;
@@ -390,57 +387,59 @@ export function ProfileSetup() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="name" className="flex items-center">
-            Full Name *
-            {isFieldIncomplete(fullName) && (
-              <AlertCircle className="w-4 h-4 text-destructive ml-1 animate-pulse" />
-            )}
-          </Label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              id="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setName( e.target.value)}
-              className={`pl-10 ${isFieldIncomplete(fullName) ? 'border-destructive bg-destructive/5' : ''}`}
-              placeholder="Enter your full name"
-            />
-          </div>
-        </div>
+                 <div className="space-y-2">
+           <Label htmlFor="name" className="flex items-center">
+             Full Name
+             <CheckCircle className="w-4 h-4 text-green-600 ml-1" />
+           </Label>
+           <div className="relative">
+             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+             <Input
+               id="fullName"
+               type="text"
+               value={fullName}
+               disabled
+               className="pl-10 bg-gray-50 text-gray-700 cursor-not-allowed"
+               placeholder="Full name from signup"
+             />
+           </div>
+           <p className="text-xs text-gray-500">This information is from your signup and cannot be changed here</p>
+         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email" className="flex items-center">
-            Email Address *
-            {isFieldIncomplete(email) && (
-              <AlertCircle className="w-4 h-4 text-destructive ml-1 animate-pulse" />
-            )}
-          </Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`pl-10 ${isFieldIncomplete(email) ? 'border-destructive bg-destructive/5' : ''}`}
-              placeholder="Enter your email"
-            />
-          </div>
-        </div>
+         <div className="space-y-2">
+           <Label htmlFor="email" className="flex items-center">
+             Email Address
+             <CheckCircle className="w-4 h-4 text-green-600 ml-1" />
+           </Label>
+           <div className="relative">
+             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+             <Input
+               id="email"
+               type="email"
+               value={email}
+               disabled
+               className="pl-10 bg-gray-50 text-gray-700 cursor-not-allowed"
+               placeholder="Email from signup"
+             />
+           </div>
+           <p className="text-xs text-gray-500">This information is from your signup and cannot be changed here</p>
+         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="phoneNo">Phone Number *</Label>
-          <Input
-            id="phoneNo"
-            type="tel"
-            required
-            value={phoneNo}
-            onChange={(e) => setPhoneNo(e.target.value)}
-            placeholder="Enter your phone number"
-          />
-        </div>
+         <div className="space-y-2">
+           <Label htmlFor="phoneNo" className="flex items-center">
+             Phone Number
+             <CheckCircle className="w-4 h-4 text-green-600 ml-1" />
+           </Label>
+           <Input
+             id="phoneNo"
+             type="tel"
+             value={phoneNo}
+             disabled
+             className="bg-gray-50 text-gray-700 cursor-not-allowed"
+             placeholder="Phone number from signup"
+           />
+           <p className="text-xs text-gray-500">This information is from your signup and cannot be changed here</p>
+         </div>
       </div>
 
       <div className="space-y-2">

@@ -27,6 +27,13 @@ export function FreelancerRequests() {
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
 
+  // Fetch milestones when dialog opens
+  useEffect(() => {
+    if (showDetailDialog && selectedRequest && selectedRequest.paymentType === 'milestone') {
+      fetchMilestones(selectedRequest.projectId);
+    }
+  }, [showDetailDialog, selectedRequest]);
+
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -160,7 +167,10 @@ export function FreelancerRequests() {
           onClick={async () => {
             setSelectedRequest(request);
             setShowDetailDialog(true);
-            await fetchMilestones(request.projectId);
+            // Fetch milestones immediately when dialog opens
+            if (request.paymentType === 'milestone') {
+              await fetchMilestones(request.projectId);
+            }
           }}
         >
           <Eye className="w-4 h-4" />
@@ -266,8 +276,14 @@ export function FreelancerRequests() {
         </Card>
       )}
       {/* Request Detail Dialog */}
-      <Dialog open={showDetailDialog && !!selectedRequest} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-3xl bg-white p-6">
+      <Dialog open={showDetailDialog && !!selectedRequest} onOpenChange={(open) => {
+        setShowDetailDialog(open);
+        if (!open) {
+          setMilestones([]);
+          setLoadingMilestones(false);
+        }
+      }}>
+        <DialogContent className="max-w-3xl bg-white p-6 max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Project Request Details</DialogTitle>
             <DialogDescription>
@@ -316,10 +332,20 @@ export function FreelancerRequests() {
                   </div>
                 </div>
                 
-                {/* Attached Document */}
-                {selectedRequest.attachedDocumentPath && (
+                {/* Start Date */}
+                {selectedRequest.startDate && (
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Project Documents</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {format(selectedRequest.startDate, 'dd MMM yyyy')}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Attached Document */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Project Documents</label>
+                  {selectedRequest.attachedDocumentPath ? (
                     <a 
                       href={selectedRequest.attachedDocumentPath} 
                       target="_blank" 
@@ -329,8 +355,10 @@ export function FreelancerRequests() {
                       <Upload className="w-4 h-4 mr-1" />
                       View Project Documents
                     </a>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-gray-500">No documents attached to this project.</p>
+                  )}
+                </div>
                 
                 {/* Required Skills */}
                 <div className="mb-4">
