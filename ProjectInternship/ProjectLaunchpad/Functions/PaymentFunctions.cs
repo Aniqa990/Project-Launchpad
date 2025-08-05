@@ -457,6 +457,28 @@ namespace ProjectLaunchpad.Functions
             }
         }
 
+        [Function("GetTotalRevenue")]
+        public async Task<HttpResponseData> GetTotalRevenue(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/total-revenue")] HttpRequestData req)
+        {
+            var response = req.CreateResponse();
+
+            try
+            {
+                var totalRevenue = await _unitOfWork.PaymentRepository.GetTotalRevenueAsync();
+
+                response.StatusCode = HttpStatusCode.OK;
+                await response.WriteAsJsonAsync(new { totalRevenue = totalRevenue });
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                await response.WriteStringAsync($"Error retrieving total revenue: {ex.Message}");
+                return response;
+            }
+        }
+
 
 
 
