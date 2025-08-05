@@ -22,8 +22,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Badge } from '../../components/ui/badge';
 import SignatureCanvas from 'react-signature-canvas';
 
-// Add these at the top of the file (after imports):
-// Remove Cloudinary env constants and uploadToCloudinary function
 
 export function CreateProject() {
   const navigate = useNavigate();
@@ -68,7 +66,6 @@ export function CreateProject() {
   const [signatureImageUrl, setSignatureImageUrl] = useState<string>('');
   const [signatureUploading, setSignatureUploading] = useState(false);
 
-  // Move Cloudinary env constants inside the component
   const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 

@@ -48,7 +48,6 @@ export function Sidebar() {
     { icon: CheckSquare, label: 'Milestones', path: '/freelancer/milestones' },
     { icon: DollarSign, label: 'Payments', path: '/freelancer/payments' },
     { icon: Clock, label: 'Timesheet', path: '/freelancer/timesheets' },
-    { icon: Star, label: 'Feedback', path: '/freelancer/feedback' },
     { icon: MessageSquare, label: 'Meeting Summaries', path: '/freelancer/meeting-summaries' },
     { icon: Settings, label: 'Settings', path: '/freelancer/settings' },
     { icon: Video, label: 'Meetings', path: '/freelancer/meetings' },

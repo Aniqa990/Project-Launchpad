@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 import { InvoicePage } from './InvoicePage'; // Restore InvoicePage import
-import { MultiFreelancerPaymentModal } from './MultiFreelancerPaymentModal';
+import { MultiFreelancerPaymentModal } from '../../components/ui/MultiFreelancerPaymentModal';
 import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers } from '../../apiendpoints';
 import PaymentForm from './PaymentForm'; // Added import for PaymentForm
 import { validatePaymentData, formatPaymentAmount, calculatePlatformFee, calculateFreelancerAmount, getPaymentStatusColor, formatPaymentDate } from '../../utils/paymentHelpers';

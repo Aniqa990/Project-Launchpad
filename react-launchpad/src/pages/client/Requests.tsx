@@ -13,8 +13,6 @@ export function ClientProjectRequests() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
-  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [replacingRequestId, setReplacingRequestId] = useState<number | null>(null);
 
