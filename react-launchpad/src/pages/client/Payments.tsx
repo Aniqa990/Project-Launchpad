@@ -16,7 +16,7 @@ import {
   Filter,
   Search
 } from 'lucide-react';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 import { InvoicePage } from './InvoicePage'; // Restore InvoicePage import
 import { MultiFreelancerPaymentModal } from './MultiFreelancerPaymentModal';
 import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers } from '../../apiendpoints';
@@ -78,7 +78,7 @@ export function ClientPayments() {
         
         setProjects(transformedProjects);
       } catch (err) {
-        handleError(err, 'fetchProjects');
+        handleApiError(err, 'fetchProjects');
       } finally {
         setLoading(false);
       }
@@ -118,7 +118,7 @@ export function ClientPayments() {
         const data = await getClientPayments(clientId);
         setPayments(data);
       } catch (err) {
-        handleError(err, 'fetchPayments');
+        handleApiError(err, 'fetchPayments');
       } finally {
         setLoading(false);
       }
@@ -138,7 +138,7 @@ export function ClientPayments() {
         const data = await getMilestonesByProjectId(Number(selectedProjectId));
         setMilestones(data);
       } catch (err) {
-        handleError(err, 'fetchMilestones');
+        handleApiError(err, 'fetchMilestones');
       } finally {
         setLoading(false);
       }
@@ -210,7 +210,7 @@ export function ClientPayments() {
         paidFreelancerIds.includes(freelancerId)
       );
     } catch (error) {
-      handleError(error, 'checkFreelancerPayments');
+      handleApiError(error, 'checkFreelancerPayments');
       return false;
     }
   };
@@ -271,7 +271,7 @@ export function ClientPayments() {
       const data = await getClientPayments(clientId);
       setPayments(data);
     } catch (err) {
-      handleError(err, 'releasePayment');
+      handleApiError(err, 'releasePayment');
     }
   };
 
@@ -309,7 +309,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        handleError(new Error(validation.error), 'validation');
+        handleApiError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -317,10 +317,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
+        handleApiError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      handleError(err, 'processPayment');
+      handleApiError(err, 'processPayment');
     }
   };
 
@@ -340,7 +340,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        handleError(new Error(validation.error), 'validation');
+        handleApiError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -348,10 +348,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
+        handleApiError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      handleError(err, 'processPayment');
+      handleApiError(err, 'processPayment');
     }
   };
 
@@ -371,7 +371,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        handleError(new Error(validation.error), 'validation');
+        handleApiError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -379,10 +379,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
+        handleApiError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      handleError(err, 'processPayment');
+      handleApiError(err, 'processPayment');
     }
   };
 
@@ -423,7 +423,7 @@ export function ClientPayments() {
       }
     } catch (error) {
       console.error('Error in handleMilestonePayment:', error);
-      handleError(error, 'processPayment');
+      handleApiError(error, 'processPayment');
     }
   };
 
@@ -447,7 +447,7 @@ export function ClientPayments() {
       // Validate payment data
       const validation = validatePaymentData(paymentData);
       if (!validation.isValid) {
-        handleError(new Error(validation.error), 'validation');
+        handleApiError(new Error(validation.error), 'validation');
         return;
       }
 
@@ -455,10 +455,10 @@ export function ClientPayments() {
       if (url) {
         window.location.href = url;
       } else {
-        handleError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
+        handleApiError(new Error('Failed to initiate Stripe Checkout.'), 'processPayment');
       }
     } catch (err: any) {
-      handleError(err, 'processPayment');
+      handleApiError(err, 'processPayment');
     }
   };
 
@@ -889,30 +889,25 @@ export function ClientPayments() {
         </div>
       )}
 
-     {/* Empty State */}
-{
-  (
-    (viewMode === 'milestones' && filteredMilestones.length === 0) ||
-    (viewMode === 'payments' && filteredPayments.length === 0)
-  ) && (
-    <Card className="text-center py-12">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <DollarSign className="w-8 h-8 text-gray-400" />
-      </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">
-        {viewMode === 'milestones' ? 'No milestones found' : 'No payments found'}
-      </h3>
-      <p className="text-gray-600">
-        {(searchTerm || statusFilter !== 'all' || (viewMode === 'payments' && paymentTypeFilter !== 'all'))
-          ? 'Try adjusting your search or filters'
-          : viewMode === 'milestones'
-            ? 'Milestone payments will appear here as your projects progress'
-            : 'Payment history will appear here as you make payments'}
-      </p>
-    </Card>
-  )
-}
-
+      {/* Empty State */}
+      {((viewMode === 'milestones' && filteredMilestones.length === 0) || (viewMode === 'payments' && filteredPayments.length === 0)) && (
+        <Card className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <DollarSign className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {viewMode === 'milestones' ? 'No milestones found' : 'No payments found'}
+          </h3>
+          <p className="text-gray-600">
+            {searchTerm || statusFilter !== 'all' || (viewMode === 'payments' && paymentTypeFilter !== 'all')
+              ? 'Try adjusting your search or filters' 
+              : viewMode === 'milestones' 
+                ? 'Milestone payments will appear here as your projects progress'
+                : 'Payment history will appear here as you make payments'
+            }
+          </p>
+        </Card>
+      )}
       {/* Payment Modal */}
       <Modal
         isOpen={showPaymentModal}
@@ -1012,8 +1007,7 @@ export function ClientPayments() {
             setShowMultiFreelancerModal(false);
             setSelectedMilestoneForMultiPayment(null);
             // Refresh payments and milestones
-            fetchPayments();
-            fetchMilestones();
+            // Note: The component will automatically refresh when the modal closes
           }}
         />
       )}
