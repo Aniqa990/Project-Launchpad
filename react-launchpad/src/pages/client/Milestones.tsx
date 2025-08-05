@@ -41,47 +41,7 @@ import {
   Download,
   Lock
 } from 'lucide-react';
-
-interface Project {
-  Id?: number;
-  id?: number;
-  ProjectTitle?: string;
-  projectTitle?: string;
-  Description?: string;
-  description?: string;
-  PaymentType?: string;
-  paymentType?: string;
-  CategoryOrDomain?: string;
-  categoryOrDomain?: string;
-  Deadline?: string;
-  deadline?: string;
-  Duration?: string;
-  duration?: string;
-  RequiredSkills?: string;
-  requiredSkills?: string;
-  Budget?: number;
-  budget?: number;
-  NumberOfFreelancers?: number;
-  numberOfFreelancers?: number;
-  Status?: string;
-  status?: string;
-  ApprovalStatus?: string;
-  approvalStatus?: string;
-  RejectionReason?: string | null;
-  rejectionReason?: string | null;
-  ClientId?: number;
-  clientId?: number;
-  StartDate?: string;
-  startDate?: string;
-  AttachedDocumentPath?: string | null;
-  attachedDocumentPath?: string | null;
-  Client?: any;
-  client?: any;
-  Team?: any[];
-  team?: any[];
-  Progress?: number;
-  progress?: number;
-}
+import { Project, FreelancerProfile } from '@/types';
 
 interface Milestone {
   Id: number;
@@ -101,35 +61,15 @@ interface Milestone {
   paymentStatus?: string; // Added payment status
 }
 
-interface Freelancer {
-  Id: number;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  PhoneNo: string;
-  Gender: string;
-  ProfilePicture: string | null;
-  Role: string;
-  CreatedAt: string;
-  Skills: string;
-  Experience: string;
-  HourlyRate: number;
-  AvgRating: number;
-  Availability: string;
-  WorkingHours: string;
-  Summary: string;
-  Projects: string;
-}
-
 interface FreelancerMilestone {
   Id: number;
   UserId: number;
   MilestoneId: number;
   AssignedAt: string;
-  User: Freelancer;
+  User: FreelancerProfile;
 }
 
-const ClientMilestones: React.FC = () => {
+export function ClientMilestones() {
   const { user } = useAuth();
   const clientId = user?.id || 1;
 
@@ -137,13 +77,13 @@ const ClientMilestones: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>('All');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
+  const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedFreelancer, setSelectedFreelancer] = useState<number | null>(null);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
-  const [milestoneAssignments, setMilestoneAssignments] = useState<{[milestoneId: number]: Freelancer[]}>({});
+  const [milestoneAssignments, setMilestoneAssignments] = useState<{[milestoneId: number]: FreelancerProfile[]}>({});
   const [milestonePayments, setMilestonePayments] = useState<{[milestoneId: number]: any}>({});
 
   // Fetch client projects
@@ -169,10 +109,10 @@ const ClientMilestones: React.FC = () => {
   // Set default project when projects are loaded (only on initial load)
   useEffect(() => {
     if (projects.length > 0 && selectedProject === 'All') {
-      const firstProject = projects.find(project => project && (project.Id || project.id));
+      const firstProject = projects.find(project => project && (project.id));
       if (firstProject) {
-        const projectId = firstProject.Id || firstProject.id;
-        const projectTitle = firstProject.ProjectTitle || firstProject.projectTitle;
+        const projectId = firstProject.id;
+        const projectTitle = firstProject.projectTitle;
         if (projectId) {
           console.log('Auto-selecting project:', projectId, projectTitle);
           setSelectedProject(projectId.toString());
@@ -275,28 +215,7 @@ const ClientMilestones: React.FC = () => {
          console.log('Fetching freelancers for project:', selectedProject);
          const data = await getProjectFreelancers(Number(selectedProject));
          console.log('Freelancers fetched:', data);
-         
-         // Transform FreelancerProfile to Freelancer interface
-         const transformedData = data.map((f: any) => ({
-           Id: f.id || f.Id,
-           FirstName: f.firstName || f.FirstName || '',
-           LastName: f.lastName || f.LastName || '',
-           Email: f.email || f.Email || '',
-           PhoneNo: f.phoneNo || f.PhoneNo || '',
-           Gender: f.gender || f.Gender || '',
-           ProfilePicture: f.profilePicture || f.ProfilePicture || null,
-           Role: f.role || f.Role || '',
-           CreatedAt: f.createdAt || f.CreatedAt || '',
-           Skills: f.skills || f.Skills || '',
-           Experience: f.experience || f.Experience || '',
-           HourlyRate: f.hourlyRate || f.HourlyRate || 0,
-           AvgRating: f.avgRating || f.AvgRating || 0,
-           Availability: f.availability || f.Availability || '',
-           WorkingHours: f.workingHours || f.WorkingHours || '',
-           Summary: f.summary || f.Summary || '',
-           Projects: f.projects || f.Projects || ''
-         }));
-         setFreelancers(transformedData);
+         setFreelancers(data);
        } catch (error) {
          console.error('Error fetching freelancers:', error);
          handleApiError(error, 'fetchFreelancers');
@@ -319,7 +238,7 @@ const ClientMilestones: React.FC = () => {
 
     // Check if freelancer is already assigned to this milestone
     const currentAssignments = milestoneAssignments[selectedMilestone.Id] || [];
-    const isAlreadyAssigned = currentAssignments.some(f => f.Id === selectedFreelancer);
+    const isAlreadyAssigned = currentAssignments.some(f => f.id === selectedFreelancer);
     
     if (isAlreadyAssigned) {
       alert('This freelancer is already assigned to this milestone');
@@ -331,7 +250,7 @@ const ClientMilestones: React.FC = () => {
       await assignMilestoneToFreelancer(selectedMilestone.Id, selectedFreelancer);
       
       // Update local assignments
-      const assignedFreelancer = freelancers.find(f => f.Id === selectedFreelancer);
+      const assignedFreelancer = freelancers.find(f => f.id === selectedFreelancer);
       if (assignedFreelancer) {
         setMilestoneAssignments(prev => ({
           ...prev,
@@ -358,7 +277,7 @@ const ClientMilestones: React.FC = () => {
       // Update local assignments
       setMilestoneAssignments(prev => ({
         ...prev,
-        [milestoneId]: (prev[milestoneId] || []).filter(f => f.Id !== userId)
+        [milestoneId]: (prev[milestoneId] || []).filter(f => f.id !== userId)
       }));
     } catch (error) {
       handleApiError(error, 'unassignMilestone');
@@ -473,8 +392,8 @@ const ClientMilestones: React.FC = () => {
 
   // Get available freelancers for a specific milestone (excluding already assigned ones)
   const getAvailableFreelancers = (milestoneId: number) => {
-    const assignedFreelancerIds = (milestoneAssignments[milestoneId] || []).map(f => f.Id);
-    return freelancers.filter(freelancer => !assignedFreelancerIds.includes(freelancer.Id));
+    const assignedFreelancerIds = (milestoneAssignments[milestoneId] || []).map(f => f.id);
+    return freelancers.filter(freelancer => !assignedFreelancerIds.includes(freelancer.id));
   };
 
   return (
@@ -518,9 +437,9 @@ const ClientMilestones: React.FC = () => {
                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
              >
                              <option value="All">All Projects</option>
-               {projects.filter(project => project && (project.Id || project.id)).map((project) => {
-                 const projectId = project.Id || project.id;
-                 const projectTitle = project.ProjectTitle || project.projectTitle;
+               {projects.filter(project => project && (project.id)).map((project) => {
+                 const projectId = project.id;
+                 const projectTitle = project.projectTitle;
                  return projectId ? (
                    <option key={projectId} value={projectId.toString()}>
                      {projectTitle || 'Untitled Project'}
@@ -582,20 +501,20 @@ const ClientMilestones: React.FC = () => {
                   {milestoneAssignments[milestone.Id] && milestoneAssignments[milestone.Id].length > 0 ? (
                     <div className="space-y-2">
                       {milestoneAssignments[milestone.Id].map((freelancer) => (
-                        <div key={freelancer.Id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div key={freelancer.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div>
                             <p className="text-sm font-medium">
-                              {freelancer.FirstName} {freelancer.LastName}
+                              {freelancer.firstName} {freelancer.lastName}
                             </p>
                             <p className="text-xs text-gray-600">
-                              {freelancer.Email} • ${freelancer.HourlyRate || 0}/hr
+                              {freelancer.email} • ${freelancer.hourlyRate || 0}/hr
                             </p>
                           </div>
                           {milestone.Status !== 2 && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleUnassignFreelancer(milestone.Id, freelancer.Id)}
+                              onClick={() => handleUnassignFreelancer(milestone.Id, freelancer.id)}
                               className="text-red-600 hover:text-red-700"
                             >
                               <UserMinus className="w-3 h-3" />
@@ -674,8 +593,8 @@ const ClientMilestones: React.FC = () => {
                           >
                             <option value="">Choose a freelancer</option>
                             {getAvailableFreelancers(selectedMilestone?.Id || 0).map((freelancer) => (
-                              <option key={freelancer.Id} value={freelancer.Id}>
-                                {freelancer.FirstName} {freelancer.LastName} - ${freelancer.HourlyRate || 0}/hr
+                              <option key={freelancer.id} value={freelancer.id}>
+                                {freelancer.firstName} {freelancer.lastName} - ${freelancer.hourlyRate || 0}/hr
                               </option>
                             ))}
                           </select>

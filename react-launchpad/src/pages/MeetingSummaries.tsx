@@ -3,7 +3,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { 
   getMeetingSummaries, 
   getFreelancerProjects,
-  getClientProjects
+  getClientProjects,
+  startProjectMeeting,
+  stopMeeting,
+  runElevenLabsBot
 } from '../apiendpoints';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -28,21 +31,9 @@ import {
   VolumeX,
   Bot
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-
-// ElevenLabs conversation hook - replace with real import when package is installed
+import { showErrorToast } from '@/utils/errorHandler';
 import { useConversation } from '@elevenlabs/react';
-
-interface MeetingSummary {
-  id: number; 
-  freelancerId: number;
-  projectId: number;
-  freelancerName: string;
-  projectName: string;
-  summary: string;
-  blocker?: string;
-  createdAt: string;
-}
+import { MeetingSummary } from '@/types';
 
 interface Project {
   id: number;
@@ -72,7 +63,7 @@ export function MeetingSummaries() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [projects, setProjects] = useState<Project[]>([]);
   
-  const agentId = 'agent_4001k1b6f2kefwmtn30k4jcc8gjt';
+  const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
   const conversation = useConversation({
     onConnect: () => setConvStarted(true),
     onDisconnect: () => setConvStarted(false),
@@ -147,24 +138,20 @@ export function MeetingSummaries() {
   // Start both ElevenLabs conversation and audio recording
   const startConversation = async () => {
     if (selectedProject === 'all') {
-      toast.error('Please select a project before starting conversation');
+      showErrorToast('Please select a project before starting conversation');
       return;
     }
 
     setConvError(null);
     setShowConversationUI(true);
     try {
-      const response = await fetch('http://localhost:8001/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: Number(selectedProject),
-          freelancer_id: user?.id
-        })
-      });
-      const data = await response.json();
-      if (data.status !== 'recording_started' && data.status !== 'already_recording') {
-        setConvError('Failed to start backend recording: ' + (data.error || data.status));
+      if (!user?.id) {
+        showErrorToast('Please login to start conversation');
+        return;
+      }
+      const response = await startProjectMeeting(Number(selectedProject), user.id);
+      if (response.status !== 'recording_started' && response.status !== 'already_recording') {
+        setConvError('Failed to start backend recording: ' + (response.error || response.status));
         return;
       }
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -190,13 +177,9 @@ export function MeetingSummaries() {
     stopRecording();
  
     try {
-      const response = await fetch('http://localhost:8001/stop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = await response.json();
-      if (data.status !== 'success') {
-        setConvError('Failed to stop backend recording: ' + (data.error || data.status));
+      const response = await stopMeeting();
+      if (response.status !== 'success') {
+        setConvError('Failed to stop backend recording: ' + (response.error || response.status));
       } else {
         // Optionally, handle the transcript data here
         // e.g., setTranscript(data.transcript);
@@ -206,10 +189,7 @@ export function MeetingSummaries() {
     }
  
     try {
-      await fetch('http://localhost:8001/run-elevenlabs-bot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const response = await runElevenLabsBot();
       console.log('Bot triggered successfully.');
     } catch (err) {
       console.error('Failed to call bot endpoint:', err);

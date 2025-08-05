@@ -490,6 +490,9 @@ export function KanbanBoard() {
   const [projectDetails, setProjectDetails] = useState<any>(null);
   const [loadingProjectDetails, setLoadingProjectDetails] = useState(false);
 
+  // Check if user can perform actions (only freelancers can)
+  const canPerformActions = user?.role === 'freelancer';
+
   useEffect(() => {
     async function fetchTasks() {
       setLoading(true);
@@ -645,6 +648,9 @@ export function KanbanBoard() {
   );
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    // Only allow drag/drop for freelancers
+    if (!canPerformActions) return;
+    
     const { active, over } = event;
     if (!over) return;
     // Handle subtasks
@@ -722,12 +728,16 @@ export function KanbanBoard() {
   };
 
   const handleEditButton = () => {
+    // Only allow editing for freelancers
+    if (!canPerformActions) return;
     setEditTask(selectedTask);
     setShowTaskModal(false);
     setShowAddTaskModal(false);
   };
 
   const handleCreateTaskButton = () => {
+    // Only allow creating for freelancers
+    if (!canPerformActions) return;
     setShowAddTaskModal(true);
     setShowTaskModal(false);
     setEditTask(null);
@@ -877,8 +887,13 @@ export function KanbanBoard() {
                   : 'Monitor and track project progress'
                 }
               </p>
+              {user?.role === 'client' && (
+                <p className="text-sm text-blue-600 mt-1">
+                  View-only mode - You can monitor task progress but cannot modify tasks
+                </p>
+              )}
             </div>
-            {user?.role === 'freelancer' && (
+            {canPerformActions && (
               <Button 
                 icon={Plus} 
                 onClick={handleCreateTaskButton} 
@@ -987,7 +1002,7 @@ export function KanbanBoard() {
           ) : (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               <DndContext
-                sensors={sensors}
+                sensors={canPerformActions ? sensors : []}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >

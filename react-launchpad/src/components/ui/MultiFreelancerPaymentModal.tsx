@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
-import { getMilestoneFreelancers, createStripeCheckoutSession, getPaymentByMilestone, createMultiFreelancerCheckoutSession } from '../../apiendpoints';
-import { validatePaymentData } from '../../utils/paymentHelpers';
+import { Button } from './button';
+import { Card } from './card';
+import { Badge } from './badge';
+import { getMilestoneFreelancers, createStripeCheckoutSession, getPaymentByMilestone, createMultiFreelancerCheckoutSession } from '@/apiendpoints';
+import { validatePaymentData } from '@/utils/paymentHelpers';
 import { DollarSign, Users, AlertCircle, CheckCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { showErrorToast } from '@/utils/errorHandler';
 
-interface Freelancer {
+interface MilestoneFreelancer {
   FreelancerId: number;
   FirstName: string;
   LastName: string;
@@ -35,7 +35,7 @@ export const MultiFreelancerPaymentModal: React.FC<MultiFreelancerPaymentModalPr
   onClose,
   onSuccess
 }) => {
-  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
+  const [freelancers, setFreelancers] = useState<MilestoneFreelancer[]>([]);
   const [selectedFreelancers, setSelectedFreelancers] = useState<PaymentDistribution[]>([]);
   const [loading, setLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -62,14 +62,14 @@ export const MultiFreelancerPaymentModal: React.FC<MultiFreelancerPaymentModalPr
           .map((payment: any) => payment.FreelancerId);
         
         // Filter out already paid freelancers
-        const unpaidFreelancers = data.filter((f: Freelancer) => 
+        const unpaidFreelancers = data.filter((f: MilestoneFreelancer) => 
           !paidFreelancerIds.includes(f.FreelancerId)
         );
         
         // Initialize with equal distribution for unpaid freelancers only
         if (unpaidFreelancers.length > 0) {
           const equalAmount = milestoneAmount / unpaidFreelancers.length;
-          const distributions = unpaidFreelancers.map((f: Freelancer) => ({
+          const distributions = unpaidFreelancers.map((f: MilestoneFreelancer) => ({
             freelancerId: f.FreelancerId,
             freelancerName: `${f.FirstName} ${f.LastName}`,
             amount: equalAmount,
@@ -81,7 +81,7 @@ export const MultiFreelancerPaymentModal: React.FC<MultiFreelancerPaymentModalPr
         }
       } catch (error) {
         console.error('Failed to fetch milestone freelancers:', error);
-        toast.error('Failed to fetch freelancers for this milestone');
+        showErrorToast('Failed to fetch freelancers for this milestone');
       } finally {
         setLoading(false);
       }
@@ -129,12 +129,12 @@ export const MultiFreelancerPaymentModal: React.FC<MultiFreelancerPaymentModalPr
   // Handle payment submission
   const handlePayment = async () => {
     if (!isValidDistribution) {
-      toast.error(`Total amount must equal $${milestoneAmount.toFixed(2)}. Current total: $${totalDistributed.toFixed(2)}`);
+      showErrorToast(`Total amount must equal $${milestoneAmount.toFixed(2)}. Current total: $${totalDistributed.toFixed(2)}`);
       return;
     }
 
     if (selectedFreelancers.length === 0) {
-      toast.error('Please select at least one freelancer');
+      showErrorToast('Please select at least one freelancer');
       return;
     }
 
@@ -166,13 +166,13 @@ export const MultiFreelancerPaymentModal: React.FC<MultiFreelancerPaymentModalPr
       if (url) {
         window.location.href = url;
       } else {
-        toast.error('Failed to create payment session');
+        showErrorToast('Failed to create payment session');
       }
 
       onSuccess();
     } catch (error: any) {
       console.error('Payment error:', error);
-      toast.error(error.message || 'Failed to process payment');
+      showErrorToast(error.message || 'Failed to process payment');
     } finally {
       setPaymentLoading(false);
     }

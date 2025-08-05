@@ -970,7 +970,7 @@ export const startProjectMeeting = async (
   try {
     // Use Python server URL for meeting functionality
     const response = await axios.post(
-      "http://localhost:8001/start-project-meeting",
+      "http://localhost:8001/start",
       {
         project_id: projectId,
         freelancer_id: freelancerId,
@@ -991,6 +991,15 @@ export const stopMeeting = async () => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to stop meeting");
+  }
+};
+
+export const runElevenLabsBot = async () => {
+  try {
+    const response = await axios.post("http://localhost:8001/run-elevenlabs-bot");
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to run elevenlabs bot");
   }
 };
 
