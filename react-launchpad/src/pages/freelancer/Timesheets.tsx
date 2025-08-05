@@ -18,7 +18,8 @@ import {
   FileText,
   Users,
   Target,
-  Zap
+  Zap,
+  RefreshCw
 } from 'lucide-react';
 
 interface Project {
@@ -69,6 +70,13 @@ const FreelancerTimesheets: React.FC = () => {
     workDescription: '',
   });
   const [manualSubmitting, setManualSubmitting] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+    timesheetId?: number;
+  }>>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Calculate summary statistics
   const totalHoursThisWeek = timesheets
@@ -202,32 +210,33 @@ const FreelancerTimesheets: React.FC = () => {
           }
         }
         
-        // Transform timesheet data to camelCase and add project names
-        const transformedTimesheets = data.map((t: any) => {
-          // Get project name from projects array
-          const project = projects.find(p => p.id === t.ProjectId);
-          
-          return {
-            id: t.Id,
-            projectId: t.ProjectId,
-            projectName: project?.title || `Project ${t.ProjectId}`,
-            dateOfWork: t.DateOfWork,
-            startTime: t.StartTime,
-            endTime: t.EndTime,
-            totalHours: t.TotalHours,
-            workDescription: t.WorkDescription,
-            hourlyRate: t.HourlyRate,
-            calculatedAmount: t.CalculatedAmount,
-            approvalStatus: t.ApprovalStatus,
-            reviewerComments: t.ReviewerComments,
-            freelancerId: t.FreelancerId,
-          };
-        });
+                 // Transform timesheet data to camelCase and add project names
+         const transformedTimesheets = data.map((t: any) => {
+           // Get project name from projects array
+           const project = projects.find(p => p.id === t.ProjectId);
+           
+           return {
+             id: t.Id || t.id,
+             projectId: t.ProjectId || t.projectId,
+             projectName: project?.title || `Project ${t.ProjectId || t.projectId}`,
+             dateOfWork: t.DateOfWork || t.dateOfWork || '',
+             startTime: t.StartTime || t.startTime || '',
+             endTime: t.EndTime || t.endTime || '',
+             totalHours: t.TotalHours || t.totalHours || 0,
+             workDescription: t.WorkDescription || t.workDescription || '',
+             hourlyRate: t.HourlyRate || t.hourlyRate || 0,
+             calculatedAmount: t.CalculatedAmount || t.calculatedAmount || 0,
+             approvalStatus: t.ApprovalStatus || t.approvalStatus || 'Pending',
+             reviewerComments: t.ReviewerComments || t.reviewerComments || '',
+             freelancerId: t.FreelancerId || t.freelancerId,
+           };
+         });
         
         console.log('Transformed timesheets:', transformedTimesheets);
         
-        // Filter timesheets for this freelancer
-        setTimesheets(data.filter((t: any) => t.FreelancerId === user.id));
+                 // Filter timesheets for this freelancer and use transformed data
+         const freelancerTimesheets = transformedTimesheets.filter((t: any) => t.freelancerId === user.id);
+         setTimesheets(freelancerTimesheets);
       } catch (error) {
         console.error('Error fetching timesheets:', error);
         setError('Failed to fetch timesheets');
@@ -237,6 +246,79 @@ const FreelancerTimesheets: React.FC = () => {
       }
     };
     fetchTimesheets();
+  }, [user?.id, projects]);
+
+  // Add periodic refresh to get real-time updates
+  useEffect(() => {
+    if (!user?.id || projects.length === 0) return;
+
+         const interval = setInterval(async () => {
+       try {
+         const data = await getTimesheets();
+         
+         // Transform timesheet data to camelCase and add project names
+         const transformedTimesheets = data.map((t: any) => {
+           const project = projects.find(p => p.id === t.ProjectId);
+           return {
+             id: t.Id || t.id,
+             projectId: t.ProjectId || t.projectId,
+             projectName: project?.title || `Project ${t.ProjectId || t.projectId}`,
+             dateOfWork: t.DateOfWork || t.dateOfWork || '',
+             startTime: t.StartTime || t.startTime || '',
+             endTime: t.EndTime || t.endTime || '',
+             totalHours: t.TotalHours || t.totalHours || 0,
+             workDescription: t.WorkDescription || t.workDescription || '',
+             hourlyRate: t.HourlyRate || t.hourlyRate || 0,
+             calculatedAmount: t.CalculatedAmount || t.calculatedAmount || 0,
+             approvalStatus: t.ApprovalStatus || t.approvalStatus || 'Pending',
+             reviewerComments: t.ReviewerComments || t.reviewerComments || '',
+             freelancerId: t.FreelancerId || t.freelancerId,
+           };
+         });
+         
+         const freelancerTimesheets = transformedTimesheets.filter((t: any) => t.freelancerId === user.id);
+         
+         // Only update if there are changes
+         setTimesheets(prev => {
+           const prevIds = prev.map(t => t.id).sort();
+           const newIds = freelancerTimesheets.map((t: any) => t.id).sort();
+           
+           if (JSON.stringify(prevIds) !== JSON.stringify(newIds)) {
+             return freelancerTimesheets;
+           }
+           
+           // Check for status changes and show notifications
+           const statusChanges = freelancerTimesheets.filter((newTs: any) => {
+             const oldTs = prev.find(p => p.id === newTs.id);
+             return oldTs && oldTs.approvalStatus !== newTs.approvalStatus;
+           });
+           
+           if (statusChanges.length > 0) {
+             statusChanges.forEach((changedTs: any) => {
+               const oldTs = prev.find(p => p.id === changedTs.id);
+               if (oldTs) {
+                 const message = changedTs.approvalStatus === 'Approved' 
+                   ? `Your timesheet for ${changedTs.projectName || 'project'} has been approved!`
+                   : `Your timesheet for ${changedTs.projectName || 'project'} has been rejected. ${changedTs.reviewerComments ? `Reason: ${changedTs.reviewerComments}` : ''}`;
+                 
+                 setNotifications(prev => [...prev, {
+                   id: Date.now().toString(),
+                   message,
+                   type: changedTs.approvalStatus === 'Approved' ? 'success' : 'error',
+                   timesheetId: changedTs.id
+                 }]);
+               }
+             });
+           }
+           
+           return statusChanges.length > 0 ? freelancerTimesheets : prev;
+         });
+       } catch (error) {
+         console.error('Error refreshing timesheets:', error);
+       }
+     }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
   }, [user?.id, projects]);
 
   useEffect(() => {
@@ -403,8 +485,85 @@ const FreelancerTimesheets: React.FC = () => {
   console.log('Date filter:', dateFilter);
   console.log('Project filter:', projectFilter);
 
+     // Manual refresh function
+   const refreshTimesheets = async () => {
+     if (!user?.id || projects.length === 0) return;
+     
+     setRefreshing(true);
+     try {
+       const data = await getTimesheets();
+       
+       // Transform timesheet data to camelCase and add project names
+       const transformedTimesheets = data.map((t: any) => {
+         const project = projects.find(p => p.id === t.ProjectId);
+         return {
+           id: t.Id || t.id,
+           projectId: t.ProjectId || t.projectId,
+           projectName: project?.title || `Project ${t.ProjectId || t.projectId}`,
+           dateOfWork: t.DateOfWork || t.dateOfWork || '',
+           startTime: t.StartTime || t.startTime || '',
+           endTime: t.EndTime || t.endTime || '',
+           totalHours: t.TotalHours || t.totalHours || 0,
+           workDescription: t.WorkDescription || t.workDescription || '',
+           hourlyRate: t.HourlyRate || t.hourlyRate || 0,
+           calculatedAmount: t.CalculatedAmount || t.calculatedAmount || 0,
+           approvalStatus: t.ApprovalStatus || t.approvalStatus || 'Pending',
+           reviewerComments: t.ReviewerComments || t.reviewerComments || '',
+           freelancerId: t.FreelancerId || t.freelancerId,
+         };
+       });
+       
+       const freelancerTimesheets = transformedTimesheets.filter((t: any) => t.freelancerId === user.id);
+       setTimesheets(freelancerTimesheets);
+       setError('');
+     } catch (error) {
+       console.error('Error refreshing timesheets:', error);
+       setError('Failed to refresh timesheets');
+     } finally {
+       setRefreshing(false);
+     }
+   };
+
+  // Auto-remove notifications after 5 seconds
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const timer = setTimeout(() => {
+        setNotifications(prev => prev.slice(1));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notifications]);
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Notifications */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`p-4 rounded-lg shadow-lg max-w-sm ${
+                notification.type === 'success' 
+                  ? 'bg-green-500 text-white' 
+                  : notification.type === 'error'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-blue-500 text-white'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <p className="text-sm font-medium">{notification.message}</p>
+                <button
+                  onClick={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+                  className="ml-2 text-white hover:text-gray-200"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -421,17 +580,27 @@ const FreelancerTimesheets: React.FC = () => {
                 </span>
                 <span className="flex items-center space-x-1">
                   <Timer className="w-4 h-4" />
-                  <span>{totalHoursThisWeek.toFixed(1)}h this week</span>
+                                     <span>{(totalHoursThisWeek || 0).toFixed(1)}h this week</span>
                 </span>
               </div>
             </div>
-            <button
-              onClick={() => setShowManualForm(v => !v)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Timesheet</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={refreshTimesheets}
+                disabled={refreshing}
+                className="flex items-center space-x-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+              </button>
+              <button
+                onClick={() => setShowManualForm(v => !v)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Timesheet</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -443,7 +612,7 @@ const FreelancerTimesheets: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">This Week's Hours</p>
-                <p className="text-2xl font-bold text-gray-900">{totalHoursThisWeek.toFixed(1)}h</p>
+                                 <p className="text-2xl font-bold text-gray-900">{(totalHoursThisWeek || 0).toFixed(1)}h</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
                 <Clock className="w-6 h-6 text-blue-600" />
@@ -455,7 +624,7 @@ const FreelancerTimesheets: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">This Week's Earnings</p>
-                <p className="text-2xl font-bold text-gray-900">${totalEarningsThisWeek.toFixed(2)}</p>
+                                 <p className="text-2xl font-bold text-gray-900">${(totalEarningsThisWeek || 0).toFixed(2)}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <DollarSign className="w-6 h-6 text-green-600" />
@@ -769,7 +938,103 @@ const FreelancerTimesheets: React.FC = () => {
           )}
         </div>
 
-
+        {/* Timesheet List */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">My Timesheets</h2>
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <FileText className="w-4 h-4" />
+              <span>{displayTimesheets.length} entries</span>
+            </div>
+          </div>
+          
+          {displayTimesheets.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No timesheets found</h3>
+              <p className="text-gray-600">
+                {filteredTimesheets.length === 0 && allTimesheets.length > 0 
+                  ? 'Try adjusting your filters to see timesheets' 
+                  : 'Start tracking your time to see timesheets here'
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {displayTimesheets.map((timesheet) => (
+                <div 
+                  key={timesheet.id} 
+                  className={`border rounded-lg p-4 transition-all duration-200 ${
+                    timesheet.approvalStatus === 'Approved' 
+                      ? 'border-green-200 bg-green-50' 
+                      : timesheet.approvalStatus === 'Rejected'
+                      ? 'border-red-200 bg-red-50'
+                      : 'border-gray-200 bg-white'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="font-semibold text-gray-900">{timesheet.projectName}</h3>
+                        <div className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(timesheet.approvalStatus)}`}>
+                          {timesheet.approvalStatus}
+                        </div>
+                        {getStatusIcon(timesheet.approvalStatus)}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-3">
+                        <div>
+                          <span className="font-medium text-gray-700">Date:</span>
+                          <p className="text-gray-600">{new Date(timesheet.dateOfWork).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Time:</span>
+                          <p className="text-gray-600">{timesheet.startTime} - {timesheet.endTime}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Hours:</span>
+                          <p className="text-gray-600">{formatHours(timesheet.totalHours)}</p>
+                        </div>
+                                                 <div>
+                           <span className="font-medium text-gray-700">Amount:</span>
+                           <p className="text-gray-600">${(timesheet.calculatedAmount || 0).toFixed(2)}</p>
+                         </div>
+                      </div>
+                      
+                      <div>
+                        <span className="font-medium text-gray-700">Work Description:</span>
+                        <p className="text-gray-600 mt-1">{timesheet.workDescription}</p>
+                      </div>
+                      
+                      {/* Show reviewer comments if rejected */}
+                      {timesheet.approvalStatus === 'Rejected' && timesheet.reviewerComments && (
+                        <div className="mt-3 p-3 bg-red-100 border border-red-200 rounded-lg">
+                          <div className="flex items-start space-x-2">
+                            <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-red-800">Rejection Reason:</p>
+                              <p className="text-sm text-red-700 mt-1">{timesheet.reviewerComments}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Show approval message if approved */}
+                      {timesheet.approvalStatus === 'Approved' && (
+                        <div className="mt-3 p-3 bg-green-100 border border-green-200 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <p className="text-sm font-medium text-green-800">Timesheet approved!</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {error && (
           <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
