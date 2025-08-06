@@ -361,9 +361,9 @@ export function ClientPayments() {
         freelancerId: selectedFreelancerId,
         projectId: milestone.ProjectId || milestone.projectId || selectedProjectId,
         paymentType: 'Milestone',
-        milestoneId: milestone.Id || milestone.id,
+        milestoneId: milestone.MilestoneId || milestone.Id || milestone.id,
         timesheetId: null,
-        amount: milestone.amount ?? 0,
+        amount: milestone.amount || milestone.Amount || 0,
       };
 
       // Validate payment data
@@ -888,14 +888,6 @@ export function ClientPayments() {
                       {formatPaymentAmount(payment.Amount || 0)}
                     </div>
                     
-                    {payment.PaymentStatus === 'Paid' && (
-                      <Button
-                        icon={CreditCard}
-                        onClick={() => handleReleasePayment(payment.Id || payment.id)}
-                      >
-                        Release Payment
-                      </Button>
-                    )}
                   </div>
                 </div>
               </Card>
@@ -965,12 +957,7 @@ export function ClientPayments() {
               </div>
             </div>
             <div className="flex space-x-4">
-              <Button 
-                className="flex-1"
-                onClick={() => handleReleasePayment(selectedMilestone.Id || selectedMilestone.id)}
-              >
-                Release ${selectedMilestone.Amount?.toLocaleString() || ''}
-              </Button>
+              {/* Removed Release button from client invoice modal */}
               <Button 
                 variant="outline" 
                 className="flex-1"

@@ -60,6 +60,7 @@ namespace ProjectLaunchpad.Functions
                 PaymentStatus = "Pending",
                 TransactionReference = intent.Id // correct Stripe reference
             };
+            newPayment.PaymentStatus  = "Pending"; // Set initial status to Pending
 
             await _unitOfWork.PaymentRepository.AddPaymentAsync(newPayment);
             await _unitOfWork.SaveAsync();
