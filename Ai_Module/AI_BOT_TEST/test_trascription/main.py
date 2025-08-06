@@ -349,7 +349,31 @@ def get_summaries():
     data = fetch_all_summaries()
     return {"status": "success", "data": data}
  
+@app.post("/add-project")
+def add_project(payload: ProjectPayload):
+    data = load_gist()
  
+    for project in data.get("projects", []):
+        if project["id"] == payload.id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"❌ Project with ID '{payload.id}' already exists."
+            )
+ 
+    new_project = {
+        "id": payload.id,
+        "projectTitle": payload.projectTitle,
+        "description": payload.description,
+        "freelancersId": [],
+        "freelancersAssigned": []
+    }
+ 
+    data.setdefault("projects", []).append(new_project)
+    update_gist(data)
+ 
+    return {"message": f"✅ Project '{payload.projectTitle}' added."}
+ 
+
 # -------------------- API: Assign Freelancer --------------------
 @app.post("/assign-freelancer")
 def assign_freelancer(payload: AssignFreelancerPayload):
