@@ -18,6 +18,7 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task<IEnumerable<Payment>> GetPaymentsByMilestoneIdAsync(int milestoneId);
         Task<Payment?> GetByTransactionReferenceAsync(string transactionRef);
         Task UpdateAsync(Payment payment);
+        Task<decimal> GetTotalRevenueAsync();
 
     }
 }

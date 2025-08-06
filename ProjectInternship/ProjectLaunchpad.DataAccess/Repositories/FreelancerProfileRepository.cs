@@ -28,55 +28,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 .FirstOrDefaultAsync(p => p.Id == userId);
         }
 
-        public async Task AddOrUpdateFreelancerProfileAsync(FreelancerWithUserDTO dto)
-        {
-            var existingProfile = await _db.freelancerProfiles.FindAsync(dto.Id);
-            var existingUser = await _db.users.FindAsync(dto.Id);
-
-            if (existingProfile != null && existingUser!=null )
-            {
-                // Update existing profile
-                existingProfile.Skills = dto.Skills ?? existingProfile.Skills;
-                existingProfile.Experience = dto.Experience ?? existingProfile.Experience;
-                existingProfile.Projects = dto.Projects ?? existingProfile.Projects;
-                existingProfile.HourlyRate = dto.HourlyRate ?? existingProfile.HourlyRate;
-                existingProfile.AvgRating = dto.AvgRating ?? existingProfile.AvgRating;
-                existingProfile.Availability = dto.Availability ?? existingProfile.Availability;
-                existingProfile.WorkingHours = dto.WorkingHours ?? existingProfile.WorkingHours;
-                existingProfile.Summary = dto.Summary ?? existingProfile.Summary;
-
-                _db.freelancerProfiles.Update(existingProfile);
-
-                existingUser.FirstName = dto.FirstName ?? existingUser.FirstName;
-                existingUser.LastName = dto.LastName ?? existingUser.LastName;
-                existingUser.PhoneNo = dto.PhoneNo ?? existingUser.PhoneNo;
-                existingUser.ProfilePicture = dto.ProfilePicture ?? existingUser.ProfilePicture;
-                existingUser.Password = dto.Password ?? existingUser.Password;
-
-
-                _db.users.Update(existingUser);
-                await _db.SaveChangesAsync();
-            }
-            else
-            {
-                // Create new profile
-                var entity = new FreelancerProfile
-                {
-                    Id = dto.Id ?? 0,
-                    Skills = dto.Skills,
-                    Experience = dto.Experience,
-                    Projects = dto.Projects,
-                    HourlyRate = dto.HourlyRate ?? 0,
-                    AvgRating = dto.AvgRating ?? 0,
-                    Availability = dto.Availability ?? "available",
-                    WorkingHours = dto.WorkingHours ?? "9am-5pm",
-                    Summary = dto.Summary ?? ""
-                };
-
-                await _db.freelancerProfiles.AddAsync(entity);
-            }
-        }
-
         public async Task AddFreelancerProfileAsync(FreelancerProfileDTO dto)
         {
             var entity = new FreelancerProfile

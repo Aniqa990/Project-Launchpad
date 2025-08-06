@@ -60,6 +60,7 @@ namespace ProjectLaunchpad.Functions
                 PaymentStatus = "Pending",
                 TransactionReference = intent.Id // correct Stripe reference
             };
+            newPayment.PaymentStatus  = "Pending"; // Set initial status to Pending
 
             await _unitOfWork.PaymentRepository.AddPaymentAsync(newPayment);
             await _unitOfWork.SaveAsync();
@@ -470,6 +471,28 @@ namespace ProjectLaunchpad.Functions
             {
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 await response.WriteStringAsync($"Error: {ex.Message}");
+                return response;
+            }
+        }
+
+        [Function("GetTotalRevenue")]
+        public async Task<HttpResponseData> GetTotalRevenue(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "payments/total-revenue")] HttpRequestData req)
+        {
+            var response = req.CreateResponse();
+
+            try
+            {
+                var totalRevenue = await _unitOfWork.PaymentRepository.GetTotalRevenueAsync();
+
+                response.StatusCode = HttpStatusCode.OK;
+                await response.WriteAsJsonAsync(new { totalRevenue = totalRevenue });
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                await response.WriteStringAsync($"Error retrieving total revenue: {ex.Message}");
                 return response;
             }
         }

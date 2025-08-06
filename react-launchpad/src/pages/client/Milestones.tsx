@@ -165,7 +165,7 @@ export function ClientMilestones() {
         const payments: {[milestoneId: number]: any} = {};
         
         await Promise.all(
-          transformedMilestones.map(async (milestone) => {
+          transformedMilestones.map(async (milestone: any) => {
             try {
               // Fetch freelancers
               const freelancers = await getMilestoneFreelancers(milestone.Id);
@@ -498,13 +498,13 @@ export function ClientMilestones() {
                   {milestoneAssignments[milestone.Id] && milestoneAssignments[milestone.Id].length > 0 ? (
                     <div className="space-y-2">
                       {milestoneAssignments[milestone.Id].map((freelancer) => (
-                        <div key={freelancer.FreelancerId || freelancer.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div key={freelancer.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div>
                             <p className="text-sm font-medium">
-                              {freelancer.FirstName || freelancer.firstName} {freelancer.LastName || freelancer.lastName}
+                              {freelancer.firstName} {freelancer.lastName}
                             </p>
                             <p className="text-xs text-gray-600">
-                              {freelancer.email ? `${freelancer.email} • ` : ''}${freelancer.HourlyRate || freelancer.hourlyRate || 0}/hr
+                              {freelancer.email ? `${freelancer.email} • ` : ''}${freelancer.hourlyRate || 0}/hr
                             </p>
                           </div>
                           {milestone.Status !== 2 && (
@@ -575,7 +575,7 @@ export function ClientMilestones() {
                       </Button>
                     </DialogTrigger>
                     
-                    <DialogContent>
+                    <DialogContent className="bg-white">
                       <DialogHeader>
                         <DialogTitle>Assign Freelancer to "{milestone.Title}"</DialogTitle>
                       </DialogHeader>

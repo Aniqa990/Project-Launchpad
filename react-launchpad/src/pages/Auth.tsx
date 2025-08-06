@@ -269,37 +269,37 @@ export function Auth({ mode }: AuthProps) {
   if (mode === "login") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
+        <div className="max-w-sm w-full">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <Link to="/" className="inline-flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <Rocket className="w-6 h-6 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <Rocket className="w-5 h-5 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Project Launchpad
               </span>
             </Link>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-              <p className="text-gray-600">Sign in to your account</p>
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h1>
+              <p className="text-gray-600 text-sm">Sign in to your account</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                     placeholder="sarah@client.com or alex@freelancer.com"
                     required
                   />
@@ -308,15 +308,15 @@ export function Auth({ mode }: AuthProps) {
 
               {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                     placeholder="Enter your password"
                     required
                   />
@@ -325,14 +325,14 @@ export function Auth({ mode }: AuthProps) {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {/* Forgot Password */}
               <div className="text-right">
-                <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
                   Forgot your password?
                 </Link>
               </div>
@@ -340,14 +340,14 @@ export function Auth({ mode }: AuthProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="text-center mt-8 pt-6 border-t border-gray-100">
-              <p className="text-gray-600">
+            <div className="text-center mt-6 pt-4 border-t border-gray-100">
+              <p className="text-gray-600 text-sm">
                 Don't have an account?{' '}
                 <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
                   Sign up for free
@@ -363,80 +363,80 @@ export function Auth({ mode }: AuthProps) {
   // Signup mode - show 3-step process
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+      <div className="max-w-sm w-full">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <Link to="/" className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Rocket className="w-6 h-6 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <Rocket className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Project Launchpad
             </span>
           </Link>
         </div>
 
         {/* Signup Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
           {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-gray-600">Step {step} of 3</span>
-              <span className="text-sm text-gray-500">{Math.round((step / 3) * 100)}% Complete</span>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-gray-600">Step {step} of 3</span>
+              <span className="text-xs text-gray-500">{Math.round((step / 3) * 100)}% Complete</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${(step / 3) * 100}%` }}
               ></div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Step 1: Role Selection */}
             {step === 1 && (
               <>
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Project Launchpad</h1>
-                  <p className="text-gray-600">Choose your role to get started</p>
+                <div className="text-center mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">Join Project Launchpad</h1>
+                  <p className="text-gray-600 text-sm">Choose your role to get started</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     I want to:
                   </label>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, role: 'client' })}
-                      className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                      className={`w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ${
                         formData.role === 'client'
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <User className="w-6 h-6" />
+                      <div className="flex items-center space-x-2">
+                        <User className="w-5 h-5" />
                         <div>
-                          <div className="font-semibold">Hire Freelancers</div>
-                          <div className="text-sm opacity-75">I have projects that need to be done</div>
+                          <div className="font-semibold text-sm">Hire Freelancers</div>
+                          <div className="text-xs opacity-75">I have projects that need to be done</div>
                         </div>
                       </div>
                     </button>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, role: 'freelancer' })}
-                      className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                      className={`w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ${
                         formData.role === 'freelancer'
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <User className="w-6 h-6" />
+                      <div className="flex items-center space-x-2">
+                        <User className="w-5 h-5" />
                         <div>
-                          <div className="font-semibold">Work as a Freelancer</div>
-                          <div className="text-sm opacity-75">I want to offer my services to clients</div>
+                          <div className="font-semibold text-sm">Work as a Freelancer</div>
+                          <div className="text-xs opacity-75">I want to offer my services to clients</div>
                         </div>
                       </div>
                     </button>
@@ -446,7 +446,7 @@ export function Auth({ mode }: AuthProps) {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
                 >
                   Continue
                 </button>
@@ -456,17 +456,17 @@ export function Auth({ mode }: AuthProps) {
             {/* Step 2: Basic Information */}
             {step === 2 && (
               <>
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Basic Information</h1>
-                  <p className="text-gray-600">Tell us about yourself</p>
+                <div className="text-center mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">Basic Information</h1>
+                  <p className="text-gray-600 text-sm">Tell us about yourself</p>
                 </div>
                 {/* Profile Picture Upload */}
-                <div className="flex items-center justify-center mb-6">
-                  <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="flex items-center space-x-3">
                     <Avatar
                       src={formData.profilePicture}
                       alt={formData.firstName || 'Profile'}
-                      size="lg"
+                      size="md"
                     />
                     <input
                       type="file"
@@ -480,55 +480,56 @@ export function Auth({ mode }: AuthProps) {
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={profilePicUploading}
+                      className="text-xs"
                     >
-                      {profilePicUploading ? 'Uploading...' : (formData.profilePicture ? 'Change Picture' : 'Add Profile Picture')}
+                      {profilePicUploading ? 'Uploading...' : (formData.profilePicture ? 'Change Picture' : 'Add Picture')}
                     </Button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="firstName"
                       required
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                       placeholder="Enter your first name"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="lastName"
                       required
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                       placeholder="Enter your last name"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="email"
                       name="email"
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                      className={`w-full pl-9 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm ${
                         formData.email && !validateEmail(formData.email) 
                           ? 'border-red-300 focus:ring-red-500' 
                           : 'border-gray-300'
@@ -539,7 +540,7 @@ export function Auth({ mode }: AuthProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
                   <PhoneInput
                     country={'pk'}
                     value={formData.phoneNo}
@@ -549,39 +550,40 @@ export function Auth({ mode }: AuthProps) {
                     countryCodeEditable={false}
                     inputStyle={{
                       width: '100%',
-                      paddingLeft: '48px',
-                      borderRadius: '0.75rem',
+                      paddingLeft: '40px',
+                      borderRadius: '0.5rem',
                       border: phoneValidation.error ? '1px solid #EF4444' : '1px solid #D1D5DB',
-                      height: '48px'
+                      height: '40px',
+                      fontSize: '14px'
                     }}
                     buttonStyle={{
-                      borderTopLeftRadius: '0.75rem',
-                      borderBottomLeftRadius: '0.75rem'
+                      borderTopLeftRadius: '0.5rem',
+                      borderBottomLeftRadius: '0.5rem'
                     }}
                     inputClass="focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   {phoneValidation.error && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
                       <span className="mr-1">⚠</span>
                       {phoneValidation.error}
                     </p>
                   )}
                   {formData.phoneNo && phoneValidation.isValid && (
-                    <p className="text-green-500 text-sm mt-1 flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-1" />
+                    <p className="text-green-500 text-xs mt-1 flex items-center">
+                      <CheckCircle className="w-3 h-3 mr-1" />
                       Valid phone number
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
                   <select
                     name="gender"
                     required
                     value={formData.gender}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                   >
                     <option value="">Select gender</option>
                     <option value="male">Male</option>
@@ -591,18 +593,18 @@ export function Auth({ mode }: AuthProps) {
                   </select>
                 </div>
 
-                <div className="flex space-x-4">
+                <div className="flex space-x-3">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200"
+                    className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 text-sm"
                   >
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
                   >
                     Continue
                   </button>
@@ -613,22 +615,22 @@ export function Auth({ mode }: AuthProps) {
             {/* Step 3: Password */}
             {step === 3 && (
               <>
-                <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Secure Your Account</h1>
-                  <p className="text-gray-600">Create a strong password</p>
+                <div className="text-center mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">Secure Your Account</h1>
+                  <p className="text-gray-600 text-sm">Create a strong password</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       name="password"
                       required
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                      className={`w-full pl-9 pr-10 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm ${
                         showPasswordValidation 
                           ? passwordValidation.isValid 
                             ? 'border-green-500' 
@@ -642,24 +644,24 @@ export function Auth({ mode }: AuthProps) {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   
                   {/* Password validation feedback */}
                   {showPasswordValidation && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Password requirements:</p>
-                      <ul className="space-y-1">
+                    <div className="mt-2 p-2 bg-gray-50 rounded-lg">
+                      <p className="text-xs font-medium text-gray-700 mb-1">Password requirements:</p>
+                      <ul className="space-y-0.5">
                         {passwordValidation.errors.map((error, index) => (
-                          <li key={index} className="text-sm text-red-500 flex items-center">
-                            <span className="mr-2">✗</span>
+                          <li key={index} className="text-xs text-red-500 flex items-center">
+                            <span className="mr-1">✗</span>
                             {error}
                           </li>
                         ))}
                         {passwordValidation.isValid && (
-                          <li className="text-sm text-green-500 flex items-center">
-                            <CheckCircle className="w-4 h-4 mr-2" />
+                          <li className="text-xs text-green-500 flex items-center">
+                            <CheckCircle className="w-3 h-3 mr-1" />
                             Password meets all requirements
                           </li>
                         )}
@@ -669,16 +671,16 @@ export function Auth({ mode }: AuthProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       required
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                       placeholder="Confirm your password"
                     />
                     <button
@@ -686,23 +688,23 @@ export function Auth({ mode }: AuthProps) {
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="flex space-x-4">
+                <div className="flex space-x-3">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200"
+                    className="flex-1 bg-gray-100 text-gray-700 py-2.5 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 text-sm"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     {isLoading ? 'Signing Up...' : 'Sign Up'}
                   </button>
@@ -712,8 +714,8 @@ export function Auth({ mode }: AuthProps) {
           </form>
 
           {/* Login Link */}
-          <div className="text-center mt-8 pt-6 border-t border-gray-100">
-            <p className="text-gray-600">
+          <div className="text-center mt-6 pt-4 border-t border-gray-100">
+            <p className="text-gray-600 text-sm">
               Already have an account?{' '}
               <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
                 Sign in

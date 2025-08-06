@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FolderOpen } from "lucide-react";
 import { getProjectsWithPendingApproval, updateProjectApprovalStatus, getMilestonesByProjectId } from "@/apiendpoints";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,11 @@ export function AdminProjectApprovals() {
   const fetchProjects = async () => {
     try {
       const data = await getProjectsWithPendingApproval();
-      setProjects(data);
+      console.log('Fetched projects:', data);
+      setProjects(data || []);
     } catch (error) {
       handleApiError(error, 'fetchProjects');
+      setProjects([]);
     }
   };
 
@@ -110,51 +113,66 @@ export function AdminProjectApprovals() {
   return (
     <div className="p-8">
       <h2 className="text-2xl font-bold mb-6">Pending Project Approvals</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projects.map((project: Project) => {
-          const { start, end } = getTimeline(project);
-          return (
-            <div key={project.id} className="bg-white rounded-xl shadow p-6 flex flex-col">
-              <h3 className="text-lg font-semibold">{project.projectTitle}</h3>
-              <div className="mb-2">
-                <span className="font-medium">Category:</span> {project.categoryOrDomain}
+      {loading ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading projects...</p>
+        </div>
+      ) : !loading && projects.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No pending project approvals</h3>
+          <p className="text-gray-600">
+            Project approvals will appear here when clients submit new projects that require admin review.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {projects.map((project: Project) => {
+            const { start, end } = getTimeline(project);
+            return (
+              <div key={project.id} className="bg-white rounded-xl shadow p-6 flex flex-col">
+                <h3 className="text-lg font-semibold">{project.projectTitle}</h3>
+                <div className="mb-2">
+                  <span className="font-medium">Category:</span> {project.categoryOrDomain}
+                </div>
+                <div className="mb-2">
+                  <span className="font-medium">Timeline:</span>{" "}
+                  <span>
+                    {start !== "Not set" ? `${start} to ${end}` : end !== "Not set" ? `Due: ${end}` : "Not set"}
+                  </span>
+                </div>
+                <div className="mb-2">
+                  <span className="font-medium">Budget:</span> ${project.budget}
+                </div>
+                <div className="flex space-x-2 mt-auto">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`project-details/${project.id}`)}
+                    size="sm"
+                  >
+                    View Details
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => handleApprove(project.id)}
+                    disabled={loading}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={() => handleReject(project)}
+                    disabled={loading}
+                  >
+                    Reject
+                  </Button>
+                </div>
               </div>
-              <div className="mb-2">
-                <span className="font-medium">Timeline:</span>{" "}
-                <span>
-                  {start !== "Not set" ? `${start} to ${end}` : end !== "Not set" ? `Due: ${end}` : "Not set"}
-                </span>
-              </div>
-              <div className="mb-2">
-                <span className="font-medium">Budget:</span> ${project.budget}
-              </div>
-              <div className="flex space-x-2 mt-auto">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`project-details/${project.id}`)}
-                  size="sm"
-                >
-                  View Details
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => handleApprove(project.id)}
-                  disabled={loading}
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => handleReject(project)}
-                  disabled={loading}
-                >
-                  Reject
-                </Button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Milestone Modal */}
       <Modal

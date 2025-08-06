@@ -37,6 +37,16 @@ namespace ProjectLaunchpad.DataAccess.Repositories
             await Task.CompletedTask;
         }
 
+        public async Task<decimal> GetTotalRevenueAsync()
+        {
+            var paidPayments = await _db.payments
+                .Where(p => p.PaymentStatus == "Paid")
+                .ToListAsync();
+
+            var totalAmount = paidPayments.Sum(p => p.Amount);
+            return totalAmount * 0.05m; // 5% platform fee
+        }
+
         public async Task DeletePaymentAsync(int id)
         {
             var payment = await _db.payments.FindAsync(id);
