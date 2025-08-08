@@ -50,37 +50,6 @@ export interface FreelancerProfile {
   projects: string;
 }
 
-// export interface ProfileSetupData {
-//   Summary: string;
-//   Skills: {
-//     Id: number;
-//     SkillName: string;
-//     Source: string;
-//   }[];
-//   Projects: {
-//     Id: number;
-//     Title: string;
-//     Description: string;
-//     Source: string;
-//   }[];
-//   Experience: {
-//     Id: number;
-//     Title: string;
-//     Company: string;
-//     StartDate: string;
-//     EndDate: string;
-//     Description: string;
-//     Source: string;
-//   }[];
-// }
-
-// export interface ParsedResumeData {
-//   summary: string;
-//   skills: Skill[];
-//   experience: Experience[];
-//   projects: ProjectItem[];
-// }
-
 export interface ParsedResumeData {
   summary: string;
   skills: string[];
@@ -125,9 +94,10 @@ export interface Milestone {
   isApproved?: boolean;
   handoverStatus?: string;
   projectId: number;
-  status: 'notStarted' | 'inProgress' | 'completed';
+  status: number;
   deliverables: string[];
 }
+
 
 export interface MilestoneWithPayment {
   id: number;
@@ -165,6 +135,21 @@ export interface MilestoneWithUsers {
   clientFirstName: string;
   clientLastName: string;
   clientEmail: string;
+}
+
+export interface FreelancerMilestone { //milestone details associated with freelancer
+  Id: number;
+  UserId: number;
+  MilestoneId: number;
+  AssignedAt: string;
+  User: FreelancerProfile;
+}
+
+
+export interface MilestoneFreelancer { //freelancer details associated with milestone
+  FreelancerId: number;
+  FirstName: string;
+  LastName: string;
 }
 
 export interface Task {
@@ -225,13 +210,6 @@ export interface ProjectRequest {
   requestedAt: string;
 }
 
-// export interface ProjectApproval {
-//   projectId: string;
-//   status: 'pending' | 'accepted' | 'rejected';
-//   rejectionReason?: string;
-//   sentAt?: string;
-// }
-
 export interface TimeEntry {
   id: string;
   userId: string;
@@ -243,6 +221,40 @@ export interface TimeEntry {
   hours: number;
   description: string;
   status: 'draft' | 'submitted' | 'approved' | 'rejected';
+}
+
+export interface Timesheet {
+  id: number;
+  projectName: string;
+  dateOfWork: string;
+  startTime: string;
+  endTime: string;
+  totalHours: number;
+  workDescription: string;
+  hourlyRate: number;
+  calculatedAmount: number;
+  approvalStatus: string;
+  reviewerComments?: string;
+}
+
+export interface TimesheetEntry {
+  id: string;
+  freelancerName: string;
+  freelancerAvatar: string;
+  projectName: string;
+  weekEnding: string;
+  totalHours: number;
+  hourlyRate: number;
+  totalAmount: number;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  tasks: {
+    id: string;
+    name: string;
+    hours: number;
+    description: string;
+    date: string;
+  }[];
+  submittedAt: string;
 }
 
 export interface Message {
@@ -265,6 +277,13 @@ export interface Payment {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   createdAt: string;
   completedAt?: string;
+}
+
+export interface PaymentDistribution {
+  freelancerId: number;
+  freelancerName: string;
+  amount: number;
+  percentage: number;
 }
 
 export interface Deliverable {

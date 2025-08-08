@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getProjectFreelancers } from '../../apiendpoints';
 import toast from 'react-hot-toast';
+import { handleApiError } from '@/utils/errorHandler';
 
 export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: any, onPayNow: (data: any) => void, onClose?: () => void }) => {
   console.log('InvoicePage rendered with invoiceData:', invoiceData);
@@ -24,7 +25,6 @@ export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: a
   useEffect(() => {
     const fetchFreelancers = async () => {
       if (invoiceData.milestoneFreelancers && Array.isArray(invoiceData.milestoneFreelancers) && invoiceData.milestoneFreelancers.length > 0) {
-        // Normalize freelancer IDs to 'id' for consistency
         const normalized = invoiceData.milestoneFreelancers.map((f: any) => ({
           ...f,
           id: f.id || f.FreelancerId || f.Id
@@ -46,7 +46,7 @@ export const InvoicePage = ({ invoiceData, onPayNow, onClose }: { invoiceData: a
             setSelectedFreelancerId(data[0].id);
           }
         } catch (err) {
-          toast.error('Failed to fetch freelancers');
+          handleApiError(err, 'fetchFreelancers');
         } finally {
           setLoading(false);
         }

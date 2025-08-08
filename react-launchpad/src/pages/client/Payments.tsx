@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { Avatar } from '../../components/ui/avatar';
 import { Modal } from '../../components/ui/Modal';
 import {
   Calendar,
-  Download,
   CreditCard,
   CheckCircle,
   Clock,
@@ -16,10 +14,9 @@ import {
   Search
 } from 'lucide-react';
 import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
-import { InvoicePage } from './InvoicePage'; // Restore InvoicePage import
+import { InvoicePage } from './InvoicePage';
 import { MultiFreelancerPaymentModal } from '../../components/ui/MultiFreelancerPaymentModal';
-import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, getPaymentsByProject, releasePayment, getPaymentByMilestone, getMilestoneFreelancers, getDeliverablesByMilestoneId } from '../../apiendpoints';
-import PaymentForm from './PaymentForm'; // Added import for PaymentForm
+import { createStripeCheckoutSession, getClientProjects, getMilestonesByProjectId, getClientPayments, releasePayment, getPaymentByMilestone, getMilestoneFreelancers, getDeliverablesByMilestoneId } from '../../apiendpoints';
 import { validatePaymentData, formatPaymentAmount, calculatePlatformFee, calculateFreelancerAmount, getPaymentStatusColor, formatPaymentDate } from '../../utils/paymentHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 

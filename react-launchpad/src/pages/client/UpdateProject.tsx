@@ -215,7 +215,6 @@ export function UpdateProject() {
             }
           } catch (milestoneError) {
             console.error('Failed to fetch milestones:', milestoneError);
-            // Don't show error to user as milestones might not exist yet
           }
         }
       } catch (error) {

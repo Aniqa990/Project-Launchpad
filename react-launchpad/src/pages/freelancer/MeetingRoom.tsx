@@ -43,7 +43,7 @@ export default function Meetings() {
   const [uploadTranscriptError, setUploadTranscriptError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const ASSEMBLYAI_API_KEY = '2a10d51c006c409681db68820636a14d';
+  const ASSEMBLYAI_API_KEY = import.meta.env.VITE_ASSEMBLYAI_API_KEY;
 
   // Fetch notifications for freelancer
   useEffect(() => {

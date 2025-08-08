@@ -52,5 +52,10 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                 _db.users.Remove(user);
             }
         }
+
+        public async Task<int> GetTotalUsersCountAsync()
+        {
+            return await _db.users.CountAsync();
+        }
     }
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { getProjectRequests, getFreelancerProjects } from '../../apiendpoints';
@@ -24,7 +23,6 @@ import { handleApiError } from '@/utils/errorHandler';
 export function FreelancerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isClocked, setIsClocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [requests, setRequests] = useState<ProjectRequest[]>([]);
@@ -50,53 +48,6 @@ export function FreelancerDashboard() {
       ]);
 
       console.log(projectsData);
-
-      const transformedProjects = projectsData.map((project: any) => ({
-        id: project.Id,
-        title: project.Title,
-        description: project.Description,
-        status: project.Status,
-        budget: project.Budget,
-        deadline: project.Deadline,
-        clientId: project.ClientId,
-        client: project.Client
-          ? {
-              firstName: project.Client.FirstName,
-              lastName: project.Client.LastName,
-              email: project.Client.Email,
-              phone: project.Client.PhoneNo,
-              role: project.Client.Role,
-              gender: project.Client.Gender
-            }
-          : null,
-        skills: project.Skills || [],
-        team: (project.Team || []).map((member: any) => ({
-          firstName: member.FirstName,
-          lastName: member.LastName,
-          email: member.Email,
-          phone: member.PhoneNo,
-          role: member.Role,
-          gender: member.Gender
-        })),
-        progress: project.Progress ?? 0
-      }));
-
-      const transformedRequests = requestsData.map((request: any) => ({
-        projectId: request.ProjectId,
-        freelancerId: request.FreelancerId,
-        projectTitle: request.ProjectTitle,
-        projectDescription: request.ProjectDescription,
-        projectCategory: request.ProjectCategory || 'General',
-        deadline: new Date(request.Deadline),
-        skills: request.Skills ? request.Skills.split(',').map((s: string) => s.trim()) : [],
-        budget: request.Budget,
-        clientId: request.ClientId,
-        clientName: `${request.ClientName}`,
-        clientEmail: request.ClientEmail,
-        //clientPhone: request.ClientPhone,
-        status: request.Status,
-        sentAt: request.RequestedAt
-      }));
 
       setProjects(projectsData);
       setRequests(requestsData);

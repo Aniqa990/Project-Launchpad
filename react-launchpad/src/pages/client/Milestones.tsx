@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
@@ -10,12 +9,10 @@ import {
   getProjectFreelancers,
   assignMilestoneToFreelancer,
   unassignMilestoneFromFreelancer,
-  getMilestonesByFreelancerId,
   getMilestoneFreelancers,
   getPaymentByMilestone
 } from '../../apiendpoints';
 import { 
-  validateMilestoneAssignment, 
   getMilestoneStatusText, 
   getMilestoneStatusColor,
   formatMilestoneDueDate,
@@ -24,7 +21,6 @@ import {
 } from '../../utils/milestoneHelpers';
 import { 
   getPaymentStatusColor,
-  getMilestonePaymentStatus
 } from '../../utils/paymentHelpers';
 import { handleApiError, showSuccessToast } from '../../utils/errorHandler';
 import { 
@@ -41,7 +37,7 @@ import {
   Download,
   Lock
 } from 'lucide-react';
-import { Project, FreelancerProfile } from '@/types';
+import { Project, FreelancerProfile, FreelancerMilestone } from '@/types';
 
 interface Milestone {
   Id: number;
@@ -59,14 +55,6 @@ interface Milestone {
   Deliverables: any[];
   AssignedFreelancers?: FreelancerMilestone[];
   paymentStatus?: string; // Added payment status
-}
-
-interface FreelancerMilestone {
-  Id: number;
-  UserId: number;
-  MilestoneId: number;
-  AssignedAt: string;
-  User: FreelancerProfile;
 }
 
 export function ClientMilestones() {

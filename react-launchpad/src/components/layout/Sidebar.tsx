@@ -29,14 +29,12 @@ export function Sidebar() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client/dashboard' },
     { icon: Plus, label: 'Create Project', path: '/client/create-project' },
     { icon: Folder, label: 'My Projects', path: '/client/projects' },
-    // { icon: Download, label: 'Deliverables', path: '/client/deliverables' },
     { icon: Kanban, label: 'View Tasks', path: '/client/kanban' },
     { icon: Users, label: 'View Project Requests', path: '/client/project-requests' },
     { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
     { icon: CheckSquare, label: 'Milestone Management', path: '/client/milestone-management' },
     { icon: CreditCard, label: 'Payments', path: '/client/payments' },
     { icon: MessageSquare, label: 'Meeting Summaries', path: '/client/meeting-summaries' },
-    { icon: Settings, label: 'Settings', path: '/client/settings' },
     { icon: Video, label: 'Meetings', path: '/client/meetings' },
   ];
 
@@ -49,7 +47,6 @@ export function Sidebar() {
     { icon: DollarSign, label: 'Payments', path: '/freelancer/payments' },
     { icon: Clock, label: 'Timesheet', path: '/freelancer/timesheets' },
     { icon: MessageSquare, label: 'Meeting Summaries', path: '/freelancer/meeting-summaries' },
-    { icon: Settings, label: 'Settings', path: '/freelancer/settings' },
     { icon: Video, label: 'Meetings', path: '/freelancer/meetings' },
   ];
 
@@ -58,7 +55,6 @@ export function Sidebar() {
     { icon: DollarSign, label: 'Milestone Payments', path: '/admin/payments' },
     { icon: Folder, label: 'Project Approvals', path: '/admin/projects' },
     { icon: Folder, label: 'View All Projects', path: '/admin/view-projects' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 
   const menuItems = user.role === 'client' ? clientMenuItems : user.role === 'freelancer' ? freelancerMenuItems : platformMenuItems;

@@ -21,6 +21,8 @@ import {
   Zap,
   RefreshCw
 } from 'lucide-react';
+import {Timesheet} from '../../types';
+import { handleApiError } from '@/utils/errorHandler';
 
 interface Project {
   id: number;
@@ -30,20 +32,6 @@ interface Project {
   description?: string;
   deadline?: string;
   progress?: number;
-}
-
-interface Timesheet {
-  id: number;
-  projectName: string;
-  dateOfWork: string;
-  startTime: string;
-  endTime: string;
-  totalHours: number;
-  workDescription: string;
-  hourlyRate: number;
-  calculatedAmount: number;
-  approvalStatus: string;
-  reviewerComments?: string;
 }
 
 export function FreelancerTimesheets() {
@@ -156,6 +144,7 @@ export function FreelancerTimesheets() {
         );
       } catch (error) {
         console.error('Error fetching projects:', error);
+        handleApiError(error, 'fetchProjects');
         setError('Failed to fetch projects');
         setProjects([]);
       } finally {
@@ -183,6 +172,7 @@ export function FreelancerTimesheets() {
         setFreelancerProfile(profile);
       } catch (error) {
         console.error('Error fetching freelancer profile:', error);
+        handleApiError(error, 'fetchProfile');
       }
     };
     fetchFreelancerProfile();
@@ -239,6 +229,7 @@ export function FreelancerTimesheets() {
          setTimesheets(freelancerTimesheets);
       } catch (error) {
         console.error('Error fetching timesheets:', error);
+        handleApiError(error, 'fetchTimesheets');
         setError('Failed to fetch timesheets');
         setTimesheets([]);
       } finally {
@@ -392,6 +383,7 @@ export function FreelancerTimesheets() {
         setError(''); // Clear any previous errors
       } catch (e) {
         console.error('Error submitting timesheet:', e);
+        handleApiError(e, 'createTimesheet');
         setError('Failed to submit timesheet.');
       } finally {
         setSubmitting(false);

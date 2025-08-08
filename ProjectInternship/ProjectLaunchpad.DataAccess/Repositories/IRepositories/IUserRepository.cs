@@ -18,7 +18,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task AddUserAsync(User user);
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(int userId);
-
-        // 
+        Task<int> GetTotalUsersCountAsync();
     }
 }

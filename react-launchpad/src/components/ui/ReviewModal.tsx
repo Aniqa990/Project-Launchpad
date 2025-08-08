@@ -3,7 +3,7 @@ import { Modal } from './Modal';
 import { Button } from './button';
 import { Avatar } from './avatar';
 import { Star, Send, CheckCircle } from 'lucide-react';
-import { handleError, showSuccessToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -66,7 +66,7 @@ export function ReviewModal({ isOpen, onClose, project, onSubmitReview }: Review
 
   const handleSubmit = () => {
     if (rating === 0) {
-      handleError(new Error('Please provide a rating'), 'validation');
+      handleApiError(new Error('Please provide a rating'), 'validation');
       return;
     }
 

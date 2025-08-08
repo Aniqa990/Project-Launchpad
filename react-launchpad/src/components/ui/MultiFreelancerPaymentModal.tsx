@@ -6,19 +6,7 @@ import { getMilestoneFreelancers, createStripeCheckoutSession, getPaymentByMiles
 import { validatePaymentData } from '@/utils/paymentHelpers';
 import { DollarSign, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { showErrorToast } from '@/utils/errorHandler';
-
-interface MilestoneFreelancer {
-  FreelancerId: number;
-  FirstName: string;
-  LastName: string;
-}
-
-interface PaymentDistribution {
-  freelancerId: number;
-  freelancerName: string;
-  amount: number;
-  percentage: number;
-}
+import { MilestoneFreelancer, PaymentDistribution } from '@/types';
 
 interface MultiFreelancerPaymentModalProps {
   milestone: any;

@@ -1,16 +1,16 @@
-//not connected to backend yet
-
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Play, Star, Users, Briefcase, TrendingUp, Rocket, Brain, Shield, Clock, BarChart3, MessageSquare, X, ChevronLeft, ChevronRight, Quote, CheckCircle, Zap, Target } from 'lucide-react';
+import { getLandingPageStats } from '../apiendpoints';
 
 function LandingPage() {
   const [showDemo, setShowDemo] = useState(false);
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [userReview, setUserReview] = useState({ name: '', email: '', rating: 5, comment: '' });
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showFeatureModal, setShowFeatureModal] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
+  const [stats, setStats] = useState({ totalUsers: 0, completedProjects: 0 });
+  const [loading, setLoading] = useState(true);
 
   const features = [
     {
@@ -259,13 +259,23 @@ function LandingPage() {
 
   const [currentDemoStep, setCurrentDemoStep] = useState(0);
 
-  const nextTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-  };
+  // Fetch landing page stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getLandingPageStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Failed to fetch landing page stats:', error);
+        // Keep default values if API fails
+        setStats({ totalUsers: 0, completedProjects: 0 });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const prevTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
+    fetchStats();
+  }, []);
 
   const nextDemoStep = () => {
     setCurrentDemoStep((prev) => (prev + 1) % demoSteps.length);
@@ -273,15 +283,6 @@ function LandingPage() {
 
   const prevDemoStep = () => {
     setCurrentDemoStep((prev) => (prev - 1 + demoSteps.length) % demoSteps.length);
-  };
-
-  const handleReviewSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // In a real app, this would submit to an API
-    console.log('Review submitted:', userReview);
-    alert('Thank you for your review! It will be published after moderation.');
-    setShowReviewForm(false);
-    setUserReview({ name: '', email: '', rating: 5, comment: '' });
   };
 
   const openFeatureModal = (feature: any) => {
@@ -347,7 +348,7 @@ function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
                 <Link 
-                  to="/auth"
+                  to="/signup"
                   className="group bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center space-x-2"
                 >
                   <span>Get Started Free</span>
@@ -366,23 +367,16 @@ function LandingPage() {
                 <div>
                   <div className="flex items-center justify-center lg:justify-start space-x-2 text-2xl font-bold text-blue-600 mb-1">
                     <Users className="w-6 h-6" />
-                    <span>50K+</span>
+                    <span>{loading ? '...' : `${stats.totalUsers.toLocaleString()}+`}</span>
                   </div>
                   <p className="text-gray-600 text-sm">Active Users</p>
                 </div>
                 <div>
                   <div className="flex items-center justify-center lg:justify-start space-x-2 text-2xl font-bold text-indigo-600 mb-1">
                     <Briefcase className="w-6 h-6" />
-                    <span>10K+</span>
+                    <span>{loading ? '...' : `${stats.completedProjects.toLocaleString()}+`}</span>
                   </div>
                   <p className="text-gray-600 text-sm">Projects Completed</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-center lg:justify-start space-x-2 text-2xl font-bold text-purple-600 mb-1">
-                    <TrendingUp className="w-6 h-6" />
-                    <span>98%</span>
-                  </div>
-                  <p className="text-gray-600 text-sm">Success Rate</p>
                 </div>
               </div>
             </div>
@@ -485,119 +479,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section - Interactive */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Loved by{' '}
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Thousands
-              </span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              See what our users have to say about their experience with Project Launchpad.
-            </p>
-            
-            <button
-              onClick={() => setShowReviewForm(true)}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              Write a Review
-            </button>
-          </div>
-
-          {/* Testimonial Carousel */}
-          <div className="relative max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl p-8 shadow-lg relative">
-              <div className="absolute -top-4 left-8">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                  <Quote className="w-4 h-4 text-white" />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-1 mb-6 mt-4">
-                {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                ))}
-                {testimonials[currentTestimonial].verified && (
-                  <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                    Verified
-                  </span>
-                )}
-              </div>
-
-              <p className="text-gray-700 text-lg leading-relaxed mb-8">
-                "{testimonials[currentTestimonial].content}"
-              </p>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <img 
-                    src={testimonials[currentTestimonial].avatar} 
-                    alt={testimonials[currentTestimonial].name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{testimonials[currentTestimonial].name}</h4>
-                    <p className="text-sm text-gray-600">{testimonials[currentTestimonial].role}</p>
-                    <p className="text-sm text-blue-600">{testimonials[currentTestimonial].company}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={prevTestimonial}
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={nextTestimonial}
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Testimonial indicators */}
-              <div className="flex justify-center space-x-2 mt-6">
-                {testimonials.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentTestimonial(index)}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      index === currentTestimonial ? 'bg-blue-600' : 'bg-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-3xl font-bold text-blue-600 mb-2">4.9/5</div>
-              <p className="text-gray-600">Average Rating</p>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-indigo-600 mb-2">50K+</div>
-              <p className="text-gray-600">Happy Users</p>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">10K+</div>
-              <p className="text-gray-600">Projects Done</p>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-pink-600 mb-2">98%</div>
-              <p className="text-gray-600">Success Rate</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -618,20 +499,20 @@ function LandingPage() {
             <div>
               <h3 className="font-semibold text-lg mb-4">Product</h3>
               <ul className="space-y-3">
-                <li><Link to="/auth?feature=features" className="text-gray-400 hover:text-white transition-colors">Features</Link></li>
-                <li><Link to="/auth?feature=pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link></li>
-                <li><Link to="/auth?feature=integrations" className="text-gray-400 hover:text-white transition-colors">Integrations</Link></li>
-                <li><Link to="/auth?feature=api" className="text-gray-400 hover:text-white transition-colors">API</Link></li>
+                <li>Features</li>
+                <li>Pricing</li>
+                <li>Integrations</li>
+                <li>API</li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold text-lg mb-4">Company</h3>
               <ul className="space-y-3">
-                <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">About</Link></li>
-                <li><Link to="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link></li>
-                <li><Link to="/careers" className="text-gray-400 hover:text-white transition-colors">Careers</Link></li>
-                <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
+                <li>About</li>
+                <li>Blog</li>
+                <li>Careers</li>
+                <li>Contact</li>
               </ul>
             </div>
           </div>
@@ -707,7 +588,7 @@ function LandingPage() {
                 
                 {currentDemoStep === demoSteps.length - 1 ? (
                   <Link
-                    to="/auth"
+                    to="/signup"
                     className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200"
                   >
                     <span>Get Started</span>
@@ -800,7 +681,7 @@ function LandingPage() {
                 <h4 className="text-lg font-semibold text-gray-900 mb-2">Ready to Experience {selectedFeature.title}?</h4>
                 <p className="text-gray-600 mb-4">Join thousands of satisfied users and transform your project management today.</p>
                 <Link
-                  to="/auth"
+                  to="/signup"
                   className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200"
                 >
                   <span>Get Started Free</span>
@@ -808,84 +689,6 @@ function LandingPage() {
                 </Link>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Review Form Modal */}
-      {showReviewForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Write a Review</h2>
-              <button
-                onClick={() => setShowReviewForm(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-            
-            <form onSubmit={handleReviewSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                <input
-                  type="text"
-                  required
-                  value={userReview.name}
-                  onChange={(e) => setUserReview({ ...userReview, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Your name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={userReview.email}
-                  onChange={(e) => setUserReview({ ...userReview, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="your@email.com"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                <div className="flex space-x-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setUserReview({ ...userReview, rating: star })}
-                      className={`w-8 h-8 ${star <= userReview.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                    >
-                      <Star className="w-full h-full fill-current" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Review</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={userReview.comment}
-                  onChange={(e) => setUserReview({ ...userReview, comment: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Share your experience..."
-                />
-              </div>
-              
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200"
-              >
-                Submit Review
-              </button>
-            </form>
           </div>
         </div>
       )}

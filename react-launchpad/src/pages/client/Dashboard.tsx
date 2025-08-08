@@ -146,7 +146,6 @@ export function ClientDashboard() {
     }
   };
 
-  // Refresh data when component comes into focus
   useEffect(() => {
     const handleFocus = () => {
       if (user && user.id) {

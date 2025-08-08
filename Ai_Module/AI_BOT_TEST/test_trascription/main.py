@@ -72,9 +72,9 @@ def initialize_database():
     try:
         db_connection = DatabaseConnection()
         db_connection.create_meeting_summaries_table()
-        print("✅ Database initialized successfully")
+        print("Database initialized successfully")
     except Exception as e:
-        print(f"❌ Database initialization failed: {e}")
+        print(f"Database initialization failed: {e}")
  
 # Audio callback
 def audio_callback(indata, frames, time, status):
@@ -109,7 +109,7 @@ def stop_and_transcribe():
  
     # Handle failed transcript
     if not result or result.get("status") != "completed":
-        print("❌ Transcription failed:", result)
+        print("Transcription failed:", result)
         return {"status": "failed", "error": result.get("error", "Unknown transcription error")}
  
     # Format text from result
@@ -134,9 +134,9 @@ def stop_and_transcribe():
                
                 # Store meeting summary
                 # Debug LLM output
-                print("🔍 LLM Output:", llm_res["json_output"])
-                print("🔍 Summary:", llm_res["json_output"].get("summary", ""))
-                print("🔍 Blockers:", llm_res["json_output"].get("blockers", ""))
+                print("LLM Output:", llm_res["json_output"])
+                print("Summary:", llm_res["json_output"].get("summary", ""))
+                print("Blockers:", llm_res["json_output"].get("blockers", ""))
                
                 summary_data = {
                     "freelancer_id": current_meeting_context["freelancer_id"],
@@ -148,7 +148,7 @@ def stop_and_transcribe():
                 }
                
                 store_summary(summary_data)
-                print("✅ Meeting summary stored in database")
+                print("Meeting summary stored in database")
        
         cleaned = llm_res.get("cleaned_text", raw_txt)
     else:
@@ -167,7 +167,7 @@ def stop_and_transcribe():
         from github.uploader import add_meeting
         add_meeting(cleaned)
     except Exception as e:
-        print("❌ Gist upload error:", e)
+        print("Gist upload error:", e)
  
     return {"status": "success", "transcript": cleaned}
  
@@ -224,44 +224,44 @@ def start(request: MeetingStartRequest):
     start_recording()
     return {"status": "recording_started","context": current_meeting_context}
  
-@app.post("/start-project-meeting")
-def start_project_meeting(request: MeetingStartRequest):
-    """Start recording with project context"""
-    global kb_result
-    print("recording started")
+# @app.post("/start-project-meeting")
+# def start_project_meeting(request: MeetingStartRequest):
+#     """Start recording with project context"""
+#     global kb_result
+#     print("recording started")
  
-    URL_TO_ADD = "https://gist.githubusercontent.com/SyedAdnanAijaz/1d6b26defc4bb3743567f976d5c0c8fa/raw"
+#     URL_TO_ADD = "https://gist.githubusercontent.com/SyedAdnanAijaz/1d6b26defc4bb3743567f976d5c0c8fa/raw"
  
-    try:
-        # Step 1: Add KB
-        kb_result = add_url_to_kb(URL_TO_ADD)
-        if not kb_result:
-            return {"status": "failed", "message": "Failed to add URL to KB"}
+#     try:
+#         # Step 1: Add KB
+#         kb_result = add_url_to_kb(URL_TO_ADD)
+#         if not kb_result:
+#             return {"status": "failed", "message": "Failed to add URL to KB"}
  
-        clear_agent_kb()
-        update_agent_with_kb(kb_result['id'], kb_result['name'])
+#         clear_agent_kb()
+#         update_agent_with_kb(kb_result['id'], kb_result['name'])
  
-        # Step 2: Validate project and freelancer
-        project = get_project_by_id(request.project_id)
-        freelancer = get_freelancer_by_id(request.freelancer_id)
+#         # Step 2: Validate project and freelancer
+#         project = get_project_by_id(request.project_id)
+#         freelancer = get_freelancer_by_id(request.freelancer_id)
  
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
-        if not freelancer:
-            raise HTTPException(status_code=404, detail="Freelancer not found")
+#         if not project:
+#             raise HTTPException(status_code=404, detail="Project not found")
+#         if not freelancer:
+#             raise HTTPException(status_code=404, detail="Freelancer not found")
  
-        # Step 4: Start recording if not already
-        if is_recording:
-            return {"status": "already_recording"}
+#         # Step 4: Start recording if not already
+#         if is_recording:
+#             return {"status": "already_recording"}
  
-        start_recording()
-        return {
-            "status": "recording_started",
-            "kb_document": kb_result
-        }
+#         start_recording()
+#         return {
+#             "status": "recording_started",
+#             "kb_document": kb_result
+#         }
  
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+#     except Exception as e:
+#         return {"status": "error", "message": str(e)}
  
 @app.post("/stop")
 def stop():
@@ -357,7 +357,7 @@ def add_project(payload: ProjectPayload):
         if project["id"] == payload.id:
             raise HTTPException(
                 status_code=400,
-                detail=f"❌ Project with ID '{payload.id}' already exists."
+                detail=f"Project with ID '{payload.id}' already exists."
             )
  
     new_project = {
@@ -371,7 +371,7 @@ def add_project(payload: ProjectPayload):
     data.setdefault("projects", []).append(new_project)
     update_gist(data)
  
-    return {"message": f"✅ Project '{payload.projectTitle}' added."}
+    return {"message": f"Project '{payload.projectTitle}' added."}
  
 
 # -------------------- API: Assign Freelancer --------------------
@@ -384,7 +384,7 @@ def assign_freelancer(payload: AssignFreelancerPayload):
             # Check if freelancer already assigned
             if payload.freelancerId in project["freelancersId"]:
                 return {
-                    "message": f"⚠️ Freelancer ID '{payload.freelancerId}' already assigned to project '{payload.id}'."
+                    "message": f"Freelancer ID '{payload.freelancerId}' already assigned to project '{payload.id}'."
                 }
            
             project["freelancersId"].append(payload.freelancerId)
@@ -395,10 +395,38 @@ def assign_freelancer(payload: AssignFreelancerPayload):
  
             update_gist(data)
             return {
-                "message": f"✅ Freelancer '{payload.freelancerName}' assigned to project '{payload.id}'."
+                "message": f"Freelancer '{payload.freelancerName}' assigned to project '{payload.id}'."
             }
  
-    raise HTTPException(status_code=404, detail=f"❌ Project with ID '{payload.id}' not found.")
+    raise HTTPException(status_code=404, detail=f"Project with ID '{payload.id}' not found.")
+
+class DeleteProjectPayload(BaseModel):
+    id: str
+@app.delete("/delete-project")
+def delete_project(payload: DeleteProjectPayload):
+    data = load_gist()
+ 
+    # Filter out the project with matching ID
+    original_count = len(data.get("projects", []))
+    data["projects"] = [
+        project for project in data.get("projects", [])
+        if project["id"] != payload.id
+    ]
+    new_count = len(data["projects"])
+ 
+    # If nothing was removed, the ID wasn't found
+    if original_count == new_count:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Project with ID '{payload.id}' not found."
+        )
+ 
+    # Save updated data to gist
+    update_gist(data)
+ 
+    return {
+        "message": f"Project with ID '{payload.id}' deleted successfully."
+    }
  
 if __name__ == "__main__":
     import uvicorn

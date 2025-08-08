@@ -13,10 +13,11 @@ import {
   getMeetingDetails, 
   getProjectDetails, 
   getTasksByProjectId, 
-  getFreelancersByProject, 
+  getProjectFreelancers, 
   syncTasksFromAI,
   getAudioByMeetingId
 } from '../../apiendpoints';
+import { FreelancerProfile } from '@/types';
 
 interface AITaskGeneratorProps {
   projectId: number;
@@ -58,13 +59,13 @@ export function AITaskGenerator({ projectId, onTasksGenerated }: AITaskGenerator
       
       // Step 4: Get freelancers
       setStatus('Fetching project freelancers...');
-      const freelancers = await getFreelancersByProject(projectId);
+      const freelancers = await getProjectFreelancers(projectId);
       console.log('🔍 Step 4 - Project Freelancers:', freelancers);
       
       // Create freelancer directory
       const freelancerDirectory: { [key: number]: string } = {};
-      freelancers.forEach((f: any) => {
-        freelancerDirectory[f.Id] = `${f.FirstName} ${f.LastName}`;
+      freelancers.forEach((f: FreelancerProfile) => {
+        freelancerDirectory[f.id] = `${f.firstName} ${f.lastName}`;
       });
       console.log('🔍 Step 4 - Freelancer Directory:', freelancerDirectory);
 
@@ -160,7 +161,7 @@ export function AITaskGenerator({ projectId, onTasksGenerated }: AITaskGenerator
       console.log('🔍 Step 7 - Task generator payload:', taskGeneratorPayload);
       console.log('🔍 Step 7 - Calling task generator service...');
       
-      const taskGeneratorResponse = await fetch('http://127.0.0.1:8001/generate-tasks', {
+      const taskGeneratorResponse = await fetch('http://127.0.0.1:8002/generate-tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,7 +244,7 @@ export function AITaskGenerator({ projectId, onTasksGenerated }: AITaskGenerator
       
       // Step 3: Get freelancers
       setStatus('Fetching project freelancers...');
-      const freelancers = await getFreelancersByProject(projectId);
+      const freelancers = await getProjectFreelancers(projectId);
       console.log('🧪 Mock Test - Project Freelancers:', freelancers);
       
       const freelancerDirectory: { [key: number]: string } = {};
@@ -316,7 +317,7 @@ export function AITaskGenerator({ projectId, onTasksGenerated }: AITaskGenerator
       console.log('🧪 Mock Test - Freelancer directory being sent:', freelancerDirectory);
       console.log('🧪 Mock Test - Mock transcript being sent:', mockTranscriptItems);
       console.log('🧪 Mock Test - Calling task generator service...');
-      console.log('🧪 Mock Test - Service URL: http://127.0.0.1:8001/generate-tasks');
+      console.log('🧪 Mock Test - Service URL: http://127.0.0.1:8002/generate-tasks');
       
       // 🔍 DEBUG: Show exact JSON being sent
       console.log('🔍 DEBUG - EXACT JSON BEING SENT TO AI SERVICE:');
@@ -331,7 +332,7 @@ export function AITaskGenerator({ projectId, onTasksGenerated }: AITaskGenerator
       while (retryCount < maxRetries) {
         console.log(`🔄 AI Service - Attempt ${retryCount + 1}/${maxRetries}`);
         
-        taskGeneratorResponse = await fetch('http://127.0.0.1:8001/generate-tasks', {
+        taskGeneratorResponse = await fetch('http://127.0.0.1:8002/generate-tasks', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -525,7 +526,7 @@ export function AITaskGenerator({ projectId, onTasksGenerated }: AITaskGenerator
           <p className="font-medium mb-1">Requirements:</p>
           <p>• Project must have meetings with transcript files uploaded</p>
           <p>• Transcript files should be accessible via Cloudinary URLs</p>
-          <p>• FastAPI services must be running on ports 8001 (task generator) and 8002 (merge transcript)</p>
+          <p>• FastAPI services must be running on ports 8002 (task generator) and 8002 (merge transcript)</p>
         </div>
 
         {/* Status Messages */}

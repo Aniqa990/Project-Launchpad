@@ -1,7 +1,6 @@
 import axios from "axios";
 import type {
   FreelancerProfile,
-  LoginResponse,
   SignupRequest,
   User,
   KanbanTask,
@@ -10,12 +9,12 @@ import type {
   KanbanTaskPriorityLevel,
   Deliverable,
   Feedback,
-  Milestone,
 } from "@/types";
-import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst"; //for matching the keys from backend to frontend
+import { lowercaseFirstLetterKeys } from "@/utils/lowercaseFirst"; //for matching letter casing for the keys from backend to frontend, used for get apis
+//You may remove the use of this function lowercaseFirstLetterKeys if you convert all type interfaces to start with a capital letter in types/index.tsx and fix casing for all data properties in pages
 
 const api = axios.create({
-  baseURL: "http://localhost:7053/api",
+  baseURL: "http://localhost:7071/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -508,7 +507,7 @@ export const getDeliverablesByMilestoneId = async (
 // Hourly Logs
 export const getHourlyLogs = async (): Promise<any[]> => {
   const response = await api.get("/logs");
-  return response.data;
+  return lowercaseFirstLetterKeys(response.data);
 };
 
 export const getFreelancerHourlyLogs = async (
@@ -516,7 +515,7 @@ export const getFreelancerHourlyLogs = async (
 ): Promise<any[]> => {
   try {
     const response = await api.get(`/logs/freelancer/${freelancerId}`);
-    return response.data;
+    return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to fetch freelancer hourly logs"
@@ -527,7 +526,7 @@ export const getFreelancerHourlyLogs = async (
 export const getLogsByProjectId = async (projectId: number): Promise<any[]> => {
   try {
     const response = await api.get(`/projects/${projectId}/logs`);
-    return response.data;
+    return lowercaseFirstLetterKeys(response.data);
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to fetch logs by project"
@@ -633,7 +632,7 @@ export const updateMilestoneHandover = async (
 // TIMESHEETS
 export const getTimesheets = async () => {
   const res = await api.get("/timesheets");
-  return res.data;
+  return lowercaseFirstLetterKeys(res.data);
 };
 
 export const createTimesheet = async (payload: any) => {
@@ -671,7 +670,7 @@ export const getTimesheetsByFreelancer = async (freelancerName: string) => {
 // MESSAGES
 export const getUserMessages = async (userId: number) => {
   const res = await api.get(`/messages/user/${userId}`);
-  return res.data;
+  return lowercaseFirstLetterKeys(res.data);
 };
 
 export const getConversationMessages = async (
@@ -679,7 +678,7 @@ export const getConversationMessages = async (
   otherUserId: number
 ) => {
   const res = await api.get(`/messages/conversation/${userId}/${otherUserId}`);
-  return res.data;
+  return lowercaseFirstLetterKeys(res.data);
 };
 
 export const sendMessage = async (messageData: any) => {
@@ -1113,3 +1112,16 @@ export const getProjectClosureSummary = async (projectId: number) => {
     );
   }
 };
+
+// Landing page stats APIs
+export const getLandingPageStats = async () => {
+  try {
+    const response = await api.get('/landing-page/stats');
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch landing page stats"
+    );
+  }
+};
+

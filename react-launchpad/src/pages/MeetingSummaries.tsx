@@ -31,7 +31,7 @@ import {
   VolumeX,
   Bot
 } from 'lucide-react';
-import { showErrorToast } from '@/utils/errorHandler';
+import { showErrorToast, handleApiError } from '@/utils/errorHandler';
 import { useConversation } from '@elevenlabs/react';
 import { MeetingSummary } from '@/types';
 
@@ -86,6 +86,7 @@ export function MeetingSummaries() {
         }
         setProjects(projectsData);
       } catch (e) {
+        handleApiError(e, 'fetchProjects');
         setProjects([]);
       }
     }
@@ -181,8 +182,7 @@ export function MeetingSummaries() {
       if (response.status !== 'success') {
         setConvError('Failed to stop backend recording: ' + (response.error || response.status));
       } else {
-        // Optionally, handle the transcript data here
-        // e.g., setTranscript(data.transcript);
+
       }
     } catch (err) {
       setConvError('Failed to stop backend recording: ' + String(err));
@@ -217,14 +217,12 @@ export function MeetingSummaries() {
       };
 
       mediaRecorder.onstop = () => {
-        // Try to use 'audio/wav' for AssemblyAI compatibility
         let audioBlob;
         try {
           audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         } catch {
           audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         }
-        // Transcription logic removed
       };
 
       mediaRecorder.start();

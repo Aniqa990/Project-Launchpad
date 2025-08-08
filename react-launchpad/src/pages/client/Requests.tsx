@@ -3,11 +3,10 @@ import { getClientProjects, getProjectRequestsByProjectId, getFreelancerById, up
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { Clock, X } from 'lucide-react';
+import { handleApiError } from '@/utils/errorHandler';
 
 export function ClientProjectRequests() {
   const { user } = useAuth();
@@ -49,7 +48,7 @@ export function ClientProjectRequests() {
         setRequests(allRequests);
         console.log(allRequests);
       } catch (error: any) {
-        toast.error(error.message || 'Failed to load project requests');
+        handleApiError(error, 'fetchData');
       } finally {
         setLoading(false);
       }
@@ -76,7 +75,7 @@ export function ClientProjectRequests() {
       await updateProjectRequestStatus(projectId, 'replaced', freelancerId);
       navigate(`/client/freelancer-suggestions?projectId=${projectId}`);
     } catch (err: any) {
-      toast.error('Failed to update request status.');
+      handleApiError(err, 'updateProjectRequestStatus');
     } finally {
       setReplacingRequestId(null);
     }
@@ -91,7 +90,7 @@ export function ClientProjectRequests() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Project Requests</h1>
-        <p className="text-gray-600">Review and respond to project invitations</p>
+        <p className="text-gray-600">Review project requests sent to freelancers</p>
       </div>
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

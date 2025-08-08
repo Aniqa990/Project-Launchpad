@@ -28,6 +28,7 @@ import { Modal } from '../components/ui/Modal';
 import { EditTaskModal } from '../components/ui/EditTaskModal';
 import { AddTaskModal } from '../components/ui/AddTaskModal';
 import { EditSubtaskModal } from '../components/ui/EditSubtaskModal';
+import { handleApiError } from '@/utils/errorHandler';
 
 // Custom CSS animations
 const customStyles = `
@@ -72,8 +73,6 @@ const customStyles = `
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   }
 `;
-
-// Remove import { mockSubtasks } from '../../utils/mockData';
 
 interface KanbanColumnProps {
   title: string;
@@ -502,7 +501,7 @@ export function KanbanBoard() {
         const subtaskData = await getSubtasks();
         setSubtasks(subtaskData);
       } catch (e) {
-        // handle error (could show toast)
+        handleApiError(e, 'fetchTasks');
       } finally {
         setLoading(false);
       }
@@ -533,6 +532,7 @@ export function KanbanBoard() {
             : 'No projects created yet.');
         }
       } catch (e) {
+        handleApiError(e, 'fetchProjects');
         setMessage('Could not fetch your projects.');
       } finally {
         setLoadingProjects(false);
@@ -560,6 +560,7 @@ export function KanbanBoard() {
           setMessage('No tasks for this project yet.');
         }
       } catch (e) {
+        handleApiError(e, 'fetchTasks');
         setMessage('Could not fetch tasks for this project.');
       } finally {
         setLoadingTasks(false);
@@ -583,6 +584,7 @@ export function KanbanBoard() {
         setProjectDetails(projectData);
       } catch (e) {
         console.error('Could not fetch project details:', e);
+        handleApiError(e, 'fetchProjectDetails');
         setProjectDetails(null);
       } finally {
         setLoadingProjectDetails(false);
@@ -750,7 +752,7 @@ export function KanbanBoard() {
       await fetchProjectTasks();
       setShowAddTaskModal(false);
     } catch (e) {
-      // handle error
+      handleApiError(e, 'createTask');
     } finally {
       setFormLoading(false);
     }
@@ -772,7 +774,7 @@ export function KanbanBoard() {
       setEditTask(null);
       setShowTaskModal(false);
     } catch (e) {
-      // handle error
+      handleApiError(e, 'updateTask');
     } finally {
       setFormLoading(false);
     }
@@ -785,7 +787,7 @@ export function KanbanBoard() {
       setTasks(tasks => tasks.filter(task => task.Id !== id));
       setShowTaskModal(false);
     } catch (e) {
-      // handle error
+      handleApiError(e, 'deleteTask');
     } finally {
       setDeleteLoading(false);
     }
@@ -804,7 +806,7 @@ export function KanbanBoard() {
       setSubtasks(subtaskData);
       setSelectedSubtask(null);
     } catch (e) {
-      // handle error
+      handleApiError(e, 'updateSubtask');
     } finally {
       setFormLoading(false);
     }

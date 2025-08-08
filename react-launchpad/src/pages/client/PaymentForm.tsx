@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { createStripePaymentIntent, createStripeCheckoutSession } from "@/apiendpoints";
+import { handleApiError } from '@/utils/errorHandler';
 
 interface PaymentFormProps {
   clientId: number;
@@ -40,7 +41,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ clientId, freelancerId = 1, p
         setMessage("  Payment successful!");
       }
     } catch (err) {
-      setMessage("Error processing payment.");
+      handleApiError(err, 'processPayment');
     } finally {
       setLoading(false);
     }
@@ -65,7 +66,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ clientId, freelancerId = 1, p
         setMessage('Failed to initiate Stripe Checkout.');
       }
     } catch (err) {
-      setMessage('Error redirecting to Stripe Checkout.');
+      handleApiError(err, 'processPayment');
     } finally {
       setLoading(false);
     }

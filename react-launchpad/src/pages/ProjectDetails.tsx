@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -7,16 +7,13 @@ import {
   ArrowLeft, 
   Calendar, 
   DollarSign, 
-  Clock,
-  FileText,
   Users,
   BarChart3,
   Download,
-  Upload
 } from 'lucide-react';
 import { getProjectById, getMilestonesByProjectId } from '../apiendpoints';
 import { Project, Milestone } from '../types';
-import toast from 'react-hot-toast';
+import { handleApiError } from '@/utils/errorHandler';
 
 interface ProjectDetailsProps {
   projectId?: string | number;
@@ -53,14 +50,15 @@ export function ProjectDetails({ projectId: propProjectId, showBackButton = true
             setMilestones(milestoneData);
           } catch (err) {
             console.error('Failed to fetch milestones:', err);
+            handleApiError(err, 'fetchMilestones');
             setMilestones([]);
           } finally {
             setMilestonesLoading(false);
           }
         }
       } catch (err) {
+        handleApiError(err, 'fetchProjectDetails');
         setError('Failed to load project details');
-        toast.error('Failed to load project details');
       } finally {
         setLoading(false);
       }
@@ -288,8 +286,8 @@ export function ProjectDetails({ projectId: propProjectId, showBackButton = true
                       </div>
                       <h4 className="font-semibold text-gray-900">{milestone.title}</h4>
                       <Badge variant={
-                        milestone.status === 'completed' ? 'success' :
-                        milestone.status === 'inProgress' ? 'warning' : 'default'
+                        milestone.status === 2 ? 'success' :
+                        milestone.status === 1 ? 'warning' : 'default'
                       }>
                         {milestone.status}
                       </Badge>

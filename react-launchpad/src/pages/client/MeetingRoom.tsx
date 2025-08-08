@@ -5,6 +5,7 @@ import { getClientProjects, startMeeting, uploadMeetingAudio, getProjectFreelanc
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../components/ui/select';
 import { Button } from '../../components/ui/button';
 import type { FreelancerProfile } from '../../types';
+import { handleApiError } from '@/utils/errorHandler';
 
 export default function Meetings() {
   const [recording, setRecording] = useState(false);
@@ -46,20 +47,23 @@ export default function Meetings() {
 
   // Fetch projects for client
   useEffect(() => {
-    console.log('Client ID:', clientId); // DEBUG
+    console.log('Client ID:', clientId);
     if (!clientId) return;
     setLoadingProjects(true);
     setError(null);
     getClientProjects(clientId)
       .then((data) => {
-        console.log('Fetched projects:', data); // DEBUG
+        console.log('Fetched projects:', data);
         setProjects(data);
       })
-      .catch(() => setError('Failed to load projects'))
+      .catch((err) => {
+        handleApiError(err, 'fetchProjects');
+        setError('Failed to load projects');
+      })
       .finally(() => setLoadingProjects(false));
   }, [clientId]);
 
-  // Fetch freelancers for selected project
+
   useEffect(() => {
     if (!selectedProjectId) {
       setFreelancers([]);
@@ -72,7 +76,10 @@ export default function Meetings() {
       .then((res) => {
         setFreelancers(res);
       })
-      .catch(() => setError('Failed to load freelancers'))
+      .catch((err) => {
+        handleApiError(err, 'fetchFreelancers');
+        setError('Failed to load freelancers');
+      })
       .finally(() => setLoadingFreelancers(false));
   }, [selectedProjectId]);
 
@@ -82,7 +89,6 @@ export default function Meetings() {
     setMeetingActive(false);
   }, [selectedProjectId, selectedFreelancerId]);
 
-  // Remove stoppedByJitsiRef logic
 
   const handleStartRecording = async () => {
     setAudioUrl(null);

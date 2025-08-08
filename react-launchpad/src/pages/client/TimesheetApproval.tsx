@@ -6,27 +6,8 @@ import { Badge } from '../../components/ui/badge';
 import { CheckSquare, X, Clock, MessageSquare, User, Calendar, Filter, Search } from 'lucide-react';
 import { approveTimesheet, rejectTimesheet, getProjectById, getClientProjects, getProjectFreelancers, getTimesheetsByFreelancerId, getFreelancerById } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
-import { Project } from '../../types';
-
-interface TimesheetEntry {
-  id: string;
-  freelancerName: string;
-  freelancerAvatar: string;
-  projectName: string;
-  weekEnding: string;
-  totalHours: number;
-  hourlyRate: number;
-  totalAmount: number;
-  status: 'Pending' | 'Approved' | 'Rejected';
-  tasks: {
-    id: string;
-    name: string;
-    hours: number;
-    description: string;
-    date: string;
-  }[];
-  submittedAt: string;
-}
+import { Project, TimesheetEntry } from '../../types';
+import { handleApiError } from '@/utils/errorHandler';
 
 // Helper to get week ending date (Sunday) for a given date string
 function getWeekEnding(dateStr: string): string {
@@ -70,6 +51,7 @@ async function groupTimesheets(flat: any[]): Promise<TimesheetEntry[]> {
   
   // Process all entries and fetch freelancer profiles
   for (const entry of flat) {
+    console.log(entry)
     const freelancerId = entry.FreelancerId;
     const freelancerProfile = await getFreelancerProfile(freelancerId);
     const freelancerHourlyRate = freelancerProfile?.hourlyRate || 0;
@@ -187,6 +169,7 @@ export function TimesheetApproval() {
             }
           } catch (projectErr) {
             console.error('Error fetching specific project:', projectErr);
+            handleApiError(projectErr, 'fetchProjectDetails');
             setError('Failed to fetch project details');
             setLoading(false);
             return;
@@ -292,7 +275,7 @@ export function TimesheetApproval() {
       await approveTimesheet(Number(backendId), comment);
       setTimesheets(prev => prev.map(t => t.id === timesheetId ? { ...t, status: 'Approved' } : t));
     } catch (err) {
-      alert('Failed to approve timesheet.');
+      handleApiError(err, 'approveTimesheet');
     } finally {
       setActionLoading(null);
     }
@@ -310,20 +293,12 @@ export function TimesheetApproval() {
       await rejectTimesheet(Number(backendId), comment);
       setTimesheets(prev => prev.map(t => t.id === timesheetId ? { ...t, status: 'Rejected' } : t));
     } catch (err) {
-      alert('Failed to reject timesheet.');
+      handleApiError(err, 'rejectTimesheet');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Approved': return 'bg-green-100 text-green-800';
-      case 'Pending': return 'bg-yellow-100 text-yellow-800';
-      case 'Rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const clearFilters = () => {
     setSelectedProject('all');

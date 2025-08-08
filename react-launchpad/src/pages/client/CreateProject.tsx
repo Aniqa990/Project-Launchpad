@@ -17,9 +17,8 @@ import {
 } from 'lucide-react';
 import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
 import toast from 'react-hot-toast';
-import { createProject, getFreelancerById, getFreelancerProjects, sendProjectRequest, addProjectToGist } from '../../apiendpoints';
+import { createProject, addProjectToGist } from '../../apiendpoints';
 import { useAuth } from '../../contexts/AuthContext';
-import { Badge } from '../../components/ui/badge';
 import SignatureCanvas from 'react-signature-canvas';
 
 
@@ -35,14 +34,13 @@ export function CreateProject() {
     Budget: '',
     StartDate: '',
     Deadline: '',
-    PaymentType: 'fixed', // default to lowercase for backend
+    PaymentType: 'fixed',
     CategoryOrDomain: '',
     NumberOfFreelancers: 1,
     Milestones: '',
     CloudinaryUrl: '', // Add CloudinaryUrl to projectData
   });
   const [skillInput, setSkillInput] = useState('');
-  const [selectedFreelancers, setSelectedFreelancers] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   // Milestone fields
   const [milestoneInput, setMilestoneInput] = useState({
@@ -55,12 +53,10 @@ export function CreateProject() {
   const [budgetDivision, setBudgetDivision] = useState<'fixed' | 'milestone'>('fixed');
   const [milestones, setMilestones] = useState<{ title: string; description: string; amount: string; dueDate: string }[]>([]);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
-  const [detailedFreelancers, setDetailedFreelancers] = useState<any[]>([]);
-  const [sendingRequests, setSendingRequests] = useState(false);
   const sigCanvasRef = useRef<any>(null);
   const [signatureError, setSignatureError] = useState('');
   const [isSigned, setIsSigned] = useState(false);
-  const [uploading, setUploading] = useState(false); // Add uploading state
+  const [uploading, setUploading] = useState(false);
   // Signature upload state
   const [signatureImage, setSignatureImage] = useState<File | null>(null);
   const [signatureImageUrl, setSignatureImageUrl] = useState<string>('');
@@ -215,7 +211,6 @@ export function CreateProject() {
     handleInputChange('Skills', projectData.Skills.filter(s => s !== skill));
   };
 
-  // In handleFileUpload, just store the file(s) in state as before
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
@@ -249,7 +244,7 @@ export function CreateProject() {
         return;
       }
       
-      // Always go to next step (step 5 - signature step)
+      // Always go to next step
       setStep(step + 1);
     } else if (step === 5) {
       // Validate milestones before proceeding (only for milestone-based projects)
@@ -347,7 +342,6 @@ export function CreateProject() {
       const response = await createProject(payload);
       console.log('Create project response:', response);
       
-      // Get the project ID from the response
       const projectId = response?.Id?.toString() ||
         response?.id?.toString() ||
         response?.projectId?.toString() ||
@@ -366,7 +360,6 @@ export function CreateProject() {
           console.log('Project added to GitHub gist successfully');
         } catch (error) {
           console.error('Failed to add project to GitHub gist:', error);
-          // Don't show error to user as this is not critical
         }
       }
       

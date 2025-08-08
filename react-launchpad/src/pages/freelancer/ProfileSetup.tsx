@@ -61,7 +61,7 @@ export function ProfileSetup() {
   const [email, setEmail] = useState(user?.email ?? '');
   const [phoneNo, setPhoneNo] = useState(user?.phoneNo ?? '');
 
-  // UI/UX state for modals
+  // states for modals
   const [showExpModal, setShowExpModal] = useState(false);
   const [editExp, setEditExp] = useState(null);
   const [showProjModal, setShowProjModal] = useState(false);
@@ -138,22 +138,22 @@ export function ProfileSetup() {
       };
   };
   
-    // Add state for multiple resumes
+    // State for multiple resumes
     const [uploadedResumes, setUploadedResumes] = useState<{ name: string; status: 'pending' | 'parsing' | 'success' | 'error'; error?: string }[]>([]);
 
-    // Update handleFileUpload to handle multiple files
+    // Handle multiple files
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || []);
       for (const file of files) {
         setUploadedResumes(prev => [...prev, { name: file.name, status: 'parsing' }]);
         setUploading(true);
         try {
-          await new Promise(resolve => setTimeout(resolve, 500)); // Simulate upload
+          await new Promise(resolve => setTimeout(resolve, 500));
           setResumeUploaded(true);
           setParsing(true);
           try {
             const parsedData = await parseResume(file);
-            setProfileData(parsedData); // Optionally merge or replace, as per your logic
+            setProfileData(parsedData);
             setUploadedResumes(prev => prev.map(r => r.name === file.name ? { ...r, status: 'success' } : r));
             setShowParseResults(true);
             showSuccessToast(`Resume ${file.name} parsed successfully!`);
@@ -195,7 +195,6 @@ export function ProfileSetup() {
       updateProfileField('skills', profileData.skills.filter(s => s !== skill));
     };
   
-    // Update add/edit/remove functions for experience and projects to use camelCase fields and assign ids
     const addExperience = (exp: any) => {
       exp.id = experienceId.current++;
       updateProfileField('experience', [...profileData.experience, exp]);

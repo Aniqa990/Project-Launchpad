@@ -34,7 +34,6 @@ export function FreelancerSettings() {
   });
   const [dangerModal, setDangerModal] = useState({ open: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   const [resumeUploading, setResumeUploading] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -81,7 +80,7 @@ export function FreelancerSettings() {
         setProfileData(profileData);
         console.log(profileData);
         
-        // 2. Try to fetch parsed JSON from resume_parser
+        // 2. Try to fetch parsed JSON from resume_parser if new resume uploaded
         try {
           const response = await fetch(`http://localhost:8000/api/get-parsed-json/${user?.id}`);
           if (response.ok) {
@@ -143,28 +142,6 @@ export function FreelancerSettings() {
   // Handlers for editing profileData
   const handleProfileFieldChange = (field: string, value: any) => {
     setProfileData(prev => prev ? { ...prev, [field]: value } : prev);
-  };
-
-  // Helper functions to get data from either parsed JSON or profile
-  const getSkills = () => {
-    if (hasResumeData && parsedJsonData?.skills) {
-      return Array.isArray(parsedJsonData.skills) ? parsedJsonData.skills : [];
-    }
-    return [];
-  };
-
-  const getExperience = () => {
-    if (hasResumeData && parsedJsonData?.experience) {
-      return Array.isArray(parsedJsonData.experience) ? parsedJsonData.experience : [];
-    }
-    return [];
-  };
-
-  const getProjects = () => {
-    if (hasResumeData && parsedJsonData?.projects) {
-      return Array.isArray(parsedJsonData.projects) ? parsedJsonData.projects : [];
-    }
-    return [];
   };
 
   // Functions to manage skills
@@ -243,7 +220,7 @@ export function FreelancerSettings() {
     setShowProjModal(true);
   };
 
-  // Function to strip IDs from arrays (like in ProfileSetup)
+  // Function to strip IDs from arrays for storing in format
   function stripIds<T extends { id?: any }>(arr: T[]): Omit<T, 'id'>[] {
     return arr.map(({ id, ...rest }) => rest);
   }
@@ -469,14 +446,6 @@ const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     showSuccessToast('Account deleted!');
     navigate('/');
   };
-
-  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = e.target.files?.[0];
-  //   if (!file) return;
-  //   const filename = file.name;
-  //   setProfile((prev: any) => prev ? { ...prev, ProfilePicture: filename } : prev);
-  //   toast.success(`Selected file: ${filename}`);
-  // };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

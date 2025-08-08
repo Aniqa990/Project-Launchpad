@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { getClientProjects, getProjectById, updateProject, getProjectClosureSummary } from '../../apiendpoints';
 import { Project } from '@/types';
-import { handleApiError, showSuccessToast, showErrorToast } from '@/utils/errorHandler';
+import { handleApiError, showSuccessToast} from '@/utils/errorHandler';
 
 export function ClientProjects() {
   const navigate = useNavigate();
@@ -30,15 +30,6 @@ export function ClientProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState<any>({});
-  const [formErrors, setFormErrors] = useState<any>({});
-  const [updateLoading, setUpdateLoading] = useState(false);
-  const [updateSuccess, setUpdateSuccess] = useState('');
-  const [updateError, setUpdateError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   
   // Start date update modal state
@@ -99,7 +90,6 @@ export function ClientProjects() {
     fetchProjects();
   }, [user]);
 
-  // Refresh data when component comes into focus
   useEffect(() => {
     const handleFocus = () => {
       if (user?.id) {
@@ -146,7 +136,6 @@ export function ClientProjects() {
     return matchesStatus && matchesApproval && matchesSearch;
   });
 
-  // getStatusColor is not needed, use Badge variant prop
 
   const getStatusCounts = () => {
     return {
@@ -168,13 +157,6 @@ export function ClientProjects() {
 
   const statusCounts = getStatusCounts();
   const approvalCounts = getApprovalCounts();
-
-  // // Remove modal logic and use navigation for viewDetails
-  // const viewDetails = (projectId: number) => {
-  //   navigate(`/workspace/${projectId}`);
-  // };
-
-  // Remove editProject function
 
   const createNewProject = () => {
     navigate('/client/create-project');
@@ -325,7 +307,6 @@ export function ClientProjects() {
       const summary = await getProjectClosureSummary(projectId);
       setClosureModal(prev => ({ ...prev, summary, loading: false }));
     } catch (error) {
-      handleApiError(error, 'getProjectClosureSummary');
       setClosureModal(prev => ({ 
         ...prev, 
         error: 'Failed to load project closure summary', 
@@ -604,6 +585,16 @@ export function ClientProjects() {
                         className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                       >
                         Update Timeline
+                      </Button>
+                    )}
+                    
+                    {project.status === 'open' && project.approvalStatus === 'pending' && (
+                      <Button
+                        onClick={() => navigate(`/client/update-project/${project.id}`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                      >
+                        Update Project
                       </Button>
                     )}
                   </div>

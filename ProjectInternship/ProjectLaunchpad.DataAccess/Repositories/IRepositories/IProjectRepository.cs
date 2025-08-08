@@ -23,5 +23,6 @@ namespace ProjectLaunchpad.DataAccess.Repositories.IRepositories
         Task UpdateProjectAsync(Project project);
         Task DeleteProjectAsync(int id);
         Task<List<Project>> GetProjectsByClientIdAsync(int clientId);
+        Task<int> GetCompletedProjectsCountAsync();
     }
 }

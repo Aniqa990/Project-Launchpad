@@ -138,7 +138,7 @@ export function FreelancerProjects() {
               </div>
               <div className="flex items-center justify-between">
                 <Link
-                  to={`/freelancer/kanban`} //see later if we need to add the project id to view certaon project tasks
+                  to={`/freelancer/kanban`}
                   className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   <span>View Tasks</span>

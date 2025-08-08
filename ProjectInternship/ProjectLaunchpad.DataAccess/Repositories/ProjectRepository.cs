@@ -150,5 +150,12 @@ namespace ProjectLaunchpad.DataAccess.Repositories
                         .ThenInclude(f => f.User)
                 .ToListAsync();
         }
+
+        public async Task<int> GetCompletedProjectsCountAsync()
+        {
+            return await _db.projects
+                .Where(p => p.Status.ToLower() == "closed")
+                .CountAsync();
+        }
     }
 }
