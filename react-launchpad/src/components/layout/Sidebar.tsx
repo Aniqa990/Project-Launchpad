@@ -1,0 +1,90 @@
+import React from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { 
+  LayoutDashboard, 
+  Plus,
+  Users, 
+  Clock, 
+  CheckSquare, 
+  CreditCard, 
+  MessageSquare,
+  User,
+  Kanban,
+  Upload,
+  DollarSign,
+  Star,
+  Settings,
+  Folder,
+  Video
+} from 'lucide-react';
+
+export function Sidebar() {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  if (!user) return null;
+
+  const clientMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/client/dashboard' },
+    { icon: Plus, label: 'Create Project', path: '/client/create-project' },
+    { icon: Folder, label: 'My Projects', path: '/client/projects' },
+    { icon: Kanban, label: 'View Tasks', path: '/client/kanban' },
+    { icon: Users, label: 'View Project Requests', path: '/client/project-requests' },
+    { icon: CheckSquare, label: 'Approve Timesheets', path: '/client/timesheet-approval' },
+    { icon: CheckSquare, label: 'Milestone Management', path: '/client/milestone-management' },
+    { icon: CreditCard, label: 'Payments', path: '/client/payments' },
+    { icon: MessageSquare, label: 'Meeting Summaries', path: '/client/meeting-summaries' },
+    { icon: Video, label: 'Meetings', path: '/client/meetings' },
+  ];
+
+  const freelancerMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/freelancer/dashboard' },
+    { icon: User, label: 'Projects', path: '/freelancer/projects' },
+    { icon: Clock, label: 'Requests', path: '/freelancer/requests' },
+    { icon: Kanban, label: 'Task Board', path: '/freelancer/kanban' },
+    { icon: CheckSquare, label: 'Milestones', path: '/freelancer/milestones' },
+    { icon: DollarSign, label: 'Payments', path: '/freelancer/payments' },
+    { icon: Clock, label: 'Timesheet', path: '/freelancer/timesheets' },
+    { icon: MessageSquare, label: 'Meeting Summaries', path: '/freelancer/meeting-summaries' },
+    { icon: Video, label: 'Meetings', path: '/freelancer/meetings' },
+  ];
+
+  const platformMenuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: DollarSign, label: 'Milestone Payments', path: '/admin/payments' },
+    { icon: Folder, label: 'Project Approvals', path: '/admin/projects' },
+    { icon: Folder, label: 'View All Projects', path: '/admin/view-projects' },
+  ];
+
+  const menuItems = user.role === 'client' ? clientMenuItems : user.role === 'freelancer' ? freelancerMenuItems : platformMenuItems;
+
+  return (
+    <div className="w-full h-full bg-white border-r border-gray-200 overflow-y-auto">
+      <div className="p-4 sm:p-6">
+        <nav className="space-y-1 sm:space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path || 
+                           (item.path.includes(':') && location.pathname.includes(item.path.split('/')[2]));
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200 text-sm sm:text-base ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                <span className="font-medium truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  );
+} 

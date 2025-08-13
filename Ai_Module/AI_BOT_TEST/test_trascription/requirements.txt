@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sounddevice
+soundfile
+numpy
+python-dotenv
+requests
+python-docx
+pyodbc
+pydantic
+selenium
+requests
+

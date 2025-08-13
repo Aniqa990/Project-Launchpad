@@ -1,0 +1,920 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { Card } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
+import { Modal } from '../../components/ui/Modal';
+import { 
+  FolderOpen, 
+  Eye, 
+  User, 
+  DollarSign, 
+  Calendar,
+  Filter,
+  Search,
+  Plus,
+  AlertCircle,
+  RefreshCw
+} from 'lucide-react';
+import { getClientProjects, getProjectById, updateProject, getProjectClosureSummary } from '../../apiendpoints';
+import { Project } from '@/types';
+import { handleApiError, showSuccessToast} from '@/utils/errorHandler';
+
+export function ClientProjects() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'active' | 'closed'>('all');
+  const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Start date update modal state
+  const [timelineModal, setTimelineModal] = useState({
+    isOpen: false,
+    selectedProject: null as Project | null,
+    newStartDate: '',
+    newDeadline: '',
+    error: '',
+    isUpdating: false
+  });
+
+  // Project closure summary modal state
+  const [closureModal, setClosureModal] = useState({
+    isOpen: false,
+    projectId: null as number | null,
+    summary: null as any,
+    loading: false,
+    error: ''
+  });
+
+  // Manual refresh function
+  const refreshProjects = async () => {
+    if (!user || typeof user.id !== 'number') return;
+    
+    setRefreshing(true);
+    try {
+      const data = await getClientProjects(user.id);
+      setProjects(data);
+      console.log('Projects refreshed:', data);
+    } catch (err) {
+      handleApiError(err, 'refreshProjects');
+      setError('Failed to refresh projects.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        if (user && typeof user.id === 'number') {
+          const data = await getClientProjects(user.id);
+          setProjects(data);
+          console.log(data);
+        } else {
+          setProjects([]);
+        }
+      } catch (err) {
+        handleApiError(err, 'fetchProjects');
+        setError('Failed to load projects.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, [user]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user?.id) {
+        const fetchProjects = async () => {
+          try {
+            const data = await getClientProjects(user.id!);
+            setProjects(data);
+            console.log('Projects refreshed on focus:', data);
+          } catch (err) {
+            console.error('Failed to refresh projects on focus:', err);
+          }
+        };
+        fetchProjects();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user]);
+
+  // Periodic refresh every 30 seconds when user is active
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const data = await getClientProjects(user.id!);
+        setProjects(data);
+        console.log('Projects auto-refreshed:', data);
+      } catch (err) {
+        console.error('Failed to auto-refresh projects:', err);
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const filteredProjects = projects.filter(project => {
+    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+    const matchesApproval = approvalFilter === 'all' || project.approvalStatus === approvalFilter;
+    const matchesSearch = searchTerm === '' || 
+      (project.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (project.categoryOrDomain?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+    return matchesStatus && matchesApproval && matchesSearch;
+  });
+
+
+  const getStatusCounts = () => {
+    return {
+      all: projects.length,
+      open: projects.filter(p => p.status === 'open').length,
+      active: projects.filter(p => p.status === 'active').length,
+      closed: projects.filter(p => p.status === 'closed').length,
+    };
+  };
+
+  const getApprovalCounts = () => {
+    return {
+      all: projects.length,
+      pending: projects.filter((p: Project) => p.approvalStatus === 'pending').length,
+      approved: projects.filter((p: Project) => p.approvalStatus === 'approved').length,
+      rejected: projects.filter((p: Project) => p.approvalStatus === 'rejected').length,
+    };
+  };
+
+  const statusCounts = getStatusCounts();
+  const approvalCounts = getApprovalCounts();
+
+  const createNewProject = () => {
+    navigate('/client/create-project');
+  };
+
+  // Start date validation
+  const validateStartDate = (startDate: string) => {
+    if (!startDate) return 'Start date is required';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const startDateObj = new Date(startDate);
+    
+    if (startDateObj < today) {
+      return 'Start date must not be before today ';
+    }
+    return '';
+  };
+
+  // Check if setting start date to today will activate the project
+  const willActivateProject = (startDate: string) => {
+    if (!startDate) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const startDateObj = new Date(startDate);
+    startDateObj.setHours(0, 0, 0, 0);
+    
+    return startDateObj.getTime() === today.getTime();
+  };
+
+  // Check if setting deadline to today will close the project
+  const willCloseProject = (deadline: string) => {
+    if (!deadline) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const deadlineObj = new Date(deadline);
+    deadlineObj.setHours(0, 0, 0, 0);
+    
+    return deadlineObj.getTime() === today.getTime();
+  };
+
+  // Open timeline update modal
+  const openTimelineModal = (project: Project) => {
+    setTimelineModal({
+      isOpen: true,
+      selectedProject: project,
+      newStartDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+      newDeadline: project.deadline ? new Date(project.deadline).toISOString().split('T')[0] : '',
+      error: '',
+      isUpdating: false
+    });
+  };
+
+  // Handle timeline update
+  const handleTimelineUpdate = async () => {
+    // Validate start date only if project is not active
+    if (timelineModal.selectedProject?.status !== 'active') {
+      const startDateError = validateStartDate(timelineModal.newStartDate);
+      if (startDateError) {
+        setTimelineModal(prev => ({ ...prev, error: startDateError }));
+        return;
+      }
+    }
+
+    // Validate deadline
+    const deadlineError = validateDeadline(timelineModal.newDeadline);
+    if (deadlineError) {
+      setTimelineModal(prev => ({ ...prev, error: deadlineError }));
+      return;
+    }
+    
+    if (!timelineModal.selectedProject) return;
+
+    setTimelineModal(prev => ({ ...prev, isUpdating: true }));
+    try {
+      const payload: any = {
+        deadline: new Date(timelineModal.newDeadline).toISOString(),
+      };
+
+      // Only include start date if project is not active
+      if (timelineModal.selectedProject?.status !== 'active') {
+        payload.startDate = new Date(timelineModal.newStartDate).toISOString();
+      }
+
+      await updateProject(timelineModal.selectedProject.id, payload);
+      showSuccessToast('Timeline updated successfully!');
+      
+      // Check if the project status should be active now (only for non-active projects)
+      if (timelineModal.selectedProject?.status !== 'active') {
+        const newStartDate = new Date(timelineModal.newStartDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        newStartDate.setHours(0, 0, 0, 0);
+        
+        if (newStartDate.getTime() === today.getTime()) {
+          showSuccessToast('Project activated! Start date set to today.');
+        }
+      }
+
+      // Check if the project status should be closed now
+      const newDeadline = new Date(timelineModal.newDeadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      newDeadline.setHours(0, 0, 0, 0);
+      
+      if (newDeadline.getTime() === today.getTime()) {
+        showSuccessToast('Project closed! Deadline set to today.');
+      }
+      
+      setTimelineModal(prev => ({ ...prev, isOpen: false }));
+      
+      // Refresh projects list
+      await refreshProjects();
+    } catch (error) {
+      handleApiError(error, 'updateTimeline');
+    } finally {
+      setTimelineModal(prev => ({ ...prev, isUpdating: false }));
+    }
+  };
+
+  // Deadline validation
+  const validateDeadline = (deadline: string) => {
+    if (!deadline) return 'Deadline is required';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const deadlineObj = new Date(deadline);
+    
+    if (deadlineObj < today) {
+      return 'Deadline must not be before today';
+    }
+    return '';
+  };
+
+
+
+  // Handle project closure summary
+  const handleProjectClosure = async (projectId: number) => {
+    setClosureModal(prev => ({ ...prev, isOpen: true, projectId, loading: true, error: '' }));
+    
+    try {
+      const summary = await getProjectClosureSummary(projectId);
+      setClosureModal(prev => ({ ...prev, summary, loading: false }));
+    } catch (error) {
+      setClosureModal(prev => ({ 
+        ...prev, 
+        error: 'Failed to load project closure summary', 
+        loading: false 
+      }));
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading projects...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-8 text-red-600">{error}</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Projects</h1>
+          <p className="text-gray-600 mt-1">Manage and track all your posted projects</p>
+        </div>
+        <div className="flex gap-3">
+          <Button 
+            onClick={refreshProjects}
+            disabled={refreshing}
+            variant="outline"
+            className="flex items-center"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button onClick={createNewProject} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            New Project
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Projects</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{statusCounts.all}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <FolderOpen className="w-6 h-6 text-white" />
+              </div>
+            </div>
+        </Card>
+
+        <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Open</p>
+              <p className="text-2xl font-bold text-yellow-600 mt-1">{statusCounts.open}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-white" />
+              </div>
+            </div>
+        </Card>
+
+        <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{statusCounts.active}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
+            </div>
+        </Card>
+
+        <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">closed</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">{statusCounts.closed}</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+            </div>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <div className="flex items-center justify-between p-6 pb-0">
+            <div className="flex items-center space-x-2">
+              <Filter className="w-5 h-5 text-gray-600" />
+            <span className="text-lg font-semibold">Filters</span>
+          </div>
+        </div>
+        <div className="p-6 pt-2">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Status Filter Tabs */}
+            <div className="flex space-x-2">
+              {(['all', 'open', 'active', 'closed'] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    statusFilter === status
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {status === 'all' ? 'All' : status} 
+                  {status !== 'all' && ` (${statusCounts[status]})`}
+                </button>
+              ))}
+            </div>
+
+            {/* Approval Status Filter Tabs */}
+            <div className="flex space-x-2">
+              {(['all', 'pending', 'approved', 'rejected'] as const).map((approval) => (
+                <button
+                  key={approval}
+                  onClick={() => setApprovalFilter(approval)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    approvalFilter === approval
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {approval === 'all' ? 'All Approval' : approval} 
+                  {approval !== 'all' && ` (${approvalCounts[approval]})`}
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Projects List */}
+      <Card>
+        <div className="p-6">
+          <span className="text-lg font-semibold">Projects ({filteredProjects.length})</span>
+          <div className="text-gray-500 text-sm mb-4">
+            {statusFilter === 'all' ? 'All your projects' : `Projects with status: ${statusFilter}`}
+          </div>
+          <div className="space-y-4">
+            {filteredProjects.map((project) => (
+              <div key={project.id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                                    <div className="flex items-center space-x-3 mb-2">
+                  <h4 className="font-semibold text-gray-900">{project.projectTitle}</h4>
+                  <Badge variant={
+                    project.status === 'open' ? 'warning' :
+                    project.status === 'active' ? 'info' :
+                    project.status === 'closed' ? 'success' :
+                    project.status === '' ? 'destructive' : 'default'
+                  }>
+                    {project.status || 'No Status'}
+                  </Badge>
+                  <Badge variant={
+                    project.approvalStatus === 'pending' ? 'warning' :
+                    project.approvalStatus === 'approved' ? 'success' :
+                    project.approvalStatus === 'rejected' ? 'destructive' : 'default'
+                  }>
+                    {project.approvalStatus}
+                  </Badge>
+                </div>
+                    
+                    <p className="text-sm text-gray-600 mb-3">{project.description}</p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Category:</span>
+                        <p className="text-gray-600">{project.categoryOrDomain}</p>
+                      </div>
+                      
+                      <div>
+                        <span className="font-medium text-gray-700">Budget:</span>
+                        <p className="text-gray-600">${project.budget?.toLocaleString()}</p>
+                      </div>
+                      
+                      <div>
+                        <span className="font-medium text-gray-700">Deadline:</span>
+                        <p className="text-gray-600">{project.deadline ? new Date(project.deadline).toLocaleDateString() : ''}</p>
+                      </div>
+                      
+                        <div>
+                        <span className="font-medium text-gray-700">Freelancers: </span>
+                        {Array.isArray(project.team) && project.team.length > 0 ? (
+                          <span className="text-gray-600">
+                            {project.team.map(member => member.firstName + (member.lastName ? ' ' + member.lastName : '')).join(', ')}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 italic">Not assigned</span>
+                        )}
+                        </div>
+                    </div>
+
+                    {/* Rejection Reason */}
+                    {project.approvalStatus === 'rejected' && project.rejectionReason && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <div className="flex-shrink-0">
+                            <div className="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-red-800">Rejection Reason:</p>
+                            <p className="text-sm text-red-700 mt-1">{project.rejectionReason}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex flex-col space-y-2 ml-4">
+                    {project.status === 'closed' ? (
+                      <Button
+                        onClick={() => handleProjectClosure(project.id)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        size="sm"
+                      >
+                        Close Project
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => navigate(`/client/project-details/${project.id}`)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        View Details
+                      </Button>
+                    )}
+                    
+                    {project.approvalStatus === 'approved' && project.status === 'open' && (
+                      <Button
+                        onClick={() => navigate(`/client/freelancer-suggestions?projectId=${project.id}`)}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        Find Freelancers
+                      </Button>
+                    )}
+                    
+                    {project.approvalStatus === 'rejected' && (
+                      <Button
+                        onClick={() => navigate(`/client/update-project/${project.id}`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                      >
+                        Update Project
+                      </Button>
+                    )}
+                    
+                    {(project.status === 'open' || project.status === 'active') && project.approvalStatus === 'approved' && (
+                      <Button
+                        onClick={() => openTimelineModal(project)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                      >
+                        Update Timeline
+                      </Button>
+                    )}
+                    
+                    {project.status === 'open' && project.approvalStatus === 'pending' && (
+                      <Button
+                        onClick={() => navigate(`/client/update-project/${project.id}`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                      >
+                        Update Project
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {filteredProjects.length === 0 && (
+              <div className="text-center py-8">
+                <FolderOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
+                <p className="text-gray-600">
+                  {statusFilter === 'all' 
+                    ? 'You haven\'t created any projects yet' 
+                    : `No projects with status "${statusFilter}"`
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+            {/* Timeline Update Modal */}
+      <Modal
+        isOpen={timelineModal.isOpen}
+        onClose={() => setTimelineModal(prev => ({ ...prev, isOpen: false }))}
+        title="Update Timeline"
+        size="sm"
+      >
+        <div className="space-y-4">
+                     <div>
+             <label htmlFor="newStartDate" className="block text-sm font-medium text-gray-700">
+               Start Date
+               {timelineModal.selectedProject?.status === 'active' && (
+                 <span className="text-xs text-gray-500 ml-2">(Cannot be changed for active projects)</span>
+               )}
+             </label>
+             <input
+               type="date"
+               id="newStartDate"
+               value={timelineModal.newStartDate}
+               onChange={(e) => setTimelineModal(prev => ({ ...prev, newStartDate: e.target.value }))}
+               disabled={timelineModal.selectedProject?.status === 'active'}
+               className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                 timelineModal.selectedProject?.status === 'active' ? 'bg-gray-100 cursor-not-allowed' : ''
+               }`}
+             />
+           </div>
+
+          <div>
+            <label htmlFor="newDeadline" className="block text-sm font-medium text-gray-700">
+              Deadline
+            </label>
+            <input
+              type="date"
+              id="newDeadline"
+              value={timelineModal.newDeadline}
+              onChange={(e) => setTimelineModal(prev => ({ ...prev, newDeadline: e.target.value }))}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+
+          {timelineModal.error && (
+            <p className="mt-2 text-sm text-red-600 flex items-center">
+              <AlertCircle className="w-4 h-4 mr-1" />
+              {timelineModal.error}
+            </p>
+          )}
+
+          {willActivateProject(timelineModal.newStartDate) && !timelineModal.error && (
+            <p className="mt-2 text-sm text-green-600 flex items-center">
+              <div className="w-4 h-4 mr-1 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+              Project will be activated immediately when start date is set to today
+            </p>
+          )}
+
+          {willCloseProject(timelineModal.newDeadline) && !timelineModal.error && (
+            <p className="mt-2 text-sm text-red-600 flex items-center">
+              <div className="w-4 h-4 mr-1 bg-red-500 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+              Project will be closed immediately when deadline is set to today
+            </p>
+          )}
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setTimelineModal(prev => ({ ...prev, isOpen: false }))}
+              disabled={timelineModal.isUpdating}
+            >
+              Cancel
+            </Button>
+                         <Button
+               onClick={handleTimelineUpdate}
+               disabled={
+                 timelineModal.isUpdating || 
+                 !timelineModal.newDeadline || 
+                 (timelineModal.selectedProject?.status !== 'active' && !timelineModal.newStartDate)
+               }
+               className="bg-blue-600 hover:bg-blue-700"
+             >
+              {timelineModal.isUpdating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Update Timeline
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Project Closure Summary Modal */}
+      <Modal
+        isOpen={closureModal.isOpen}
+        onClose={() => setClosureModal(prev => ({ ...prev, isOpen: false }))}
+        title="Project Closure Summary"
+        size="xl"
+      >
+        <div className="max-h-[calc(70vh-120px)] overflow-y-auto space-y-4 pr-2">
+          {closureModal.loading && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading project closure summary...</p>
+            </div>
+          )}
+
+          {closureModal.error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <p className="text-red-800">{closureModal.error}</p>
+              </div>
+            </div>
+          )}
+
+          {closureModal.summary && !closureModal.loading && (
+            <div className="space-y-4">
+              {/* Project Information */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Project Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium text-gray-700">Title:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.ProjectTitle}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Status:</span>
+                    <Badge variant={
+                      closureModal.summary.Project.Status === 'closed' ? 'success' : 'default'
+                    }>
+                      {closureModal.summary.Project.Status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Category:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.CategoryOrDomain}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Payment Type:</span>
+                    <p className="text-gray-900">{closureModal.summary.Project.PaymentType}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Start Date:</span>
+                    <p className="text-gray-900">
+                      {closureModal.summary.Project.StartDate && closureModal.summary.Project.StartDate !== '0001-01-01T00:00:00' 
+                        ? new Date(closureModal.summary.Project.StartDate).toLocaleDateString() 
+                        : 'Not set'
+                      }
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Deadline:</span>
+                    <p className="text-gray-900">
+                      {closureModal.summary.Project.Deadline 
+                        ? new Date(closureModal.summary.Project.Deadline).toLocaleDateString() 
+                        : 'Not set'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Freelancers */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Assigned Freelancers</h3>
+                {closureModal.summary.Project.Freelancers && closureModal.summary.Project.Freelancers.length > 0 ? (
+                  <div className="space-y-2">
+                    {closureModal.summary.Project.Freelancers.map((freelancer: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {freelancer.FirstName} {freelancer.LastName}
+                          </p>
+                          <p className="text-sm text-gray-600">{freelancer.Email}</p>
+                        </div>
+                        <Badge variant="info">ID: {freelancer.Id}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No freelancers assigned to this project</p>
+                )}
+              </div>
+
+              {/* Milestones */}
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Milestones</h3>
+                {closureModal.summary.Milestones && closureModal.summary.Milestones.length > 0 ? (
+                  <div className="space-y-3">
+                    {closureModal.summary.Milestones.map((milestone: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded-lg border">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{milestone.Title}</h4>
+                          <Badge variant={
+                            milestone.Status === 'completed' ? 'success' :
+                            milestone.Status === 'in_progress' ? 'warning' :
+                            milestone.Status === 'pending' ? 'default' : 'default'
+                          }>
+                            {milestone.Status}
+                          </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+                          <div>
+                            <span className="font-medium text-gray-700">Amount:</span>
+                            <p className="text-gray-900">${milestone.Amount?.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">Due Date:</span>
+                            <p className="text-gray-900">
+                              {milestone.DueDate ? new Date(milestone.DueDate).toLocaleDateString() : 'Not set'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Deliverables */}
+                        {milestone.Deliverables && milestone.Deliverables.length > 0 && (
+                          <div className="mb-2">
+                            <h5 className="font-medium text-gray-700 mb-1">Deliverables:</h5>
+                            <div className="space-y-2">
+                              {milestone.Deliverables.map((deliverable: any, dIndex: number) => (
+                                <div key={dIndex} className="bg-gray-50 p-2 rounded">
+                                  <p className="text-sm text-gray-900">{deliverable.comment}</p>
+                                  <p className="text-xs text-gray-600">Status: {deliverable.Status}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Assigned Freelancers */}
+                        {milestone.AssignedFreelancers && milestone.AssignedFreelancers.length > 0 && (
+                          <div className="mb-2">
+                            <h5 className="font-medium text-gray-700 mb-1">Assigned Freelancers:</h5>
+                            <div className="space-y-1">
+                              {milestone.AssignedFreelancers.map((freelancer: any, fIndex: number) => (
+                                <p key={fIndex} className="text-sm text-gray-900">
+                                  {freelancer.FirstName} {freelancer.LastName}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Payments */}
+                        {milestone.Payments && milestone.Payments.length > 0 && (
+                          <div>
+                            <h5 className="font-medium text-gray-700 mb-1">Payments:</h5>
+                            <div className="space-y-2">
+                              {milestone.Payments.map((payment: any, pIndex: number) => (
+                                <div key={pIndex} className="bg-gray-50 p-2 rounded">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-900">${payment.Amount?.toLocaleString()}</span>
+                                    <Badge variant={
+                                      payment.PaymentStatus === 'completed' ? 'success' :
+                                      payment.PaymentStatus === 'pending' ? 'warning' : 'default'
+                                    }>
+                                      {payment.PaymentStatus}
+                                    </Badge>
+                                  </div>
+                                  {payment.PaymentDate && (
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      {new Date(payment.PaymentDate).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No milestones found for this project</p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={() => setClosureModal(prev => ({ ...prev, isOpen: false }))}
+              variant="outline"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}

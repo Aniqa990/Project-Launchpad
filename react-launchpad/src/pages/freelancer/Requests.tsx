@@ -1,0 +1,429 @@
+import { useState, useEffect } from 'react';
+import {getProjectRequests, updateProjectRequestStatus, assignFreelancerToProject, assignFreelancerToGist, getMilestonesByProjectId} from '@/apiendpoints';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
+import { 
+  Calendar,
+  DollarSign,
+  Clock,
+  Check,
+  X,
+  Eye,
+  Upload
+} from 'lucide-react';
+import { handleApiError, showSuccessToast } from '@/utils/errorHandler';
+import { ProjectRequest } from '@/types';
+
+export function FreelancerRequests() {
+  const { user } = useAuth();
+  const [requests, setRequests] = useState<ProjectRequest[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<ProjectRequest | null>(null);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(false);
+
+  // Fetch milestones when dialog opens
+  useEffect(() => {
+    if (showDetailDialog && selectedRequest && selectedRequest.paymentType === 'milestone') {
+      fetchMilestones(selectedRequest.projectId);
+    }
+  }, [showDetailDialog, selectedRequest]);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        if (user?.id) {
+          const data = await getProjectRequests(user.id);
+          setRequests(data);
+          console.log(data);
+        }
+      } catch (error: any) {
+        handleApiError(error, 'fetchData');
+      }
+    };
+    fetchRequests();
+  }, [user?.id]);
+
+  const fetchMilestones = async (projectId: number) => {
+    if (selectedRequest?.paymentType === 'milestone') {
+      setLoadingMilestones(true);
+      try {
+        const milestoneData = await getMilestonesByProjectId(projectId);
+        setMilestones(milestoneData);
+      } catch (error) {
+        console.error('Failed to fetch milestones:', error);
+        setMilestones([]);
+      } finally {
+        setLoadingMilestones(false);
+      }
+    } else {
+      setMilestones([]);
+    }
+  };
+
+  const handleAcceptRequest = async (projectId: number) => {
+    try {
+      await updateProjectRequestStatus(projectId, 'accepted', user?.id);
+      setRequests((prev) => prev.map((req) =>
+        req.projectId === projectId ? { ...req, status: 'accepted' } : req
+      ));
+      if (user?.id) {
+        await assignFreelancerToProject(projectId, user?.id);
+        
+        // Assign freelancer to GitHub gist
+        try {
+          await assignFreelancerToGist({
+            id: projectId.toString(),
+            freelancerId: user.id.toString(),
+            freelancerName: `${user.firstName} ${user.lastName}`
+          });
+          console.log('Freelancer assigned to GitHub gist successfully');
+        } catch (error) {
+          console.error('Failed to assign freelancer to GitHub gist:', error);
+          // Don't show error to user as this is not critical
+        }
+      }
+      showSuccessToast('Project request accepted!');
+    } catch (err: any) {
+      handleApiError(err, 'respondToRequest');
+    } finally {
+      setShowDetailDialog(false);
+    }
+  };
+
+  const handleRejectRequest = async (projectId: number) => {
+    try {
+      await updateProjectRequestStatus(projectId, 'rejected', user?.id);
+      setRequests((prev)=> prev.map((req) =>
+        req.projectId === projectId ? { ...req, status: 'rejected' } : req
+      ));
+      showSuccessToast('Project request declined');
+    } catch (err: any) {
+      handleApiError(err, 'respondToRequest');
+    } finally {
+      setShowDetailDialog(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'accepted': return 'success';
+      case 'rejected': return 'danger';
+      case 'pending': return 'warning';
+      default: return 'default';
+    }
+  };
+
+  const RequestCard = ({ request }: { request: ProjectRequest }) => (
+    <Card className="transition-shadow hover:shadow-md cursor-pointer">
+                <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-3">
+                <Avatar src={request.clientProfilePicture} size="sm" />
+            <div>
+              <p className="font-medium text-gray-900">{request.clientName}</p>
+              <p className="text-sm text-gray-500">wants to hire you</p>
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.projectCategory}</h3>
+          <h4 className="text-md font-medium text-blue-600 mb-2">{request.projectTitle}</h4>
+        </div>
+        <Badge variant={getStatusColor(request.status) as any}>
+          {request.status}
+        </Badge>
+      </div>
+
+      {/*<p className="text-gray-600 text-sm mb-4 line-clamp-3">{request.message}</p>*/}
+
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          {request.budget && (<div className="flex items-center">
+            <DollarSign className="w-4 h-4 mr-1" />
+            ${request.budget.toLocaleString()} budget
+          </div>)}
+          <div className="flex items-center">
+            <Calendar className="w-4 h-4 mr-1" />
+            Due {request.deadline ? format(request.deadline, 'dd MMM yyyy') : ''}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {request.skills?.split(',').map(s => s.trim()).slice(0, 3).map((skill: string) => ( //skills are comma separated
+          <Badge key={skill} variant="info" size="sm">{skill}</Badge>
+        ))}
+        {request.skills?.split(',').length > 3 && (
+          <Badge variant="info" size="sm">+{request.skills.length - 3} more</Badge>
+        )}
+      </div>
+      <div className="flex space-x-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={async () => {
+            setSelectedRequest(request);
+            setShowDetailDialog(true);
+            // Fetch milestones immediately when dialog opens
+            if (request.paymentType === 'milestone') {
+              await fetchMilestones(request.projectId);
+            }
+          }}
+        >
+          <Eye className="w-4 h-4" />
+          View Details
+        </Button>
+        {request.status === 'pending' && (
+          <>
+            <Button 
+              size="sm" 
+              variant="primary"
+              icon={Check}
+              onClick={() => handleAcceptRequest(request.projectId)}
+            >
+              Accept
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              icon={X}
+              onClick={() => handleRejectRequest(request.projectId)}
+            >
+              Decline
+            </Button>
+          </>
+        )}
+      </div>
+    </Card>
+  );
+
+  const pendingRequests = requests.filter((req) => req.status === 'pending');
+  const respondedRequests = requests.filter((req) => req.status !== 'pending');
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Project Requests</h1>
+        <p className="text-gray-600">Review and respond to project invitations</p>
+      </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Pending Requests</p>
+              <p className="text-2xl font-bold text-gray-900">{pendingRequests.length}</p>
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Check className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Accepted</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {requests.filter((r) => r.status === 'accepted').length}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+      {/* Pending Requests */}
+      {pendingRequests.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Pending Requests ({pendingRequests.length})
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {pendingRequests.map((request) => (
+              <RequestCard key={request.projectId} request={request} />
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Previous Responses */}
+      {respondedRequests.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Previous Responses ({respondedRequests.length})
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {respondedRequests.map((request) => (
+              <RequestCard key={request.projectId} request={request} />
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Empty State */}
+      {requests.length === 0 && (
+        <Card className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No project requests yet</h3>
+          <p className="text-gray-600">
+            Project requests from clients will appear here. Make sure your profile is complete to attract more opportunities.
+          </p>
+        </Card>
+      )}
+      {/* Request Detail Dialog */}
+      <Dialog open={showDetailDialog && !!selectedRequest} onOpenChange={(open) => {
+        setShowDetailDialog(open);
+        if (!open) {
+          setMilestones([]);
+          setLoadingMilestones(false);
+        }
+      }}>
+        <DialogContent className="max-w-3xl bg-white p-6 max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Project Request Details</DialogTitle>
+            <DialogDescription>
+              Review full project details before responding.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-6">
+              {/* Client Info */}
+              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <Avatar src={selectedRequest.clientProfilePicture} size="lg" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{selectedRequest.clientName}</h3>
+                  <p className="text-gray-600">Client</p>
+                </div>
+              </div>
+              {/* Project Details */}
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Project: {selectedRequest.projectTitle}</h4>
+                <p className="text-gray-600 mb-4">{selectedRequest.projectDescription}</p>
+                
+                {/* Project Category */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <p className="text-gray-900">{selectedRequest.projectCategory}</p>
+                </div>
+                
+                {/* Budget and Payment Type */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  {selectedRequest.budget && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+                      <p className="text-lg font-semibold text-green-600">
+                        ${selectedRequest.budget.toLocaleString()}
+                        {selectedRequest.paymentType && (
+                          <span className="text-sm text-gray-500 ml-2">({selectedRequest.paymentType})</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {selectedRequest.deadline ? format(selectedRequest.deadline, 'dd MMM yyyy') : ''}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Start Date */}
+                {selectedRequest.startDate && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {format(selectedRequest.startDate, 'dd MMM yyyy')}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Attached Document */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Project Documents</label>
+                  {selectedRequest.attachedDocumentPath ? (
+                    <a 
+                      href={selectedRequest.attachedDocumentPath} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline flex items-center"
+                    >
+                      <Upload className="w-4 h-4 mr-1" />
+                      View Project Documents
+                    </a>
+                  ) : (
+                    <p className="text-sm text-gray-500">No documents attached to this project.</p>
+                  )}
+                </div>
+                
+                {/* Required Skills */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Required Skills</label>
+                  <div className="flex flex-wrap gap-2">
+                  {selectedRequest.skills?.split(',').map(s => s.trim()).map((skill: string) => (
+                      <Badge key={skill} variant="info">{skill}</Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Milestones for milestone-based projects */}
+                {selectedRequest.paymentType === 'milestone' && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Project Milestones</label>
+                    {loadingMilestones ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="text-sm text-gray-500 mt-2">Loading milestones...</p>
+                      </div>
+                    ) : milestones.length > 0 ? (
+                      <div className="space-y-3">
+                        {milestones.map((milestone, index) => (
+                          <div key={milestone.id || index} className="border rounded-lg p-3 bg-gray-50">
+                            <div className="flex justify-between items-start mb-2">
+                              <h5 className="font-medium text-gray-900">{milestone.title}</h5>
+                              <span className="text-sm font-semibold text-green-600">
+                                ${milestone.amount}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{milestone.description}</p>
+                            <div className="text-xs text-gray-500">
+                              Due: {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : 'Not set'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No milestones found for this project.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* Actions */}
+              {selectedRequest.status === 'pending' && (
+                <div className="flex space-x-4 pt-4 border-t">
+                  <Button 
+                    className="flex-1"
+                    onClick={() => handleAcceptRequest(selectedRequest.projectId)}
+                  >
+                    Accept Project
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => handleRejectRequest(selectedRequest.projectId)}
+                  >
+                    Decline
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
